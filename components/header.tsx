@@ -1,16 +1,15 @@
 'use client'
 
-import { GraduationCap, CalendarDays, Search, Sparkles } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'
 import { UserMenu } from './user-menu'
 import { cn } from '@/lib/utils'
-import { Button } from './ui/button'
 
 interface HeaderProps {
   activeTab: string
   onTabChange: (tab: string) => void
-  onOpenProfile: () => void
+  onOpenProfile: () => void // Esta é a função que abre o ProfileSheet
   isAISidebarOpen: boolean
   setIsAISidebarOpen: (open: boolean) => void
 }
@@ -34,9 +33,10 @@ export function Header({
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
         <div className="flex items-center gap-8">
+          {/* Logo / Home */}
           <button 
             onClick={() => onTabChange('explorer')} 
-            className="group flex items-center gap-2.5 transition-all"
+            className="group flex items-center gap-2.5 transition-all outline-none"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy text-white shadow-lg shadow-navy/20 transition-transform group-hover:scale-105">
               <GraduationCap className="h-5 w-5" />
@@ -47,6 +47,7 @@ export function Header({
             </div>
           </button>
 
+          {/* Navegação Principal */}
           <nav className="hidden md:block">
             <ul className="flex items-center gap-1">
               {tabs.map((tab) => (
@@ -58,7 +59,7 @@ export function Header({
                       activeTab === tab.id ? "text-navy" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
-                    {tab.icon && <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-navy" : "")} />}
+                    <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-navy" : "")} />
                     {tab.label}
                   </button>
                   {activeTab === tab.id && (
@@ -69,23 +70,8 @@ export function Header({
             </ul>
           </nav>
         </div>
-        <div className="flex items-center gap-4">
-        {/* 
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsAISidebarOpen(!isAISidebarOpen)}
-            className={cn(
-              "gap-2 border transition-all",
-              isAISidebarOpen 
-                ? "bg-navy text-white border-navy" 
-                : "text-navy border-navy/20 bg-navy/5 hover:bg-navy/10"
-            )}
-          >
-            <Sparkles className={cn("h-4 w-4", isAISidebarOpen && "animate-pulse")} />
-            <span className="hidden lg:inline">Conselheiro IA</span>
-          </Button> */}
 
+        <div className="flex items-center gap-4">
           <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
 
           <div className="flex items-center">

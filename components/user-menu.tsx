@@ -42,16 +42,21 @@ export function UserMenu({ onOpenProfile }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={onOpenProfile} className="cursor-pointer gap-2">
-          <User className="h-4 w-4" />
+        {/* Item Perfil: Mudamos para fundo Navy e texto/ícone Branco no hover */}
+        <DropdownMenuItem 
+          onClick={onOpenProfile} 
+          className="cursor-pointer gap-2 transition-colors focus:bg-navy focus:text-white group"
+        >
+          <User className="h-4 w-4 text-muted-foreground group-focus:text-white" />
           <span>Perfil</span>
         </DropdownMenuItem>
         
+        {/* Item Sair: Mantemos o estilo Destructive mas garantimos o ícone branco no focus */}
         <DropdownMenuItem 
           onClick={logout} 
-          className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+          className="cursor-pointer gap-2 text-destructive focus:bg-destructive focus:text-white group"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4 text-destructive group-focus:text-white" />
           <span>Sair</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

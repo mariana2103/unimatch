@@ -1,67 +1,100 @@
 'use client'
 
-import { GraduationCap, CalendarDays } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search, Sparkles } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'
 import { UserMenu } from './user-menu'
-import { cn } from '@/lib/utils' 
+import { cn } from '@/lib/utils'
+import { Button } from './ui/button'
 
 interface HeaderProps {
   activeTab: string
   onTabChange: (tab: string) => void
   onOpenProfile: () => void
+  isAISidebarOpen: boolean
+  setIsAISidebarOpen: (open: boolean) => void
 }
 
-export function Header({ activeTab, onTabChange, onOpenProfile }: HeaderProps) {
+export function Header({ 
+  activeTab, 
+  onTabChange, 
+  onOpenProfile, 
+  isAISidebarOpen, 
+  setIsAISidebarOpen 
+}: HeaderProps) {
   const { isLoggedIn } = useUser()
 
   const tabs = [
-    { id: 'explorer', label: 'Explorar Cursos', icon: null },
+    { id: 'explorer', label: 'Explorar', icon: Search },
     { id: 'timeline', label: 'Calendário', icon: CalendarDays },
   ]
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-card/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Logo */}
-        <button onClick={() => onTabChange('explorer')} className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy shadow-sm">
-            <GraduationCap className="h-4.5 w-4.5 text-primary-foreground" />
-          </div>
-          <div className="hidden flex-col items-start sm:flex text-left">
-            <span className="text-sm font-semibold leading-none">UniMatch</span>
-            <span className="text-[10px] leading-tight text-muted-foreground uppercase tracking-wider">Simulador DGES</span>
-          </div>
-        </button>
+        <div className="flex items-center gap-8">
+          <button 
+            onClick={() => onTabChange('explorer')} 
+            className="group flex items-center gap-2.5 transition-all"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy text-white shadow-lg shadow-navy/20 transition-transform group-hover:scale-105">
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div className="hidden flex-col items-start leading-none sm:flex text-left">
+              <span className="text-lg font-bold tracking-tight text-foreground">UniMatch</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/80">Portugal</span>
+            </div>
+          </button>
 
-        {/* Navegação */}
-        <nav>
-          <ul className="flex items-center gap-1">
-            {tabs.map((tab) => (
-              <li key={tab.id}>
-                <button
-                  onClick={() => onTabChange(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-                    activeTab === tab.id ? "bg-foreground/[0.06] text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          <nav className="hidden md:block">
+            <ul className="flex items-center gap-1">
+              {tabs.map((tab) => (
+                <li key={tab.id} className="relative">
+                  <button
+                    onClick={() => onTabChange(tab.id)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors relative z-10",
+                      activeTab === tab.id ? "text-navy" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {tab.icon && <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-navy" : "")} />}
+                    {tab.label}
+                  </button>
+                  {activeTab === tab.id && (
+                    <div className="absolute inset-0 bg-navy/5 rounded-full -z-0 border border-navy/10" />
                   )}
-                >
-                  {tab.icon && <tab.icon className="h-3.5 w-3.5" />}
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
 
-        {/* Auth Section */}
-        <div className="flex items-center gap-2">
-          {isLoggedIn ? (
-            <UserMenu onOpenProfile={onOpenProfile} />
-          ) : (
-            <AuthDialog />
-          )}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsAISidebarOpen(!isAISidebarOpen)}
+            className={cn(
+              "gap-2 border transition-all",
+              isAISidebarOpen 
+                ? "bg-navy text-white border-navy" 
+                : "text-navy border-navy/20 bg-navy/5 hover:bg-navy/10"
+            )}
+          >
+            <Sparkles className={cn("h-4 w-4", isAISidebarOpen && "animate-pulse")} />
+            <span className="hidden lg:inline">Conselheiro IA</span>
+          </Button>
+
+          <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
+
+          <div className="flex items-center">
+            {isLoggedIn ? (
+              <UserMenu onOpenProfile={onOpenProfile} />
+            ) : (
+              <AuthDialog />
+            )}
+          </div>
         </div>
       </div>
     </header>

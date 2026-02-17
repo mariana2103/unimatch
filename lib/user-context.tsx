@@ -64,6 +64,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
+    setIsLoggedIn(false)
+    setProfile(null)
+    setGrades([])
+    setExams([])
+    setComparisonList([])
+    router.push('/')
     router.refresh()
   }, [supabase, router])
 

@@ -23,6 +23,8 @@ export function ProfileView() {
 
       <div className="grid gap-8 md:grid-cols-1">
         <ProfileSettings profile={profile} />
+        <GradesSection userId={profile.id} grades={grades} />
+        <ExamsSection userId={profile.id} exams={exams} />
       </div>
     </div>
   )

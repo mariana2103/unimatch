@@ -43,7 +43,7 @@ export function Header({
             </div>
             <div className="hidden flex-col items-start leading-none sm:flex text-left">
               <span className="text-lg font-bold tracking-tight text-foreground">UniMatch</span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/80">Portugal</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/80">Simulador Universitário</span>
             </div>
           </button>
 
@@ -69,8 +69,8 @@ export function Header({
             </ul>
           </nav>
         </div>
-
         <div className="flex items-center gap-4">
+        {/* 
           <Button 
             variant="ghost" 
             size="sm" 
@@ -84,7 +84,7 @@ export function Header({
           >
             <Sparkles className={cn("h-4 w-4", isAISidebarOpen && "animate-pulse")} />
             <span className="hidden lg:inline">Conselheiro IA</span>
-          </Button>
+          </Button> */}
 
           <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
 

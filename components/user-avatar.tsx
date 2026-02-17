@@ -6,14 +6,15 @@ import { useUser } from "@/lib/user-context"
 interface UserAvatarProps {
   className?: string
 }
-
 export function UserAvatar({ className }: UserAvatarProps) {
   const { profile } = useUser()
 
+  // Versão ultra-segura para evitar o crash 'n.name'
   const initials = profile?.full_name
     ? profile.full_name
         .trim()
         .split(/\s+/)
+        .filter(Boolean) // Remove espaços vazios que causam o erro 'n'
         .map(n => n[0])
         .join('')
         .toUpperCase()
@@ -29,7 +30,7 @@ export function UserAvatar({ className }: UserAvatarProps) {
       <AvatarFallback 
         className="bg-navy text-primary-foreground font-bold text-[10px] flex items-center justify-center uppercase tracking-tighter"
       >
-        {initials}
+        {initials || 'U'}
       </AvatarFallback>
     </Avatar>
   )

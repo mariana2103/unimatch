@@ -7,27 +7,28 @@ import './globals.css'
 const _inter = Inter({ subsets: ['latin'] })
 const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
+
 export const metadata: Metadata = {
-  title: 'Candidatura ao Ensino Superior | Simulador DGES',
-  description: 'Plataforma de simulacao de candidatura ao ensino superior portugues. Calcula a tua media, explora cursos e recebe orientacao personalizada.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+  metadataBase: new URL("https://www.unimatch.pt"),
+  title: {
+    default: "Unimatch | Candidatura ao Ensino Superior em Portugal",
+    template: "%s | Unimatch"
   },
+  description: "Consulta médias de entrada, simula a tua nota de candidatura e encontra o curso certo para ti.",
+  keywords: ["ensino superior", "candidatura universidade", "médias entrada", "DGES", "nota candidatura"],
+  openGraph: {
+    type: "website",
+    locale: "pt_PT",
+    url: "https://www.unimatch.pt",
+    siteName: "Unimatch",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  }
 }
 
 export const viewport: Viewport = {

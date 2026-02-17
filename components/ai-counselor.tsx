@@ -29,7 +29,7 @@ export function AICounselor({ isOpen, onClose }: AICounselorProps) {
 
   const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input?.trim() || isLoading) return
 
     // Adiciona contexto na primeira mensagem
     if (isLoggedIn && messages.length === 0) {
@@ -118,7 +118,7 @@ export function AICounselor({ isOpen, onClose }: AICounselorProps) {
               disabled={isLoading}
               className="w-full rounded-full border bg-slate-50 py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
             />
-            <Button type="submit" size="icon" disabled={!input.trim() || isLoading}
+            <Button type="submit" size="icon" disabled={!(input || "").trim() || isLoading}
               className="absolute right-1.5 top-1.5 h-8 w-8 rounded-full bg-navy hover:bg-navy/90">
               <Send className="h-3.5 w-3.5" />
             </Button>

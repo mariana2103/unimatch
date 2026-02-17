@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { Header } from '@/components/header'
+import { ProfileSheet } from '@/components/profile-sheet'
 import { AICounselor } from '@/components/ai-counselor'
+import { cn } from '@/lib/utils'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('explorer')
@@ -36,6 +38,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   )
 }

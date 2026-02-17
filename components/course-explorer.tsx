@@ -7,7 +7,9 @@ import { CourseFilters, type Filters } from './course-filters'
 import { CourseDetailDialog } from './course-detail-dialog'
 import { ComparisonPanel } from './comparison-panel'
 import { useUser } from '@/lib/user-context'
-import { COURSES, calculateAdmissionGrade } from '@/lib/data'
+import { COURSES } from '@/lib/constants'
+import {calculateAdmissionGrade } from '@/lib/data'
+
 import type { Course } from '@/lib/types'
 
 export function CourseExplorer() {

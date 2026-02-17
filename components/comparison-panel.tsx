@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useUser } from '@/lib/user-context'
-import { COURSES } from '@/lib/data'
+import { COURSES } from '@/lib/constants'
 
 export function ComparisonPanel() {
   const { comparisonList, clearComparison, toggleComparison, profile } = useUser()

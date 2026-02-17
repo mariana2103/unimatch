@@ -1,7 +1,8 @@
--- 1. EXTENSÕES
+-- 1. EXTENSÕES (UUID + IA Vector)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS vector; -- Essencial para o AICounselor
 
--- 2. PERFIS (União Google + Email)
+-- 2. PERFIS
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   email TEXT UNIQUE,
@@ -9,57 +10,77 @@ CREATE TABLE profiles (
   avatar_url TEXT,
   username TEXT UNIQUE,
   distrito_residencia TEXT,
-  contingente_especial TEXT DEFAULT 'geral', -- Ex: 'madeira', 'acores', 'deficiente'
-  media_final_calculada DECIMAL(5,2) DEFAULT 0,
+  contingente_especial TEXT DEFAULT 'geral',
+  
+  -- Campos de Agrupamento
+  course_group TEXT CHECK (course_group IN ('CIENCIAS', 'ECONOMIA', 'HUMANIDADES', 'ARTES', 'PROFISSIONAL')),
+  
+  -- Média final fixa (usada para Profissional ou se o user quiser inserir manualmente)
+  media_fixa DECIMAL(5,2), 
+  
+  -- Média calculada automaticamente pelo sistema (Científico-Humanístico)
+  media_interna_calculada DECIMAL(5,2) DEFAULT 0,
+  
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. NOTAS DE CADEIRAS (Para gerar a média do secundário)
+-- 3. NOTAS DE CADEIRAS (Organizado para cálculo por CFD - Classificação Final de Disciplina)
 CREATE TABLE user_grades (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  subject_name TEXT NOT NULL, -- Ex: 'Matemática A'
-  year_level INTEGER CHECK (year_level IN (10, 11, 12)), -- O ano a que a nota se refere
+  subject_name TEXT NOT NULL, 
+  year_level INTEGER CHECK (year_level IN (10, 11, 12)), 
   grade INTEGER CHECK (grade BETWEEN 0 AND 20),
+  is_annual BOOLEAN DEFAULT false, -- Para disciplinas que só existem num ano (Ex: Psicologia B)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Isto impede que um utilizador tenha duas notas para o 10º ano da mesma disciplina
   UNIQUE(user_id, subject_name, year_level)
 );
 
-
--- 4. EXAMES NACIONAIS (Validade de 5 anos controlada no código)
+-- 4. EXAMES NACIONAIS (Escala 0-200 conforme a DGES)
 CREATE TABLE user_exams (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  exam_code TEXT NOT NULL, 
-  grade DECIMAL(5,2) NOT NULL, -- 0 a 200
-  exam_year INTEGER NOT NULL -- Importante para filtrar > (ano_atual - 5)
+  exam_code TEXT NOT NULL, -- IDs de 2 dígitos: '19', '02', '07', etc.
+  grade DECIMAL(5,2) NOT NULL CHECK (grade BETWEEN 0 AND 200),
+  exam_year INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. CURSOS (Inclui campos para Privadas e Públicas)
+-- 5. CURSOS (Evoluído para IA e Monetização)
 CREATE TABLE courses (
-  id TEXT PRIMARY KEY, 
+  id TEXT PRIMARY KEY, -- Código DGES
   nome TEXT NOT NULL,
-  instituicao TEXT NOT NULL,
+  instituicao_nome TEXT NOT NULL,
   distrito TEXT NOT NULL,
-  area TEXT NOT NULL,
+  area TEXT NOT NULL, -- Ex: 'Saúde', 'Engenharia'
   tipo TEXT CHECK (tipo IN ('publica', 'privada')),
   vagas INTEGER,
-  nota_ultimo_colocado DECIMAL(5,2),
-  peso_secundario DECIMAL(3,2), -- Ex: 0.60
-  peso_exames DECIMAL(3,2),     -- Ex: 0.40
-  link_oficial TEXT,            -- Link DGES ou site da Privada (Monetização)
-  is_promoted BOOLEAN DEFAULT false, -- Se a faculdade pagou para estar no topo
-  history JSONB                 -- Notas de anos anteriores
+  nota_ultimo_colocado DECIMAL(5,2), -- Escala 0-200
+  
+  -- Pesos das Faculdades
+  peso_secundario DECIMAL(3,2), -- Ex: 0.65
+  peso_exames DECIMAL(3,2),     -- Ex: 0.35
+  nota_minima_candidatura DECIMAL(5,2) DEFAULT 95.0,
+  nota_minima_p_ingresso DECIMAL(5,2) DEFAULT 95.0,
+
+  -- Campos de IA
+  descricao_ia TEXT, -- Texto para o embedding
+  embedding vector(1536), -- Vector similarity search
+  
+  link_oficial TEXT,
+  is_promoted BOOLEAN DEFAULT false,
+  history JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. REQUISITOS DE EXAMES POR CURSO (O encaixe do puzzle)
+-- 6. REQUISITOS DE EXAMES (Lógica de Conjuntos)
+-- Permite gerir cursos que aceitam várias combinações de exames
 CREATE TABLE course_requirements (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
-  exam_code TEXT NOT NULL,
-  weight DECIMAL(3,2) NOT NULL
+  exam_code TEXT NOT NULL, -- ID de 2 dígitos
+  conjunto_id INTEGER DEFAULT 1, -- Para lógica: (Exame A E Exame B) OU (Exame C)
+  weight DECIMAL(3,2) NOT NULL DEFAULT 0.50
 );
 
 -- 7. FAVORITOS
@@ -70,17 +91,17 @@ CREATE TABLE favorites (
   PRIMARY KEY (user_id, course_id)
 );
 
--- 8. CALENDÁRIO (Exames e Candidaturas)
+-- 8. CALENDÁRIO
 CREATE TABLE calendar_events (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   title TEXT NOT NULL,
-  event_type TEXT CHECK (event_type IN ('exame', 'candidatura', 'resultados')),
+  event_type TEXT CHECK (event_type IN ('exame', 'candidatura', 'resultados', 'evento_uni')),
   start_date DATE NOT NULL,
   end_date DATE,
   description TEXT
 );
 
--- 9. TRIGGER AUTOMÁTICO (Unir Auth -> Profile)
+-- 9. TRIGGER PARA NOVOS UTILIZADORES
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -95,20 +116,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE TRIGGER on_auth_user_created
+CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- 10. SEGURANÇA (RLS)
+-- 10. POLÍTICAS DE SEGURANÇA (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_exams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_requirements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users edit own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users manage own grades" ON user_grades FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users manage own exams" ON user_exams FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Courses public" ON courses FOR SELECT USING (true);
-CREATE POLICY "Favorites by user" ON favorites FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Courses and requirements are public" ON courses FOR SELECT USING (true);
+CREATE POLICY "Requirements are public" ON course_requirements FOR SELECT USING (true);
+CREATE POLICY "Users manage own favorites" ON favorites FOR ALL USING (auth.uid() = user_id);

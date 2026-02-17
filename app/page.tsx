@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Header } from '@/components/header'
-import { ProfileView } from '@/components/profile-view' // Importamos o novo View
+import { ProfileView } from '@/components/profile/profile-view' // Importamos o novo View
 import { AICounselor } from '@/components/ai-counselor'
 import { cn } from '@/lib/utils'
 
@@ -45,7 +45,7 @@ export default function Home() {
       <footer className="border-t border-border/40 bg-white py-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4">
           <p className="text-xs text-muted-foreground">
-            © 2025 UniMatch - Dados oficiais baseados na DGES.
+            © 2026 UniMatch - Dados oficiais baseados na DGES.
           </p>
           <div className="flex gap-4">
             <a href="https://www.dges.gov.pt" target="_blank" rel="noopener noreferrer"

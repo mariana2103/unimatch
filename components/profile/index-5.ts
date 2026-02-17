@@ -1,0 +1,6 @@
+export { ProfileView } from './profile-view'
+export { ProfileHeader } from './profile-header'
+export { ProfileSettings } from './profile-settings'
+export { GradesSection } from './grades-section'
+export { YearSection } from './year-section'
+export { ExamsSection } from './exams-section'

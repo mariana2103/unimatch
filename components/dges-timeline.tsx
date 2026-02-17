@@ -3,7 +3,7 @@
 import { CalendarDays, Clock, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { DGES_PHASES } from '@/lib/data'
+import { DGES_PHASES } from '@/lib/constants'
 
 function getStatus(start: string, end: string): 'upcoming' | 'active' | 'past' {
   const now = new Date()

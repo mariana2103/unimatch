@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 interface HeaderProps {
   activeTab: string
   onTabChange: (tab: string) => void
-  onOpenProfile: () => void // Esta é a função que abre o ProfileSheet
+  onOpenProfile: () => void
   isAISidebarOpen: boolean
   setIsAISidebarOpen: (open: boolean) => void
 }

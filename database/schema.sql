@@ -18,12 +18,15 @@ CREATE TABLE profiles (
 CREATE TABLE user_grades (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  subject_name TEXT NOT NULL, -- Ex: 'Matemática A', 'Português'
-  grade_10 INTEGER CHECK (grade_10 BETWEEN 0 AND 20),
-  grade_11 INTEGER CHECK (grade_11 BETWEEN 0 AND 20),
-  grade_12 INTEGER CHECK (grade_12 BETWEEN 0 AND 20),
-  is_exam_subject BOOLEAN DEFAULT false -- Se esta disciplina tem exame nacional
+  subject_name TEXT NOT NULL, -- Ex: 'Matemática A'
+  year_level INTEGER CHECK (year_level IN (10, 11, 12)), -- O ano a que a nota se refere
+  grade INTEGER CHECK (grade BETWEEN 0 AND 20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Isto impede que um utilizador tenha duas notas para o 10º ano da mesma disciplina
+  UNIQUE(user_id, subject_name, year_level)
 );
+
 
 -- 4. EXAMES NACIONAIS (Validade de 5 anos controlada no código)
 CREATE TABLE user_exams (
@@ -109,18 +112,3 @@ CREATE POLICY "Users manage own grades" ON user_grades FOR ALL USING (auth.uid()
 CREATE POLICY "Users manage own exams" ON user_exams FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Courses public" ON courses FOR SELECT USING (true);
 CREATE POLICY "Favorites by user" ON favorites FOR ALL USING (auth.uid() = user_id);
-
--- Remover a versão simplificada anterior se existir
-DROP TABLE IF EXISTS user_grades;
-
-CREATE TABLE user_grades (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  subject_name TEXT NOT NULL, -- Ex: 'Matemática A'
-  year_level INTEGER CHECK (year_level IN (10, 11, 12)), -- O ano a que a nota se refere
-  grade INTEGER CHECK (grade BETWEEN 0 AND 20),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Isto impede que um utilizador tenha duas notas para o 10º ano da mesma disciplina
-  UNIQUE(user_id, subject_name, year_level)
-);

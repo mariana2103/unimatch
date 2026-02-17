@@ -146,7 +146,7 @@ export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-primary-foreground">
               {profile.name.charAt(0).toUpperCase()}
             </div>
-            {profile.name}
+            {profile.full_name}
           </SheetTitle>
           <SheetDescription>Gere os teus dados para simulacao de candidatura.</SheetDescription>
         </SheetHeader>

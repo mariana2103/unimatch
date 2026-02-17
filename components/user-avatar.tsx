@@ -10,7 +10,15 @@ export function UserAvatar({ className }: UserAvatarProps) {
   const { profile } = useUser()
 
   // Versão ultra-segura para evitar o crash 'n.name'
-  const initials = 'U';
+  const initials = profile?.full_name 
+  ? profile.full_name
+      .split(' ')
+      .filter(part => part.length > 0) // Garante que não há partes vazias
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  : 'U';
 
   return (
     <Avatar className={className}>

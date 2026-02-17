@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { LogIn, Github } from 'lucide-react'
+import { LogIn } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function AuthDialog() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -15,6 +16,7 @@ export function AuthDialog() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('') 
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [open, setOpen] = useState(false)
   
   const router = useRouter()
@@ -23,47 +25,69 @@ export function AuthDialog() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
-    if (mode === 'signup') {
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
+    try {
+      if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`
           }
-        }
-      })
-      if (error) alert(error.message)
-      else {
+        })
+        
+        if (error) throw error
+        
         alert('Verifica o teu email para confirmar o registo!')
         setOpen(false)
-      }
-    } else {
-      // Login
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) alert(error.message)
-      else {
+        setEmail('')
+        setPassword('')
+        setFullName('')
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            setError('Email ou password incorretos')
+          } else {
+            setError(error.message)
+          }
+          return
+        }
+        
         setOpen(false)
+        setEmail('')
+        setPassword('')
         router.refresh()
       }
+    } catch (err: any) {
+      setError(err.message || 'Erro desconhecido')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { 
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
+    try {
+      setError('')
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { 
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
-      }
-    })
-    if (error) alert(error.message)
+      })
+      if (error) throw error
+    } catch (err: any) {
+      setError(err.message || 'Erro ao fazer login com Google')
+    }
   }
 
   return (
@@ -85,6 +109,12 @@ export function AuthDialog() {
         </DialogHeader>
         
         <div className="flex flex-col gap-4 py-2">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <Button variant="outline" onClick={handleGoogleLogin} className="w-full gap-2">
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -133,6 +163,7 @@ export function AuthDialog() {
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 required 
+                minLength={6}
               />
             </div>
 
@@ -144,7 +175,10 @@ export function AuthDialog() {
           <div className="text-center text-sm">
             <button 
               type="button"
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login')
+                setError('')
+              }}
               className="text-muted-foreground hover:text-primary underline underline-offset-4"
             >
               {mode === 'login' ? "Não tens conta? Regista-te" : "Já tens conta? Faz login"}

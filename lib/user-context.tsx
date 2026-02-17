@@ -29,123 +29,168 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [grades, setGrades] = useState<UserGrade[]>([])
   const [exams, setExams] = useState<UserExam[]>([])
   const [comparisonList, setComparisonList] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
   
   const supabase = createClient()
   const router = useRouter()
 
+  // Função para limpar tudo
+  const clearUserData = useCallback(() => {
+    setIsLoggedIn(false)
+    setProfile(null)
+    setGrades([])
+    setExams([])
+    setComparisonList([])
+  }, [])
+
+  // Fetch dos dados do utilizador
   const fetchAllUserData = useCallback(async (userId: string) => {
-    const [p, g, e] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-      supabase.from('user_grades').select('*').eq('user_id', userId),
-      supabase.from('user_exams').select('*').eq('user_id', userId)
-    ])
+    try {
+      const [profileRes, gradesRes, examsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('user_grades').select('*').eq('user_id', userId),
+        supabase.from('user_exams').select('*').eq('user_id', userId)
+      ])
 
-    // Se o perfil não existir na DB mas a sessão existe, faz logout
-    if (!p.data) {
-      console.warn('Perfil não encontrado - a fazer logout automático')
-      await supabase.auth.signOut()
-      setIsLoggedIn(false)
-      setProfile(null)
-      setGrades([])
-      setExams([])
-      setComparisonList([])
-      return
-    }
-
-    setProfile(p.data)
-    if (g.data) setGrades(g.data || [])
-    if (e.data) setExams(e.data || [])
-  }, [supabase])
-
-  // Limpa sessões antigas de contas apagadas (pode remover depois de alguns dias)
-  useEffect(() => {
-    const clearOldSessions = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .maybeSingle()
-        
-        if (!profile) {
-          console.log('Sessão inválida detetada - a limpar')
-          await supabase.auth.signOut()
-          window.location.reload()
+      if (profileRes.error) {
+        console.error('Erro ao carregar perfil:', profileRes.error)
+        // Se o perfil não existir, tenta criá-lo
+        if (profileRes.error.code === 'PGRST116') {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { error: insertError } = await supabase.from('profiles').insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'Utilizador'
+            })
+            if (!insertError) {
+              // Tenta novamente depois de criar
+              const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', userId).single()
+              if (newProfile) setProfile(newProfile)
+            }
+          }
         }
+        return
+      }
+
+      setProfile(profileRes.data)
+      setGrades(gradesRes.data || [])
+      setExams(examsRes.data || [])
+      setIsLoggedIn(true)
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error)
+      clearUserData()
+    }
+  }, [supabase, clearUserData])
+
+  // Verifica sessão inicial
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          await fetchAllUserData(session.user.id)
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar sessão:', error)
+      } finally {
+        setLoading(false)
       }
     }
-    clearOldSessions()
-  }, [supabase])
+    initSession()
+  }, [supabase, fetchAllUserData])
 
+  // Listener de mudanças de auth
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        setIsLoggedIn(true)
+      console.log('Auth event:', event, session?.user?.id)
+      
+      if (event === 'SIGNED_IN' && session?.user) {
         await fetchAllUserData(session.user.id)
-      } else {
-        setIsLoggedIn(false)
-        setProfile(null)
-        setGrades([])
-        setExams([])
-        setComparisonList([])
+      } else if (event === 'SIGNED_OUT') {
+        clearUserData()
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        await fetchAllUserData(session.user.id)
       }
     })
     return () => subscription.unsubscribe()
-  }, [supabase, fetchAllUserData])
+  }, [supabase, fetchAllUserData, clearUserData])
 
   const logout = useCallback(async () => {
     try {
-      await supabase.auth.signOut()
-      // Limpa tudo imediatamente
-      setIsLoggedIn(false)
-      setProfile(null)
-      setGrades([])
-      setExams([])
-      setComparisonList([])
-      // Redireciona para a home
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      clearUserData()
       router.push('/')
       router.refresh()
     } catch (error) {
       console.error('Erro no logout:', error)
+      alert('Erro ao fazer logout. Tenta novamente.')
     }
-  }, [supabase, router])
+  }, [supabase, router, clearUserData])
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!profile) return
-    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
-    if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
-  }
+    try {
+      const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
+      if (error) throw error
+      setProfile(prev => prev ? { ...prev, ...updates } : null)
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error)
+      alert('Erro ao atualizar perfil')
+    }
+  }, [profile, supabase])
 
-  const addGrade = async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
+  const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
-    const { error } = await supabase.from('user_grades').upsert({
-      user_id: profile.id,
-      subject_name,
-      year_level,
-      grade
-    }, {
-      onConflict: 'user_id,subject_name,year_level'
-    })
-    if (!error) await fetchAllUserData(profile.id)
-  }
+    try {
+      const { error } = await supabase.from('user_grades').upsert({
+        user_id: profile.id,
+        subject_name,
+        year_level,
+        grade
+      }, {
+        onConflict: 'user_id,subject_name,year_level'
+      })
+      if (error) throw error
+      await fetchAllUserData(profile.id)
+    } catch (error) {
+      console.error('Erro ao adicionar nota:', error)
+    }
+  }, [profile, supabase, fetchAllUserData])
 
-  const removeGrade = async (gradeId: string) => {
-    const { error } = await supabase.from('user_grades').delete().eq('id', gradeId)
-    if (!error && profile) await fetchAllUserData(profile.id)
-  }
-
-  const addExam = async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
+  const removeGrade = useCallback(async (gradeId: string) => {
     if (!profile) return
-    const { error } = await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
-    if (!error) await fetchAllUserData(profile.id)
-  }
+    try {
+      const { error } = await supabase.from('user_grades').delete().eq('id', gradeId)
+      if (error) throw error
+      await fetchAllUserData(profile.id)
+    } catch (error) {
+      console.error('Erro ao remover nota:', error)
+    }
+  }, [profile, supabase, fetchAllUserData])
 
-  const removeExam = async (examId: string) => {
-    const { error } = await supabase.from('user_exams').delete().eq('id', examId)
-    if (!error && profile) await fetchAllUserData(profile.id)
-  }
+  const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
+    if (!profile) return
+    try {
+      const { error } = await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
+      if (error) throw error
+      await fetchAllUserData(profile.id)
+    } catch (error) {
+      console.error('Erro ao adicionar exame:', error)
+    }
+  }, [profile, supabase, fetchAllUserData])
+
+  const removeExam = useCallback(async (examId: string) => {
+    if (!profile) return
+    try {
+      const { error } = await supabase.from('user_exams').delete().eq('id', examId)
+      if (error) throw error
+      await fetchAllUserData(profile.id)
+    } catch (error) {
+      console.error('Erro ao remover exame:', error)
+    }
+  }, [profile, supabase, fetchAllUserData])
 
   const toggleComparison = useCallback((courseId: string) => {
     setComparisonList(prev => {
@@ -156,10 +201,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(() => ({
-    isLoggedIn, profile, grades, exams, comparisonList,
-    logout, updateProfile, addGrade, removeGrade, addExam, removeExam,
-    toggleComparison, clearComparison: () => setComparisonList([])
-  }), [isLoggedIn, profile, grades, exams, comparisonList, logout, toggleComparison])
+    isLoggedIn,
+    profile,
+    grades,
+    exams,
+    comparisonList,
+    logout,
+    updateProfile,
+    addGrade,
+    removeGrade,
+    addExam,
+    removeExam,
+    toggleComparison,
+    clearComparison: () => setComparisonList([])
+  }), [isLoggedIn, profile, grades, exams, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleComparison])
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">A carregar...</div>
+  }
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 }

@@ -34,7 +34,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const router = useRouter()
 
-  // Função para limpar tudo
   const clearUserData = useCallback(() => {
     setIsLoggedIn(false)
     setProfile(null)
@@ -43,7 +42,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setComparisonList([])
   }, [])
 
-  // Fetch dos dados do utilizador
   const fetchAllUserData = useCallback(async (userId: string) => {
     try {
       const [profileRes, gradesRes, examsRes] = await Promise.all([
@@ -54,6 +52,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (profileRes.error) {
         console.error('Erro ao carregar perfil:', profileRes.error)
+        
         // Se o perfil não existir, tenta criá-lo
         if (profileRes.error.code === 'PGRST116') {
           const { data: { user } } = await supabase.auth.getUser()
@@ -63,10 +62,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
               email: user.email,
               full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'Utilizador'
             })
+            
             if (!insertError) {
-              // Tenta novamente depois de criar
               const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', userId).single()
-              if (newProfile) setProfile(newProfile)
+              if (newProfile) {
+                setProfile(newProfile)
+                setIsLoggedIn(true)
+              }
             }
           }
         }
@@ -83,36 +85,49 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase, clearUserData])
 
-  // Verifica sessão inicial
+  // Verifica sessão inicial - SÓ CORRE UMA VEZ
   useEffect(() => {
+    let mounted = true
+    
     const initSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          await fetchAllUserData(session.user.id)
+        
+        if (mounted) {
+          if (session?.user) {
+            await fetchAllUserData(session.user.id)
+          }
+          setLoading(false) // ← SEMPRE termina o loading
         }
       } catch (error) {
         console.error('Erro ao inicializar sessão:', error)
-      } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false) // ← SEMPRE termina o loading mesmo com erro
+        }
       }
     }
+    
     initSession()
-  }, [supabase, fetchAllUserData])
+    
+    return () => {
+      mounted = false
+    }
+  }, []) // ← Array vazio = só corre uma vez
 
   // Listener de mudanças de auth
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session?.user?.id)
+      console.log('Auth event:', event)
       
       if (event === 'SIGNED_IN' && session?.user) {
         await fetchAllUserData(session.user.id)
       } else if (event === 'SIGNED_OUT') {
         clearUserData()
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        await fetchAllUserData(session.user.id)
+        // Não precisa fazer nada, o token foi renovado automaticamente
       }
     })
+    
     return () => subscription.unsubscribe()
   }, [supabase, fetchAllUserData, clearUserData])
 
@@ -216,8 +231,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     clearComparison: () => setComparisonList([])
   }), [isLoggedIn, profile, grades, exams, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleComparison])
 
+  // Mostra loading só no primeiro carregamento
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">A carregar...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-2"></div>
+          <p className="text-sm text-muted-foreground">A carregar...</p>
+        </div>
+      </div>
+    )
   }
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>

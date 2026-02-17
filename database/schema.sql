@@ -135,3 +135,52 @@ CREATE POLICY "Users manage own exams" ON user_exams FOR ALL USING (auth.uid() =
 CREATE POLICY "Courses and requirements are public" ON courses FOR SELECT USING (true);
 CREATE POLICY "Requirements are public" ON course_requirements FOR SELECT USING (true);
 CREATE POLICY "Users manage own favorites" ON favorites FOR ALL USING (auth.uid() = user_id);
+
+
+
+-- Cria a função que vai inserir o perfil
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, created_at)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    NOW()
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Remove o trigger antigo se existir
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Cria o trigger
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+
+
+-- Verifica/adiciona colunas em falta
+ALTER TABLE public.profiles 
+  ADD COLUMN IF NOT EXISTS email TEXT,
+  ADD COLUMN IF NOT EXISTS full_name TEXT,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+
+-- Remove políticas antigas
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+
+-- Permite que qualquer utilizador autenticado veja o seu próprio perfil
+CREATE POLICY "Users can view own profile"
+  ON profiles FOR SELECT
+  USING (auth.uid() = id);
+
+-- Permite que qualquer utilizador autenticado atualize o seu próprio perfil
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = id);

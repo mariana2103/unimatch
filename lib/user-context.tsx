@@ -13,7 +13,6 @@ interface UserContextType {
   comparisonList: string[]
   logout: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
-  // Nomes simplificados para o TypeScript e para a UI
   addGrade: (subject_name: string, grade: number, year_level: 10 | 11 | 12) => Promise<void>
   removeGrade: (gradeId: string) => Promise<void>
   addExam: (exam: Omit<UserExam, 'id' | 'user_id'>) => Promise<void>
@@ -41,9 +40,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
       supabase.from('user_exams').select('*').eq('user_id', userId)
     ])
 
-    if (p.data) setProfile(p.data)
+    // Se o perfil não existir na DB mas a sessão existe, faz logout
+    if (!p.data) {
+      console.warn('Perfil não encontrado - a fazer logout automático')
+      await supabase.auth.signOut()
+      setIsLoggedIn(false)
+      setProfile(null)
+      setGrades([])
+      setExams([])
+      setComparisonList([])
+      return
+    }
+
+    setProfile(p.data)
     if (g.data) setGrades(g.data || [])
     if (e.data) setExams(e.data || [])
+  }, [supabase])
+
+  // Limpa sessões antigas de contas apagadas (pode remover depois de alguns dias)
+  useEffect(() => {
+    const clearOldSessions = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .maybeSingle()
+        
+        if (!profile) {
+          console.log('Sessão inválida detetada - a limpar')
+          await supabase.auth.signOut()
+          window.location.reload()
+        }
+      }
+    }
+    clearOldSessions()
   }, [supabase])
 
   useEffect(() => {
@@ -63,14 +96,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [supabase, fetchAllUserData])
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut()
-    setIsLoggedIn(false)
-    setProfile(null)
-    setGrades([])
-    setExams([])
-    setComparisonList([])
-    router.push('/')
-    router.refresh()
+    try {
+      await supabase.auth.signOut()
+      // Limpa tudo imediatamente
+      setIsLoggedIn(false)
+      setProfile(null)
+      setGrades([])
+      setExams([])
+      setComparisonList([])
+      // Redireciona para a home
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      console.error('Erro no logout:', error)
+    }
   }, [supabase, router])
 
   const updateProfile = async (updates: Partial<Profile>) => {
@@ -79,7 +118,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
   }
 
-  // Renomeado para addGrade para facilitar o uso na Sheet
   const addGrade = async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
     const { error } = await supabase.from('user_grades').upsert({

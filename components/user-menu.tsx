@@ -18,6 +18,7 @@ interface UserMenuProps {
 
 export function UserMenu({ onOpenProfile }: UserMenuProps) {
   const { profile, logout } = useUser()
+  const firstName = profile?.full_name?.trim().split(' ')[0] || 'Utilizador'
 
   return (
     <DropdownMenu>
@@ -25,7 +26,7 @@ export function UserMenu({ onOpenProfile }: UserMenuProps) {
         <button className="flex items-center gap-2 rounded-full border border-border/60 bg-background pl-1 pr-3 py-1 text-sm font-medium transition-colors hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <UserAvatar className="h-6 w-6" />
           <span className="hidden max-w-[100px] truncate sm:inline">
-            {profile?.full_name}
+            {firstName}
           </span>
         </button>
       </DropdownMenuTrigger>

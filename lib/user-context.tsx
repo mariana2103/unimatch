@@ -13,8 +13,9 @@ interface UserContextType {
   comparisonList: string[]
   logout: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
-  updateSubjectGrade: (subject_name: string, year_level: 10 | 11 | 12, grade: number) => Promise<void>
-  removeSubjectGrade: (gradeId: string) => Promise<void>
+  // Nomes simplificados para o TypeScript e para a UI
+  addGrade: (subject_name: string, grade: number, year_level: 10 | 11 | 12) => Promise<void>
+  removeGrade: (gradeId: string) => Promise<void>
   addExam: (exam: Omit<UserExam, 'id' | 'user_id'>) => Promise<void>
   removeExam: (examId: string) => Promise<void>
   toggleComparison: (courseId: string) => void
@@ -33,10 +34,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const router = useRouter()
 
-  // Função centralizada para carregar todos os dados do utilizador
   const fetchAllUserData = useCallback(async (userId: string) => {
     const [p, g, e] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId).single(),
+      supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
       supabase.from('user_grades').select('*').eq('user_id', userId),
       supabase.from('user_exams').select('*').eq('user_id', userId)
     ])
@@ -46,7 +46,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (e.data) setExams(e.data || [])
   }, [supabase])
 
-  // Escuta mudanças de autenticação (Login/Logout)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
@@ -60,7 +59,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setComparisonList([])
       }
     })
-
     return () => subscription.unsubscribe()
   }, [supabase, fetchAllUserData])
 
@@ -75,10 +73,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
   }
 
-  // Lógica "Cadeira por Cadeira" usando Upsert
-  const updateSubjectGrade = async (subject_name: string, year_level: 10 | 11 | 12, grade: number) => {
+  // Renomeado para addGrade para facilitar o uso na Sheet
+  const addGrade = async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
-
     const { error } = await supabase.from('user_grades').upsert({
       user_id: profile.id,
       subject_name,
@@ -87,21 +84,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }, {
       onConflict: 'user_id,subject_name,year_level'
     })
-
     if (!error) await fetchAllUserData(profile.id)
   }
 
-  const removeSubjectGrade = async (gradeId: string) => {
+  const removeGrade = async (gradeId: string) => {
     const { error } = await supabase.from('user_grades').delete().eq('id', gradeId)
     if (!error && profile) await fetchAllUserData(profile.id)
   }
 
   const addExam = async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
     if (!profile) return
-    const { error } = await supabase.from('user_exams').insert({
-      ...exam,
-      user_id: profile.id
-    })
+    const { error } = await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
     if (!error) await fetchAllUserData(profile.id)
   }
 
@@ -119,19 +112,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(() => ({
-    isLoggedIn,
-    profile,
-    grades,
-    exams,
-    comparisonList,
-    logout,
-    updateProfile,
-    updateSubjectGrade,
-    removeSubjectGrade,
-    addExam,
-    removeExam,
-    toggleComparison,
-    clearComparison: () => setComparisonList([])
+    isLoggedIn, profile, grades, exams, comparisonList,
+    logout, updateProfile, addGrade, removeGrade, addExam, removeExam,
+    toggleComparison, clearComparison: () => setComparisonList([])
   }), [isLoggedIn, profile, grades, exams, comparisonList, logout, toggleComparison])
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>

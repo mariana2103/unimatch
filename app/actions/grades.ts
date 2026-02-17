@@ -1,29 +1,35 @@
 'use server'
-import { createServerSupabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function saveSubjectGrade(formData: any) {
-  const supabase = createServerSupabase()
+export async function saveYearlyGrade(formData: { 
+  userId: string, 
+  subject: string, 
+  year: number, 
+  grade: number 
+}) {
+  const supabase = createClient()
   
-  const { data, error } = await supabase
+  const { data, error } = await (await supabase)
     .from('user_grades')
     .upsert({
       user_id: formData.userId,
       subject_name: formData.subject,
-      grade_10: formData.g10,
-      grade_11: formData.g11,
-      grade_12: formData.g12,
+      year_level: formData.year, // 10, 11 ou 12
+      grade: formData.grade,
+    }, {
+      onConflict: 'user_id, subject_name, year_level'
     })
 
   if (error) throw new Error(error.message)
   
-  revalidatePath('/perfil') // Atualiza a página automaticamente
-  return data
+  revalidatePath('/dashboard/notas')
+  return { success: true }
 }
 
 export async function getFavorites(userId: string) {
-  const supabase = createServerSupabase()
-  const { data, error } = await supabase
+  const supabase =createClient()
+  const { data, error } = await (await supabase)
     .from('favorites')
     .select('*, courses(*)')
     .eq('user_id', userId)

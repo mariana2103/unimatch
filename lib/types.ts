@@ -1,55 +1,66 @@
-export interface SubjectGrade {
-  subject: string
+export interface Profile {
+  id: string
+  email: string | null
+  full_name: string | null
+  avatar_url: string | null
+  username: string | null
+  distrito_residencia: string | null
+  contingente_especial: string
+  media_final_calculada: number
+  updated_at: string
+}
+
+export interface UserGrade {
+  id: string
+  user_id: string
+  subject_name: string
+  year_level: 10 | 11 | 12
   grade: number
+  created_at: string
 }
 
-export interface YearGrades {
-  ano10: SubjectGrade[]
-  ano11: SubjectGrade[]
-  ano12: SubjectGrade[]
-}
-
-export interface ExamGrade {
-  subjectCode: string
-  subjectName: string
+export interface UserExam {
+  id: string
+  user_id: string
+  exam_code: string
   grade: number
-}
-
-export interface UserProfile {
-  name: string
-  yearGrades: YearGrades
-  mediaSecundario: number
-  exams: ExamGrade[]
-  district: string
-  contingentes: string[]
+  exam_year: number
 }
 
 export interface Course {
   id: string
-  name: string
-  university: string
-  district: string
+  nome: string
+  instituicao: string
+  distrito: string
   area: string
   tipo: 'publica' | 'privada'
-  provasIngresso: { code: string; name: string; weight: number }[]
-  pesoSecundario: number
-  pesoExame: number
-  notaMinima: number
-  notaUltimoColocado: number
-  vagas: number
-  historico: { year: number; nota: number }[]
-  contingentes?: Record<string, number>
+  vagas: number | null
+  nota_ultimo_colocado: number | null
+  peso_secundario: number | null
+  peso_exames: number | null
+  link_oficial: string | null
+  is_promoted: boolean
+  history: any 
 }
 
-export interface ComparisonPair {
-  courseA: Course | null
-  courseB: Course | null
+export interface CourseRequirement {
+  id: string
+  course_id: string
+  exam_code: string
+  weight: number
 }
 
-export interface DGESPhase {
-  phase: string
+export interface Favorite {
+  user_id: string
+  course_id: string
+  created_at: string
+}
+
+export interface CalendarEvent {
+  id: string
   title: string
-  startDate: string
-  endDate: string
-  description: string
+  event_type: 'exame' | 'candidatura' | 'resultados'
+  start_date: string
+  end_date: string | null
+  description: string | null
 }

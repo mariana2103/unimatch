@@ -26,7 +26,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Crucial para atualizar a sessão
   await supabase.auth.getUser()
+
   return response
 }
 

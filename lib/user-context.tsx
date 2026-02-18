@@ -34,178 +34,163 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const router = useRouter()
 
-  const clearUserData = useCallback(() => {
-    setIsLoggedIn(false)
-    setProfile(null)
-    setGrades([])
-    setExams([])
-    setComparisonList([])
-  }, [])
-
-  const fetchAllUserData = useCallback(async (userId: string) => {
-    try {
-      const [profileRes, gradesRes, examsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase.from('user_grades').select('*').eq('user_id', userId),
-        supabase.from('user_exams').select('*').eq('user_id', userId)
-      ])
-
-      if (profileRes.error) {
-        console.error('Erro ao carregar perfil:', profileRes.error)
-        
-        // Se o perfil não existir, tenta criá-lo
-        if (profileRes.error.code === 'PGRST116') {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const { error: insertError } = await supabase.from('profiles').insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'Utilizador'
-            })
-            
-            if (!insertError) {
-              const { data: newProfile } = await supabase.from('profiles').select('*').eq('id', userId).single()
-              if (newProfile) {
-                setProfile(newProfile)
-                setIsLoggedIn(true)
-              }
-            }
-          }
-        }
-        return
-      }
-
-      setProfile(profileRes.data)
-      setGrades(gradesRes.data || [])
-      setExams(examsRes.data || [])
-      setIsLoggedIn(true)
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error)
-      clearUserData()
-    }
-  }, [supabase, clearUserData])
-
-  // Verifica sessão inicial - SÓ CORRE UMA VEZ
+  // Inicialização - corre UMA VEZ
   useEffect(() => {
-    let mounted = true
-    
-    const initSession = async () => {
+    let cancelled = false
+
+    const init = async () => {
       try {
+        // 1. Pega a sessão
         const { data: { session } } = await supabase.auth.getSession()
         
-        if (mounted) {
-          if (session?.user) {
-            await fetchAllUserData(session.user.id)
-          }
-          setLoading(false) // ← SEMPRE termina o loading
+        if (cancelled) return
+
+        // 2. Se não há sessão, termina
+        if (!session?.user) {
+          setLoading(false)
+          return
         }
-      } catch (error) {
-        console.error('Erro ao inicializar sessão:', error)
-        if (mounted) {
-          setLoading(false) // ← SEMPRE termina o loading mesmo com erro
+
+        // 3. Tenta buscar o perfil
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+
+        if (cancelled) return
+
+        // 4. Se não existe perfil, cria um
+        if (error?.code === 'PGRST116') {
+          const { error: insertError } = await supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'Utilizador'
+          })
+
+          if (!insertError) {
+            // Busca novamente
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            
+            if (newProfile && !cancelled) {
+              setProfile(newProfile)
+              setIsLoggedIn(true)
+            }
+          }
+        } else if (profileData && !cancelled) {
+          setProfile(profileData)
+          setIsLoggedIn(true)
+
+          // 5. Busca grades e exams
+          const [gradesRes, examsRes] = await Promise.all([
+            supabase.from('user_grades').select('*').eq('user_id', session.user.id),
+            supabase.from('user_exams').select('*').eq('user_id', session.user.id)
+          ])
+
+          if (!cancelled) {
+            setGrades(gradesRes.data || [])
+            setExams(examsRes.data || [])
+          }
+        }
+      } catch (err) {
+        console.error('Erro na inicialização:', err)
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
         }
       }
     }
-    
-    initSession()
-    
-    return () => {
-      mounted = false
-    }
-  }, []) // ← Array vazio = só corre uma vez
 
-  // Listener de mudanças de auth
-  useEffect(() => {
+    init()
+
+    // Auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event)
-      
+
       if (event === 'SIGNED_IN' && session?.user) {
-        await fetchAllUserData(session.user.id)
+        // Recarrega a página para reinicializar tudo
+        window.location.reload()
       } else if (event === 'SIGNED_OUT') {
-        clearUserData()
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Não precisa fazer nada, o token foi renovado automaticamente
+        setIsLoggedIn(false)
+        setProfile(null)
+        setGrades([])
+        setExams([])
+        setComparisonList([])
       }
     })
-    
-    return () => subscription.unsubscribe()
-  }, [supabase, fetchAllUserData, clearUserData])
+
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
+  }, []) // Array vazio = corre UMA VEZ
 
   const logout = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      clearUserData()
+      await supabase.auth.signOut()
+      setIsLoggedIn(false)
+      setProfile(null)
+      setGrades([])
+      setExams([])
+      setComparisonList([])
       router.push('/')
       router.refresh()
     } catch (error) {
       console.error('Erro no logout:', error)
-      alert('Erro ao fazer logout. Tenta novamente.')
     }
-  }, [supabase, router, clearUserData])
+  }, [supabase, router])
 
   const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!profile) return
-    try {
-      const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
-      if (error) throw error
-      setProfile(prev => prev ? { ...prev, ...updates } : null)
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error)
-      alert('Erro ao atualizar perfil')
-    }
+    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
+    if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
   }, [profile, supabase])
 
   const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
-    try {
-      const { error } = await supabase.from('user_grades').upsert({
-        user_id: profile.id,
-        subject_name,
-        year_level,
-        grade
-      }, {
-        onConflict: 'user_id,subject_name,year_level'
-      })
-      if (error) throw error
-      await fetchAllUserData(profile.id)
-    } catch (error) {
-      console.error('Erro ao adicionar nota:', error)
+    const { error } = await supabase.from('user_grades').upsert({
+      user_id: profile.id,
+      subject_name,
+      year_level,
+      grade
+    }, { onConflict: 'user_id,subject_name,year_level' })
+    
+    if (!error) {
+      const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
+      setGrades(data || [])
     }
-  }, [profile, supabase, fetchAllUserData])
+  }, [profile, supabase])
 
   const removeGrade = useCallback(async (gradeId: string) => {
     if (!profile) return
-    try {
-      const { error } = await supabase.from('user_grades').delete().eq('id', gradeId)
-      if (error) throw error
-      await fetchAllUserData(profile.id)
-    } catch (error) {
-      console.error('Erro ao remover nota:', error)
+    const { error } = await supabase.from('user_grades').delete().eq('id', gradeId)
+    if (!error) {
+      const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
+      setGrades(data || [])
     }
-  }, [profile, supabase, fetchAllUserData])
+  }, [profile, supabase])
 
   const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
     if (!profile) return
-    try {
-      const { error } = await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
-      if (error) throw error
-      await fetchAllUserData(profile.id)
-    } catch (error) {
-      console.error('Erro ao adicionar exame:', error)
+    const { error } = await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
+    if (!error) {
+      const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
+      setExams(data || [])
     }
-  }, [profile, supabase, fetchAllUserData])
+  }, [profile, supabase])
 
   const removeExam = useCallback(async (examId: string) => {
     if (!profile) return
-    try {
-      const { error } = await supabase.from('user_exams').delete().eq('id', examId)
-      if (error) throw error
-      await fetchAllUserData(profile.id)
-    } catch (error) {
-      console.error('Erro ao remover exame:', error)
+    const { error } = await supabase.from('user_exams').delete().eq('id', examId)
+    if (!error) {
+      const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
+      setExams(data || [])
     }
-  }, [profile, supabase, fetchAllUserData])
+  }, [profile, supabase])
 
   const toggleComparison = useCallback((courseId: string) => {
     setComparisonList(prev => {
@@ -231,14 +216,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     clearComparison: () => setComparisonList([])
   }), [isLoggedIn, profile, grades, exams, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleComparison])
 
-  // Mostra loading só no primeiro carregamento
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto mb-2"></div>
-          <p className="text-sm text-muted-foreground">A carregar...</p>
-        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy"></div>
       </div>
     )
   }

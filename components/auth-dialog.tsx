@@ -1,191 +1,213 @@
 'use client'
 
-import { useState } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { LogIn } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import type { Profile, UserGrade, UserExam } from './types'
 
-export function AuthDialog() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('') 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [open, setOpen] = useState(false)
+interface UserContextType {
+  isLoggedIn: boolean
+  profile: Profile | null
+  grades: UserGrade[]
+  exams: UserExam[]
+  comparisonList: string[]
+  logout: () => Promise<void>
+  updateProfile: (updates: Partial<Profile>) => Promise<void>
+  addGrade: (subject_name: string, grade: number, year_level: 10 | 11 | 12) => Promise<void>
+  removeGrade: (gradeId: string) => Promise<void>
+  addExam: (exam: Omit<UserExam, 'id' | 'user_id'>) => Promise<void>
+  removeExam: (examId: string) => Promise<void>
+  toggleComparison: (courseId: string) => void
+  clearComparison: () => void
+}
+
+const UserContext = createContext<UserContextType | undefined>(undefined)
+
+export function UserProvider({ children }: { children: ReactNode }) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [grades, setGrades] = useState<UserGrade[]>([])
+  const [exams, setExams] = useState<UserExam[]>([])
+  const [comparisonList, setComparisonList] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
   
-  const router = useRouter()
   const supabase = createClient()
+  const router = useRouter()
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-            },
-            emailRedirectTo: `${window.location.origin}/auth/callback`
-          }
-        })
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
         
-        if (error) throw error
-        
-        alert('Verifica o teu email para confirmar o registo!')
-        setOpen(false)
-        setEmail('')
-        setPassword('')
-        setFullName('')
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setError('Email ou password incorretos')
-          } else {
-            setError(error.message)
-          }
+        if (!session?.user) {
+          console.log('Sem sessão')
+          setLoading(false)
           return
         }
-        
-        setOpen(false)
-        setEmail('')
-        setPassword('')
-        router.refresh()
-      }
-    } catch (err: any) {
-      setError(err.message || 'Erro desconhecido')
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  const handleGoogleLogin = async () => {
-    try {
-      setError('')
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { 
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
+        console.log('Sessão encontrada:', session.user.id)
+
+        // Espera um pouco para o trigger criar o perfil (Google OAuth)
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle()
+
+        console.log('Perfil:', profileData, 'Erro:', profileError)
+
+        if (!profileData) {
+          console.log('Criando perfil manualmente...')
+          const { error: insertError } = await supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'Utilizador'
+          })
+
+          if (insertError) {
+            console.error('Erro ao criar perfil:', insertError)
+            setLoading(false)
+            return
           }
+
+          // Busca novamente
+          const { data: newProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+
+          if (newProfile) {
+            setProfile(newProfile)
+            setIsLoggedIn(true)
+          }
+        } else {
+          setProfile(profileData)
+          setIsLoggedIn(true)
+
+          // Busca grades e exams em paralelo
+          const [gradesRes, examsRes] = await Promise.all([
+            supabase.from('user_grades').select('*').eq('user_id', session.user.id),
+            supabase.from('user_exams').select('*').eq('user_id', session.user.id)
+          ])
+
+          setGrades(gradesRes.data || [])
+          setExams(examsRes.data || [])
         }
-      })
-      if (error) throw error
-    } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login com Google')
+      } catch (err) {
+        console.error('Erro na inicialização:', err)
+      } finally {
+        setLoading(false)
+      }
     }
+
+    initialize()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('Auth mudou:', event)
+      
+      if (event === 'SIGNED_IN') {
+        window.location.href = '/'
+      } else if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false)
+        setProfile(null)
+        setGrades([])
+        setExams([])
+        setComparisonList([])
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setIsLoggedIn(false)
+    setProfile(null)
+    setGrades([])
+    setExams([])
+    setComparisonList([])
+    router.push('/')
+  }, [supabase, router])
+
+  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
+    if (!profile) return
+    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
+    if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
+  }, [profile, supabase])
+
+  const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
+    if (!profile) return
+    await supabase.from('user_grades').upsert({
+      user_id: profile.id,
+      subject_name,
+      year_level,
+      grade
+    }, { onConflict: 'user_id,subject_name,year_level' })
+    const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
+    setGrades(data || [])
+  }, [profile, supabase])
+
+  const removeGrade = useCallback(async (gradeId: string) => {
+    if (!profile) return
+    await supabase.from('user_grades').delete().eq('id', gradeId)
+    const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
+    setGrades(data || [])
+  }, [profile, supabase])
+
+  const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
+    if (!profile) return
+    await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
+    const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
+    setExams(data || [])
+  }, [profile, supabase])
+
+  const removeExam = useCallback(async (examId: string) => {
+    if (!profile) return
+    await supabase.from('user_exams').delete().eq('id', examId)
+    const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
+    setExams(data || [])
+  }, [profile, supabase])
+
+  const toggleComparison = useCallback((courseId: string) => {
+    setComparisonList(prev => {
+      if (prev.includes(courseId)) return prev.filter(id => id !== courseId)
+      if (prev.length >= 2) return [prev[1], courseId]
+      return [...prev, courseId]
+    })
+  }, [])
+
+  const value = useMemo(() => ({
+    isLoggedIn,
+    profile,
+    grades,
+    exams,
+    comparisonList,
+    logout,
+    updateProfile,
+    addGrade,
+    removeGrade,
+    addExam,
+    removeExam,
+    toggleComparison,
+    clearComparison: () => setComparisonList([])
+  }), [isLoggedIn, profile, grades, exams, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleComparison])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy"></div>
+      </div>
+    )
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1.5 bg-navy text-primary-foreground">
-          <LogIn className="h-3.5 w-3.5" />
-          Entrar
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta'}</DialogTitle>
-          <DialogDescription>
-            {mode === 'login' 
-              ? 'Entra na tua conta UniMatch' 
-              : 'Junta-te ao simulador e guarda as tuas notas'}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="flex flex-col gap-4 py-2">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>
+}
 
-          <Button variant="outline" onClick={handleGoogleLogin} className="w-full gap-2">
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Google
-          </Button>
-
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Ou usar email</span>
-          </div>
-
-          <form onSubmit={handleAuth} className="grid gap-4">
-            {mode === 'signup' && (
-              <div className="grid gap-2">
-                <Label htmlFor="name">Nome Completo</Label>
-                <Input 
-                  id="name" 
-                  placeholder="Ex: João Silva" 
-                  value={fullName} 
-                  onChange={e => setFullName(e.target.value)} 
-                  required 
-                />
-              </div>
-            )}
-            
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="nome@exemplo.com" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required 
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                required 
-                minLength={6}
-              />
-            </div>
-
-            <Button type="submit" disabled={loading} className="bg-navy">
-              {loading ? "A processar..." : mode === 'login' ? "Entrar" : "Criar Conta"}
-            </Button>
-          </form>
-
-          <div className="text-center text-sm">
-            <button 
-              type="button"
-              onClick={() => {
-                setMode(mode === 'login' ? 'signup' : 'login')
-                setError('')
-              }}
-              className="text-muted-foreground hover:text-primary underline underline-offset-4"
-            >
-              {mode === 'login' ? "Não tens conta? Regista-te" : "Já tens conta? Faz login"}
-            </button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
+export const useUser = () => {
+  const context = useContext(UserContext)
+  if (!context) throw new Error('useUser must be used within a UserProvider')
+  return context
 }

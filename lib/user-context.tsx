@@ -39,10 +39,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const initialize = async () => {
       try {
-        // 1️⃣ Pega a sessão
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error('Erro ao obter sessão:', error)
+        // 1️⃣ Pega sessão do Supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) {
+          console.error('Erro ao obter sessão:', sessionError)
           return
         }
         if (!session?.user) {
@@ -53,14 +53,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userId = session.user.id
         console.log('✅ Sessão encontrada:', userId)
 
-        // 2️⃣ Busca perfil existente
+        // 2️⃣ Confirma que o user existe na tabela auth.users
+        const { data: authUser } = await supabase
+          .from('auth.users')
+          .select('id')
+          .eq('id', userId)
+          .single()
+
+        if (!authUser) {
+          console.error('⚠️ User ainda não existe no Auth → não criar profile')
+          return
+        }
+
+        // 3️⃣ Busca profile existente
         let { data: existingProfile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle()
 
-        // 3️⃣ Se não existir, cria perfil apenas se o user existir no Auth
+        // 4️⃣ Cria profile se não existir
         if (!existingProfile) {
           const { data: newProfile, error: insertError } = await supabase
             .from('profiles')
@@ -87,18 +99,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         if (!isMounted) return
 
-        // 4️⃣ Atualiza estados
+        // 5️⃣ Atualiza estados
         setProfile(existingProfile)
         setIsLoggedIn(true)
 
-        // 5️⃣ Busca grades e exams
+        // 6️⃣ Busca grades e exams
         const [{ data: gradesData }, { data: examsData }] = await Promise.all([
           supabase.from('user_grades').select('*').eq('user_id', userId),
           supabase.from('user_exams').select('*').eq('user_id', userId)
         ])
 
         if (!isMounted) return
-
         setGrades(gradesData ?? [])
         setExams(examsData ?? [])
 
@@ -111,7 +122,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     initialize()
 
-    // 🔐 Auth listener limpo
+    // 🔐 Listener de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false)

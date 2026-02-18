@@ -60,9 +60,9 @@ useEffect(() => {
         .maybeSingle()
 
       if (!profile) {
-        const { data: newProfile, error: insertError } = await supabase
+        const { data: newProfile, error } = await supabase
           .from('profiles')
-          .upsert({
+          .insert({
             id: userId,
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name ?? 'Utilizador',
@@ -70,14 +70,14 @@ useEffect(() => {
             username: null,
             distrito_residencia: null,
             contingente_especial: 'geral',
-            course_group: 'CIENCIAS', // default
-            media_final_calculada: 0,
-          }, { onConflict: 'id' })
+            course_group: 'CIENCIAS',
+            media_final_calculada: 0
+          })
           .select()
           .single()
 
-        if (insertError) {
-          console.error('Erro ao criar perfil:', insertError)
+        if (error) {
+          console.error('Erro ao criar perfil:', error)
           return
         }
         profile = newProfile

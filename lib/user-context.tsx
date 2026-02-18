@@ -33,19 +33,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   
   const supabase = createClient()
   const router = useRouter()
-
 useEffect(() => {
   let isMounted = true
 
   const initialize = async () => {
     try {
+      // 1️⃣ Pega a sessão
       const { data: { session }, error } = await supabase.auth.getSession()
-
       if (error) {
         console.error('Erro ao obter sessão:', error)
         return
       }
-
       if (!session?.user) {
         console.log('Sem sessão ativa')
         return
@@ -54,31 +52,27 @@ useEffect(() => {
       const userId = session.user.id
       console.log('✅ Sessão encontrada:', userId)
 
-      // 1️⃣ Tenta buscar perfil
+      // 2️⃣ Busca ou cria perfil
       let { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle()
 
-      // 2️⃣ Se não existir, cria e DEVOLVE logo o perfil
       if (!profile) {
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .upsert({
             id: userId,
             email: session.user.email,
-            full_name:
-              session.user.user_metadata?.full_name ??
-              session.user.user_metadata?.name ??
-              session.user.email?.split('@')[0] ??
-              'Utilizador',
+            full_name: session.user.user_metadata?.full_name ?? 'Utilizador',
             avatar_url: session.user.user_metadata?.avatar_url ?? null,
             username: null,
             distrito_residencia: null,
             contingente_especial: 'geral',
+            course_group: 'CIENCIAS', // default
             media_final_calculada: 0,
-          })
+          }, { onConflict: 'id' })
           .select()
           .single()
 
@@ -86,17 +80,16 @@ useEffect(() => {
           console.error('Erro ao criar perfil:', insertError)
           return
         }
-
         profile = newProfile
       }
 
       if (!isMounted) return
 
-      // 3️⃣ Estado base
+      // 3️⃣ Seta estado
       setProfile(profile)
       setIsLoggedIn(true)
 
-      // 4️⃣ Fetch dependente do user
+      // 4️⃣ Busca grades e exams
       const [{ data: grades }, { data: exams }] = await Promise.all([
         supabase.from('user_grades').select('*').eq('user_id', userId),
         supabase.from('user_exams').select('*').eq('user_id', userId),
@@ -106,6 +99,7 @@ useEffect(() => {
 
       setGrades(grades ?? [])
       setExams(exams ?? [])
+
     } catch (err) {
       console.error('💥 Erro na inicialização:', err)
     } finally {
@@ -115,23 +109,23 @@ useEffect(() => {
 
   initialize()
 
-  // 🔐 Listener LIMPO (sem reloads)
-  const { data: { subscription } } =
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        setIsLoggedIn(false)
-        setProfile(null)
-        setGrades([])
-        setExams([])
-        setComparisonList([])
-      }
-    })
+  // 🔐 Auth listener limpo
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') {
+      setIsLoggedIn(false)
+      setProfile(null)
+      setGrades([])
+      setExams([])
+      setComparisonList([])
+    }
+  })
 
   return () => {
     isMounted = false
     subscription.unsubscribe()
   }
 }, [])
+
 
 
   const logout = useCallback(async () => {

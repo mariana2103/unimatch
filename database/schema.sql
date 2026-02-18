@@ -286,3 +286,10 @@ CREATE POLICY "profiles_delete_policy"
   ON profiles FOR DELETE
   TO authenticated
   USING (auth.uid() = id);
+
+ALTER TABLE profiles
+DROP COLUMN IF EXISTS media_fixa,
+DROP COLUMN IF EXISTS media_interna_calculada;
+
+ALTER TABLE profiles
+ADD COLUMN media_final_calculada DECIMAL(5,2) DEFAULT 0;

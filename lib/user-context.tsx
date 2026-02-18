@@ -65,7 +65,7 @@ useEffect(() => {
       if (!profile) {
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .insert({
+          .upsert({
             id: userId,
             email: session.user.email,
             full_name:

@@ -30,104 +30,105 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [exams, setExams] = useState<UserExam[]>([])
   const [comparisonList, setComparisonList] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   const supabase = createClient()
   const router = useRouter()
-useEffect(() => {
-  let isMounted = true
 
-  const initialize = async () => {
-    try {
-      // 1️⃣ Pega a sessão
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error('Erro ao obter sessão:', error)
-        return
-      }
-      if (!session?.user) {
-        console.log('Sem sessão ativa')
-        return
-      }
+  useEffect(() => {
+    let isMounted = true
 
-      const userId = session.user.id
-      console.log('✅ Sessão encontrada:', userId)
-
-      // 2️⃣ Busca ou cria perfil
-      let { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle()
-
-      if (!profile) {
-        const { data: newProfile, error } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: session.user.email,
-            full_name: session.user.user_metadata?.full_name ?? 'Utilizador',
-            avatar_url: session.user.user_metadata?.avatar_url ?? null,
-            username: null,
-            distrito_residencia: null,
-            contingente_especial: 'geral',
-            course_group: 'CIENCIAS',
-            media_final_calculada: 0
-          })
-          .select()
-          .single()
-
+    const initialize = async () => {
+      try {
+        // 1️⃣ Pega a sessão
+        const { data: { session }, error } = await supabase.auth.getSession()
         if (error) {
-          console.error('Erro ao criar perfil:', error)
+          console.error('Erro ao obter sessão:', error)
           return
         }
-        profile = newProfile
+        if (!session?.user) {
+          console.log('Sem sessão ativa')
+          return
+        }
+
+        const userId = session.user.id
+        console.log('✅ Sessão encontrada:', userId)
+
+        // 2️⃣ Busca perfil existente
+        let { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle()
+
+        // 3️⃣ Se não existir, cria perfil apenas se o user existir no Auth
+        if (!existingProfile) {
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name ?? 'Utilizador',
+              avatar_url: session.user.user_metadata?.avatar_url ?? null,
+              username: null,
+              distrito_residencia: null,
+              contingente_especial: 'geral',
+              course_group: 'CIENCIAS',
+              media_final_calculada: 0
+            })
+            .select()
+            .single()
+
+          if (insertError) {
+            console.error('Erro ao criar perfil:', insertError)
+            return
+          }
+          existingProfile = newProfile
+        }
+
+        if (!isMounted) return
+
+        // 4️⃣ Atualiza estados
+        setProfile(existingProfile)
+        setIsLoggedIn(true)
+
+        // 5️⃣ Busca grades e exams
+        const [{ data: gradesData }, { data: examsData }] = await Promise.all([
+          supabase.from('user_grades').select('*').eq('user_id', userId),
+          supabase.from('user_exams').select('*').eq('user_id', userId)
+        ])
+
+        if (!isMounted) return
+
+        setGrades(gradesData ?? [])
+        setExams(examsData ?? [])
+
+      } catch (err) {
+        console.error('💥 Erro na inicialização:', err)
+      } finally {
+        if (isMounted) setLoading(false)
       }
-
-      if (!isMounted) return
-
-      // 3️⃣ Seta estado
-      setProfile(profile)
-      setIsLoggedIn(true)
-
-      // 4️⃣ Busca grades e exams
-      const [{ data: grades }, { data: exams }] = await Promise.all([
-        supabase.from('user_grades').select('*').eq('user_id', userId),
-        supabase.from('user_exams').select('*').eq('user_id', userId),
-      ])
-
-      if (!isMounted) return
-
-      setGrades(grades ?? [])
-      setExams(exams ?? [])
-
-    } catch (err) {
-      console.error('💥 Erro na inicialização:', err)
-    } finally {
-      if (isMounted) setLoading(false)
     }
-  }
 
-  initialize()
+    initialize()
 
-  // 🔐 Auth listener limpo
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_OUT') {
-      setIsLoggedIn(false)
-      setProfile(null)
-      setGrades([])
-      setExams([])
-      setComparisonList([])
+    // 🔐 Auth listener limpo
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false)
+        setProfile(null)
+        setGrades([])
+        setExams([])
+        setComparisonList([])
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
     }
-  })
+  }, [])
 
-  return () => {
-    isMounted = false
-    subscription.unsubscribe()
-  }
-}, [])
-
-
-
+  // Logout
   const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut()
@@ -142,12 +143,14 @@ useEffect(() => {
     }
   }, [supabase, router])
 
+  // Atualiza profile
   const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!profile) return
     const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
     if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
   }, [profile, supabase])
 
+  // Grades
   const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
     await supabase.from('user_grades').upsert({
@@ -157,30 +160,32 @@ useEffect(() => {
       grade
     }, { onConflict: 'user_id,subject_name,year_level' })
     const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
-    setGrades(data || [])
+    setGrades(data ?? [])
   }, [profile, supabase])
 
   const removeGrade = useCallback(async (gradeId: string) => {
     if (!profile) return
     await supabase.from('user_grades').delete().eq('id', gradeId)
     const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
-    setGrades(data || [])
+    setGrades(data ?? [])
   }, [profile, supabase])
 
+  // Exams
   const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
     if (!profile) return
     await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
     const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
-    setExams(data || [])
+    setExams(data ?? [])
   }, [profile, supabase])
 
   const removeExam = useCallback(async (examId: string) => {
     if (!profile) return
     await supabase.from('user_exams').delete().eq('id', examId)
     const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
-    setExams(data || [])
+    setExams(data ?? [])
   }, [profile, supabase])
 
+  // Comparison list
   const toggleComparison = useCallback((courseId: string) => {
     setComparisonList(prev => {
       if (prev.includes(courseId)) return prev.filter(id => id !== courseId)

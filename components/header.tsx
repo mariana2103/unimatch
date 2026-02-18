@@ -2,7 +2,7 @@
 
 import { GraduationCap, CalendarDays, Search } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
-import { AuthDialog } from './auth-dialog'
+import { UserProvider } from './auth-dialog'
 import { UserMenu } from './user-menu'
 import { cn } from '@/lib/utils'
 
@@ -78,7 +78,7 @@ export function Header({
             {isLoggedIn ? (
               <UserMenu onOpenProfile={onOpenProfile} />
             ) : (
-              <AuthDialog />
+              <UserProvider children={undefined} />
             )}
           </div>
         </div>

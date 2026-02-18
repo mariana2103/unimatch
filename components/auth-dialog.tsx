@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { Profile, UserGrade, UserExam } from './types'
+import type { Profile, UserGrade, UserExam } from '../lib/types'
 
 interface UserContextType {
   isLoggedIn: boolean

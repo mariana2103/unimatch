@@ -34,117 +34,91 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const router = useRouter()
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        // 1. Pega a sessão
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError) {
-          console.error('Erro ao obter sessão:', sessionError)
-          setLoading(false)
-          return
-        }
+useEffect(() => {
+  let isMounted = true
 
-        if (!session?.user) {
-          console.log('Sem sessão ativa')
-          setLoading(false)
-          return
-        }
+  const initialize = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
 
-        console.log('✅ Sessão encontrada:', session.user.id)
+      if (error) {
+        console.error('Erro ao obter sessão:', error)
+        return
+      }
 
-        // 2. Espera um pouco para o trigger criar o perfil
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!session?.user) {
+        console.log('Sem sessão ativa')
+        return
+      }
 
-        // 3. Tenta buscar o perfil - COM .single() e tratamento correto de erros
-        const { data: profileData, error: profileError } = await supabase
+      const userId = session.user.id
+      console.log('✅ Sessão encontrada:', userId)
+
+      // 1️⃣ Tenta buscar perfil
+      let { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle()
+
+      // 2️⃣ Se não existir, cria e DEVOLVE logo o perfil
+      if (!profile) {
+        const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-
-        console.log('Profile data:', profileData)
-        console.log('Profile error:', profileError)
-
-        // 4. Se não existe perfil (erro PGRST116), cria manualmente
-        if (profileError?.code === 'PGRST116' || !profileData) {
-          console.log('📝 Criando perfil manualmente...')
-          
-          const newProfile = {
-            id: session.user.id,
+          .insert({
+            id: userId,
             email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || 
-                      session.user.user_metadata?.name || 
-                      session.user.email?.split('@')[0] || 
-                      'Utilizador',
-            avatar_url: session.user.user_metadata?.avatar_url || null,
+            full_name:
+              session.user.user_metadata?.full_name ??
+              session.user.user_metadata?.name ??
+              session.user.email?.split('@')[0] ??
+              'Utilizador',
+            avatar_url: session.user.user_metadata?.avatar_url ?? null,
             username: null,
             distrito_residencia: null,
             contingente_especial: 'geral',
             media_final_calculada: 0,
-            updated_at: new Date().toISOString()
-          }
+          })
+          .select()
+          .single()
 
-          const { data: insertedProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert(newProfile)
-            .select()
-            .single()
-
-          if (insertError) {
-            console.error('❌ Erro ao criar perfil:', insertError)
-            // Tenta buscar de novo (pode ter sido criado pelo trigger)
-            const { data: retryProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single()
-            
-            if (retryProfile) {
-              setProfile(retryProfile)
-              setIsLoggedIn(true)
-            } else {
-              setLoading(false)
-              return
-            }
-          } else if (insertedProfile) {
-            console.log('✅ Perfil criado:', insertedProfile)
-            setProfile(insertedProfile)
-            setIsLoggedIn(true)
-          }
-        } else if (profileData) {
-          // Perfil existe
-          console.log('✅ Perfil encontrado:', profileData)
-          setProfile(profileData)
-          setIsLoggedIn(true)
-
-          // 5. Busca grades e exams
-          const [gradesRes, examsRes] = await Promise.all([
-            supabase.from('user_grades').select('*').eq('user_id', session.user.id),
-            supabase.from('user_exams').select('*').eq('user_id', session.user.id)
-          ])
-
-          setGrades(gradesRes.data || [])
-          setExams(examsRes.data || [])
+        if (insertError) {
+          console.error('Erro ao criar perfil:', insertError)
+          return
         }
-      } catch (err) {
-        console.error('💥 Erro na inicialização:', err)
-      } finally {
-        setLoading(false)
+
+        profile = newProfile
       }
+
+      if (!isMounted) return
+
+      // 3️⃣ Estado base
+      setProfile(profile)
+      setIsLoggedIn(true)
+
+      // 4️⃣ Fetch dependente do user
+      const [{ data: grades }, { data: exams }] = await Promise.all([
+        supabase.from('user_grades').select('*').eq('user_id', userId),
+        supabase.from('user_exams').select('*').eq('user_id', userId),
+      ])
+
+      if (!isMounted) return
+
+      setGrades(grades ?? [])
+      setExams(exams ?? [])
+    } catch (err) {
+      console.error('💥 Erro na inicialização:', err)
+    } finally {
+      if (isMounted) setLoading(false)
     }
+  }
 
-    initialize()
+  initialize()
 
-    // Auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔔 Auth event:', event)
-      
-      if (event === 'SIGNED_IN') {
-        // Força reload completo
-        window.location.href = '/'
-      } else if (event === 'SIGNED_OUT') {
+  // 🔐 Listener LIMPO (sem reloads)
+  const { data: { subscription } } =
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false)
         setProfile(null)
         setGrades([])
@@ -153,8 +127,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+  return () => {
+    isMounted = false
+    subscription.unsubscribe()
+  }
+}, [])
+
 
   const logout = useCallback(async () => {
     try {

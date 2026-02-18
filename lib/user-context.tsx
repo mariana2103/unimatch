@@ -34,54 +34,88 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const router = useRouter()
 
-  // Inicialização - corre UMA VEZ
   useEffect(() => {
-    let cancelled = false
-
-    const init = async () => {
+    const initialize = async () => {
       try {
         // 1. Pega a sessão
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        if (cancelled) return
-
-        // 2. Se não há sessão, termina
-        if (!session?.user) {
+        if (sessionError) {
+          console.error('Erro ao obter sessão:', sessionError)
           setLoading(false)
           return
         }
 
-        // 3. Tenta buscar o perfil
-        const { data: profileData, error } = await supabase
+        if (!session?.user) {
+          console.log('Sem sessão ativa')
+          setLoading(false)
+          return
+        }
+
+        console.log('✅ Sessão encontrada:', session.user.id)
+
+        // 2. Espera um pouco para o trigger criar o perfil
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        // 3. Tenta buscar o perfil - COM .single() e tratamento correto de erros
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single()
 
-        if (cancelled) return
+        console.log('Profile data:', profileData)
+        console.log('Profile error:', profileError)
 
-        // 4. Se não existe perfil, cria um
-        if (error?.code === 'PGRST116') {
-          const { error: insertError } = await supabase.from('profiles').insert({
+        // 4. Se não existe perfil (erro PGRST116), cria manualmente
+        if (profileError?.code === 'PGRST116' || !profileData) {
+          console.log('📝 Criando perfil manualmente...')
+          
+          const newProfile = {
             id: session.user.id,
             email: session.user.email,
-            full_name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'Utilizador'
-          })
+            full_name: session.user.user_metadata?.full_name || 
+                      session.user.user_metadata?.name || 
+                      session.user.email?.split('@')[0] || 
+                      'Utilizador',
+            avatar_url: session.user.user_metadata?.avatar_url || null,
+            username: null,
+            distrito_residencia: null,
+            contingente_especial: 'geral',
+            media_final_calculada: 0,
+            updated_at: new Date().toISOString()
+          }
 
-          if (!insertError) {
-            // Busca novamente
-            const { data: newProfile } = await supabase
+          const { data: insertedProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert(newProfile)
+            .select()
+            .single()
+
+          if (insertError) {
+            console.error('❌ Erro ao criar perfil:', insertError)
+            // Tenta buscar de novo (pode ter sido criado pelo trigger)
+            const { data: retryProfile } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .single()
             
-            if (newProfile && !cancelled) {
-              setProfile(newProfile)
+            if (retryProfile) {
+              setProfile(retryProfile)
               setIsLoggedIn(true)
+            } else {
+              setLoading(false)
+              return
             }
+          } else if (insertedProfile) {
+            console.log('✅ Perfil criado:', insertedProfile)
+            setProfile(insertedProfile)
+            setIsLoggedIn(true)
           }
-        } else if (profileData && !cancelled) {
+        } else if (profileData) {
+          // Perfil existe
+          console.log('✅ Perfil encontrado:', profileData)
           setProfile(profileData)
           setIsLoggedIn(true)
 
@@ -91,29 +125,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
             supabase.from('user_exams').select('*').eq('user_id', session.user.id)
           ])
 
-          if (!cancelled) {
-            setGrades(gradesRes.data || [])
-            setExams(examsRes.data || [])
-          }
+          setGrades(gradesRes.data || [])
+          setExams(examsRes.data || [])
         }
       } catch (err) {
-        console.error('Erro na inicialização:', err)
+        console.error('💥 Erro na inicialização:', err)
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        setLoading(false)
       }
     }
 
-    init()
+    initialize()
 
     // Auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event)
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Recarrega a página para reinicializar tudo
-        window.location.reload()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔔 Auth event:', event)
+      
+      if (event === 'SIGNED_IN') {
+        // Força reload completo
+        window.location.href = '/'
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false)
         setProfile(null)
@@ -123,11 +153,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => {
-      cancelled = true
-      subscription.unsubscribe()
-    }
-  }, []) // Array vazio = corre UMA VEZ
+    return () => subscription.unsubscribe()
+  }, [])
 
   const logout = useCallback(async () => {
     try {
@@ -138,7 +165,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setExams([])
       setComparisonList([])
       router.push('/')
-      router.refresh()
     } catch (error) {
       console.error('Erro no logout:', error)
     }
@@ -152,44 +178,35 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
-    const { error } = await supabase.from('user_grades').upsert({
+    await supabase.from('user_grades').upsert({
       user_id: profile.id,
       subject_name,
       year_level,
       grade
     }, { onConflict: 'user_id,subject_name,year_level' })
-    
-    if (!error) {
-      const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
-      setGrades(data || [])
-    }
+    const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
+    setGrades(data || [])
   }, [profile, supabase])
 
   const removeGrade = useCallback(async (gradeId: string) => {
     if (!profile) return
-    const { error } = await supabase.from('user_grades').delete().eq('id', gradeId)
-    if (!error) {
-      const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
-      setGrades(data || [])
-    }
+    await supabase.from('user_grades').delete().eq('id', gradeId)
+    const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
+    setGrades(data || [])
   }, [profile, supabase])
 
   const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
     if (!profile) return
-    const { error } = await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
-    if (!error) {
-      const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
-      setExams(data || [])
-    }
+    await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
+    const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
+    setExams(data || [])
   }, [profile, supabase])
 
   const removeExam = useCallback(async (examId: string) => {
     if (!profile) return
-    const { error } = await supabase.from('user_exams').delete().eq('id', examId)
-    if (!error) {
-      const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
-      setExams(data || [])
-    }
+    await supabase.from('user_exams').delete().eq('id', examId)
+    const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
+    setExams(data || [])
   }, [profile, supabase])
 
   const toggleComparison = useCallback((courseId: string) => {

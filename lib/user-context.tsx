@@ -39,71 +39,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const initialize = async () => {
       try {
-        // 1️⃣ Pega sessão do Supabase
+        // Pega a sessão atual
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) {
-          console.error('Erro ao obter sessão:', sessionError)
-          return
-        }
-        if (!session?.user) {
-          console.log('Sem sessão ativa')
-          return
-        }
+        if (sessionError) throw sessionError
+        if (!session?.user) return
 
         const userId = session.user.id
-        console.log('✅ Sessão encontrada:', userId)
 
-        // 2️⃣ Confirma que o user existe na tabela auth.users
-        const { data: authUser } = await supabase
-          .from('auth.users')
-          .select('id')
-          .eq('id', userId)
-          .single()
-
-        if (!authUser) {
-          console.error('⚠️ User ainda não existe no Auth → não criar profile')
-          return
-        }
-
-        // 3️⃣ Busca profile existente
-        let { data: existingProfile } = await supabase
+        // Busca profile existente
+        const { data: existingProfile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle()
 
-        // 4️⃣ Cria profile se não existir
         if (!existingProfile) {
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name ?? 'Utilizador',
-              avatar_url: session.user.user_metadata?.avatar_url ?? null,
-              username: null,
-              distrito_residencia: null,
-              contingente_especial: 'geral',
-              course_group: 'CIENCIAS',
-              media_final_calculada: 0
-            })
-            .select()
-            .single()
-
-          if (insertError) {
-            console.error('Erro ao criar perfil:', insertError)
-            return
-          }
-          existingProfile = newProfile
+          console.warn('⚠️ Perfil não existe. Cria-lo só depois de signup!')
+          return
         }
 
         if (!isMounted) return
 
-        // 5️⃣ Atualiza estados
         setProfile(existingProfile)
         setIsLoggedIn(true)
 
-        // 6️⃣ Busca grades e exams
+        // Busca grades e exams
         const [{ data: gradesData }, { data: examsData }] = await Promise.all([
           supabase.from('user_grades').select('*').eq('user_id', userId),
           supabase.from('user_exams').select('*').eq('user_id', userId)
@@ -122,7 +82,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     initialize()
 
-    // 🔐 Listener de auth
+    // Auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false)
@@ -139,37 +99,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Logout
   const logout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut()
-      setIsLoggedIn(false)
-      setProfile(null)
-      setGrades([])
-      setExams([])
-      setComparisonList([])
-      router.push('/')
-    } catch (error) {
-      console.error('Erro no logout:', error)
-    }
+    await supabase.auth.signOut()
+    setIsLoggedIn(false)
+    setProfile(null)
+    setGrades([])
+    setExams([])
+    setComparisonList([])
+    router.push('/')
   }, [supabase, router])
 
-  // Atualiza profile
   const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!profile) return
     const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id)
     if (!error) setProfile(prev => prev ? { ...prev, ...updates } : null)
   }, [profile, supabase])
 
-  // Grades
   const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
-    await supabase.from('user_grades').upsert({
-      user_id: profile.id,
-      subject_name,
-      year_level,
-      grade
-    }, { onConflict: 'user_id,subject_name,year_level' })
+    await supabase.from('user_grades').upsert({ user_id: profile.id, subject_name, grade, year_level }, 
+      { onConflict: 'user_id,subject_name,year_level' })
     const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
     setGrades(data ?? [])
   }, [profile, supabase])
@@ -181,7 +130,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setGrades(data ?? [])
   }, [profile, supabase])
 
-  // Exams
   const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
     if (!profile) return
     await supabase.from('user_exams').insert({ ...exam, user_id: profile.id })
@@ -196,7 +144,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setExams(data ?? [])
   }, [profile, supabase])
 
-  // Comparison list
   const toggleComparison = useCallback((courseId: string) => {
     setComparisonList(prev => {
       if (prev.includes(courseId)) return prev.filter(id => id !== courseId)
@@ -221,13 +168,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     clearComparison: () => setComparisonList([])
   }), [isLoggedIn, profile, grades, exams, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleComparison])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy"></div>
-      </div>
-    )
-  }
+  if (loading) return <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy"></div>
+  </div>
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 }

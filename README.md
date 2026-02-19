@@ -1,93 +1,90 @@
+# <img src="assets/uni-match-icon.png" height="45" /> UniMatch
 
-# UniMatch 🎓
+<p align="left">
+  <img src="https://img.shields.io/badge/Status-In_Development-ebbcba?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge" />
+  <a href="https://www.unimatch.pt/"><img src="https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge" /></a>
+</p>
 
-### Data-Driven Guidance for the Portuguese Higher Education System
+**UniMatch** is a data-driven ecosystem designed to replace the anxiety of Portuguese university applications with clarity.
 
-## The Problem
-
-Choosing a university is one of the most significant decisions a young adult faces, yet the process in Portugal remains notoriously fragmented and stressful. Students must navigate:
-
-* **Complex Weighted Averages:** 
-* **Information Asymmetry:** 
-* **Logistic Hurdles:** 
-
-> **"Every year, over 60,000 candidates apply for Higher Education in Portugal, often making life-altering decisions based on incomplete calculations or outdated spreadsheets."**
-
-**UniMatch** was built to solve this. It provides a centralized, automated platform that transforms raw academic data into actionable insights, reducing the anxiety of the application season.
+Beyond just calculating grades, UniMatch bridges the gap between ambition and eligibility. Whether you're struggling with complex rounding rules, facing grades lower than your dream course requires, or feeling lost among thousands of options, UniMatch provides a map. By leveraging semantic AI and predictive analytics, we turn fragmented data into a personalized strategy, helping every student find their place in Higher Education, even when they don't yet know where they belong.
 
 ---
 
-## Features & Solutions
+## 💻 Tech Stack
 
-### Precision Grade Management
-
-Instead of simple estimates, UniMatch allows for **subject-specific grade entry per year**. This granularity ensures that the internal average—which accounts for 50% to 65% of the final score—is calculated with 100% accuracy.
-
-### The "Match" Algorithm
-
-The core of the application is a relational logic engine that cross-references:
-
-1. The student's validated national exams.
-2. The specific weightings of each university course.
-3. Historical cut-off data.
-It provides a "Match Score," telling the student exactly what their entry grade would be for a specific institution.
-
-### Bridging the Public-Private Gap
-
-The platform treats the educational landscape as a whole, integrating both public universities and private colleges. For private institutions, it provides direct channels to official information, streamlining the discovery of specialized programs.
+<p align="left">
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+</p>
 
 ---
 
-## 💻 Tech Stack & Architecture
+## ✨ Key Features
 
-* **Framework:** [Next.js]() (App Router & Server Actions)
-* **Database:** [PostgreSQL]() via [Supabase]()
-* **Authentication:** Multi-provider OAuth (Google) and Email/Password
-* **Infrastructure:** Containerized with **Docker** for environment consistency
-* **CI/CD:** Automated deployments via **Vercel**
+* **Precision GPA Engine:** Automated calculation of the internal secondary school average (CFA) following official DGES rounding rules.
+* **The Match Algorithm:** A relational engine that cross-references your exam grades with specific university course weightings and historical cut-offs.
+* **Unified Search:** A single source of truth for both Public and Private institutions.
+* **Smart Eligibility:** Instant feedback on whether you meet the minimum entry requirements for a specific course.
 
 ---
 
-## 🐳 Getting Started (Local Development)
+## 🗺️ Roadmap (The Master Plan)
 
-This project is fully containerized to ensure a seamless setup experience.
+To make the roadmap more specific to the features you've already built and those coming next, we should emphasize the **Exploration Engine** in Phase 1. This shows that the app isn't just a "calculator," but a searchable directory.
 
-### 1. Prerequisites
+Here is the improved Roadmap:
 
-* Docker and Docker Compose
-* A Supabase project (for the managed database)
+---
 
-### 2. Configuration
+### 📍 Phase 1: Foundation (Current Focus)
 
-Clone the repository and create a `.env.local` file with your environment variables:
+* [ ] **Relational Course Directory:** Comprehensive database of Portuguese Public and Private institutions.
+* [ ] **Exploration Engine:** Search and filter courses by **location (districts)**, **academic area**, and **institution type**.
+* [ ] **Official Grade Logic:** Rigorous secondary school average calculation (CFA) for both Scientific-Humanistic and **Professional** pathways.
+* [ ] ⏳**Auth Integration:** Robust Google OAuth and Email/Password flows.
+* [ ] ⏳**Student Dashboard:** Personal profile to track grades and save favorite courses.
+
+### 📍 Phase 2: Intelligence & Semantics
+
+* [ ] **Smart Eligibility Filter:** Real-time filtering that hides courses you don't meet the minimum requirements for and highlights those where your grade is competitive.
+* [ ] **AI Counselor:** An LLM-powered assistant using **Vector Embeddings** (`pgvector`) to suggest paths for students who aren't sure what to do with their lives, matching intent to curricula.
+
+### 📍 Phase 3: Predictive Analytics
+
+* [ ] **Trend Predictor:** A regression algorithm analyzing historical cut-offs and current-year exam difficulty to **predict the 2026/27 closing grades** before they are officially released.
+* [ ] **Vacancy Monitoring:** Real-time insights into course popularity and placement probability.
+
+---
+
+## 🏗 Setup
+
+1. Clone the repository.
+2. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`.
+3. Apply SQL migrations in `/database/schema.sql`.
 
 ```bash
-git clone https://github.com/your-username/unimatch
-cd unimatch
-# Add your NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local
-```
-
-### 3. Execution
-
-Run the application using Docker Compose:
-
-```bash
-docker-compose up --build
+npm install
+npm run dev
 
 ```
 
-The application will be accessible at `http://localhost:3000`.
-
-### 4. Database Initialization
-
-Execute the SQL scripts found in `/database/schema.sql` within your Supabase SQL Editor to initialize the tables, triggers, and Row Level Security (RLS) policies.
-
 ---
 
-## 🛡 Security & Reliability
+## 💌 Connect with the Developer
 
-* **Row Level Security (RLS):** Student data and grades are strictly isolated at the database level.
-* **Server-Side Logic:** Sensitive calculations and database writes are handled via Server Actions to prevent client-side manipulation.
-* **Data Integrity:** SQL Triggers ensure that user profiles are automatically synchronized upon authentication.
+> "Information is everywhere, yet clarity is nowhere. UniMatch was built for the student who has the grades but lacks a map, turning the overwhelming noise of higher education into a clear path for those still figuring out what to do with their lives."
 
----
+<p align="left">
+  <a href="https://github.com/mariana2103">
+    <img src="https://img.shields.io/badge/Mariana_Almeida-ebbcba?style=for-the-badge&logo=github&logoColor=191724" alt="GitHub" />
+  </a>
+  &nbsp;
+  <a href="https://www.linkedin.com/in/mcaalmeida/">
+    <img src="https://img.shields.io/badge/LinkedIn-e0def4?style=for-the-badge&logo=linkedin&logoColor=191724" height="28" alt="LinkedIn" />
+  </a>
+</p>

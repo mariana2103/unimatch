@@ -7,6 +7,7 @@ export interface Profile {
   distrito_residencia: string | null
   contingente_especial: string
   media_final_calculada: number
+  course_group: string | null
   updated_at: string
 }
 

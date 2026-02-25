@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Profile } from '@/lib/types'
 
-type ProfileUpdate = Partial<Pick<Profile, 'distrito_residencia' | 'contingente_especial'>>
+type ProfileUpdate = Partial<Pick<Profile, 'distrito_residencia' | 'contingente_especial' | 'course_group'>>
 
 export async function updateProfileAction(userId: string, data: ProfileUpdate) {
   const supabase = await createClient()

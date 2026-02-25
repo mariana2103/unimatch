@@ -25,14 +25,13 @@ import {
 } from '@/components/ui/tooltip'
 import { getSubjectsByYear } from '@/lib/education-logic'
 import { calculateCFA } from '@/lib/data'
-import { addGradeAction, removeGradeAction } from '@/app/actions/grade-actions'
+import { useUser } from '@/lib/user-context'
 import type { UserGrade } from '@/lib/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface YearSectionProps {
   year: 10 | 11 | 12
-  userId: string
   /** All grades for ALL years – the component filters by year internally */
   allGrades: UserGrade[]
   /** Course group drives which subjects are available (e.g. 'CIENCIAS') */
@@ -93,9 +92,8 @@ function GradeRow({ grade, onRemove, isPending, readOnly }: GradeRowProps) {
 
 function CFASummary({ allGrades, courseGroup }: { allGrades: UserGrade[]; courseGroup: string }) {
   const cfa = useMemo(() => {
-    if (allGrades.length === 0) return null
+    if (!allGrades || allGrades.length === 0) return null
 
-    // Group grades by subject, aggregating across years
     const bySubject = allGrades.reduce<Record<string, { name: string; grades: { year: number; grade: number }[] }>>(
       (acc, g) => {
         if (!acc[g.subject_name]) {
@@ -216,16 +214,16 @@ function AddGradeForm({ availableSubjects, isPending, onAdd }: AddGradeFormProps
 
 export function YearSection({
   year,
-  userId,
   allGrades,
   courseGroup,
   readOnly = false,
 }: YearSectionProps) {
+  const { addGrade, removeGrade } = useUser()
   const [isOpen, setIsOpen] = useState(true)
   const [isPending, startTransition] = useTransition()
 
   const yearGrades = useMemo(
-    () => allGrades.filter((g) => g.year_level === year),
+    () => (allGrades ?? []).filter((g) => g.year_level === year),
     [allGrades, year]
   )
 
@@ -235,7 +233,6 @@ export function YearSection({
     return all.filter((s) => !added.has(s))
   }, [year, courseGroup, yearGrades])
 
-  // Year average (for the badge, 0-20 scale)
   const yearAvg = useMemo(() => {
     if (yearGrades.length === 0) return null
     const sum = yearGrades.reduce((acc, g) => acc + g.grade, 0)
@@ -244,13 +241,13 @@ export function YearSection({
 
   const handleAdd = (subject: string, grade: number) => {
     startTransition(async () => {
-      await addGradeAction({ userId, subject, year, grade })
+      await addGrade(subject, grade, year)
     })
   }
 
   const handleRemove = (gradeId: string) => {
     startTransition(async () => {
-      await removeGradeAction(gradeId, userId)
+      await removeGrade(gradeId)
     })
   }
 
@@ -286,7 +283,6 @@ export function YearSection({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* CFA only shown on year 12 where the full picture is available */}
           {year === 12 && <CFASummary allGrades={allGrades} courseGroup={courseGroup} />}
           <ChevronDown
             className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${

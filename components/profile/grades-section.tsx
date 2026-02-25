@@ -6,13 +6,13 @@ import { YearSection } from './year-section'
 import type { UserGrade } from '@/lib/types'
 
 interface GradesSectionProps {
-  userId: string
   grades: UserGrade[]
+  courseGroup?: string
 }
 
 const YEAR_LEVELS = [10, 11, 12] as const
 
-export function GradesSection({ userId, grades }: GradesSectionProps) {
+export function GradesSection({ grades, courseGroup = 'CIENCIAS' }: GradesSectionProps) {
   return (
     <section className="space-y-4">
       <Label className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
@@ -23,8 +23,8 @@ export function GradesSection({ userId, grades }: GradesSectionProps) {
           <YearSection
             key={year}
             year={year}
-            userId={userId}
-            grades={grades}
+            allGrades={grades}
+            courseGroup={courseGroup}
           />
         ))}
       </div>

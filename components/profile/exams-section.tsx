@@ -7,15 +7,15 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EXAM_SUBJECTS } from '@/lib/constants'
-import { addExamAction, removeExamAction } from '@/app/actions/exam-actions'
+import { useUser } from '@/lib/user-context'
 import type { UserExam } from '@/lib/types'
 
 interface ExamsSectionProps {
-  userId: string
   exams: UserExam[]
 }
 
-export function ExamsSection({ userId, exams }: ExamsSectionProps) {
+export function ExamsSection({ exams }: ExamsSectionProps) {
+  const { addExam, removeExam } = useUser()
   const [newExamCode, setNewExamCode] = useState('')
   const [newExamGrade, setNewExamGrade] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -25,7 +25,7 @@ export function ExamsSection({ userId, exams }: ExamsSectionProps) {
     if (!newExamCode || isNaN(grade)) return
 
     startTransition(async () => {
-      await addExamAction({ userId, examCode: newExamCode, grade, examYear: new Date().getFullYear() })
+      await addExam({ exam_code: newExamCode, grade, exam_year: new Date().getFullYear() })
       setNewExamCode('')
       setNewExamGrade('')
     })
@@ -33,7 +33,7 @@ export function ExamsSection({ userId, exams }: ExamsSectionProps) {
 
   const handleRemove = (examId: string) => {
     startTransition(async () => {
-      await removeExamAction(examId, userId)
+      await removeExam(examId)
     })
   }
 

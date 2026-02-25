@@ -33,13 +33,7 @@ Beyond just calculating grades, UniMatch bridges the gap between ambition and el
 
 ---
 
-## 🗺️ Roadmap (The Master Plan)
-
-To make the roadmap more specific to the features you've already built and those coming next, we should emphasize the **Exploration Engine** in Phase 1. This shows that the app isn't just a "calculator," but a searchable directory.
-
-Here is the improved Roadmap:
-
----
+## 🗺️ Roadmap
 
 ### 📍 Phase 1: Foundation (Current Focus)
 

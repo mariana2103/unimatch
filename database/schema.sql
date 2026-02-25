@@ -53,7 +53,8 @@ CREATE TABLE user_exams (
   exam_code  TEXT NOT NULL,
   grade      DECIMAL(5,2) NOT NULL CHECK (grade BETWEEN 0 AND 200),
   exam_year  INTEGER NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, exam_code, exam_year)
 );
 
 -- 6. CURSOS
@@ -160,3 +161,17 @@ CREATE POLICY "Requirements are public" ON course_requirements FOR SELECT USING 
 
 -- favorites
 CREATE POLICY "Users manage own favorites" ON favorites FOR ALL USING (auth.uid() = user_id);
+
+-- ============================================================
+-- MIGRATIONS (safe to run on existing DB without full reset)
+-- ============================================================
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'user_exams_unique_per_year'
+  ) THEN
+    ALTER TABLE public.user_exams
+      ADD CONSTRAINT user_exams_unique_per_year
+      UNIQUE (user_id, exam_code, exam_year);
+  END IF;
+END $$;

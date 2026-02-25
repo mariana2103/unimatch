@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -19,7 +18,6 @@ export function AuthDialog() {
   const [error, setError] = useState('')
   const [open, setOpen] = useState(false)
   
-  const router = useRouter()
   const supabase = createClient()
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -41,28 +39,33 @@ export function AuthDialog() {
         })
         
         if (error) throw error
-        
-        alert('Verifica o teu email para confirmar o registo!')
-        setOpen(false)
+
+        setError('')
+        // Show success message inside the dialog instead of blocking alert
+        setMode('login')
         setEmail('')
         setPassword('')
         setFullName('')
+        setError('✓ Registo feito! Verifica o teu email para confirmar a conta.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
-        
+
         if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setError('Email ou password incorretos')
+          const msg = error.message.toLowerCase()
+          if (msg.includes('invalid login credentials')) {
+            setError('Email ou password incorretos.')
+          } else if (msg.includes('email not confirmed')) {
+            setError('Email ainda não confirmado. Verifica a tua caixa de entrada.')
           } else {
             setError(error.message)
           }
           return
         }
-        
+
+        // onAuthStateChange (SIGNED_IN) handles context update — no router.refresh needed
         setOpen(false)
         setEmail('')
         setPassword('')
-        router.refresh()
       }
     } catch (err: any) {
       setError(err.message || 'Erro desconhecido')

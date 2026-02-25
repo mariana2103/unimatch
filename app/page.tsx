@@ -3,20 +3,18 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
-import { ProfileView } from '@/components/profile/profile-view'
 import { AICounselor } from '@/components/ai-counselor'
 import { AlertCircle, X } from 'lucide-react'
+import { useUser } from '@/lib/user-context'
 
 function AuthErrorBanner() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const msg = searchParams.get('authError')
     if (msg) {
       setError(decodeURIComponent(msg))
-      // Clean the URL without triggering a navigation
       const url = new URL(window.location.href)
       url.searchParams.delete('authError')
       window.history.replaceState({}, '', url.toString())
@@ -41,13 +39,22 @@ function AuthErrorBanner() {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('explorer')
   const [aiOpen, setAiOpen] = useState(false)
+  const { isNewUser, clearNewUser } = useUser()
+  const router = useRouter()
+
+  // New users get redirected to /profile automatically
+  useEffect(() => {
+    if (isNewUser) {
+      clearNewUser()
+      router.push('/profile')
+    }
+  }, [isNewUser, clearNewUser, router])
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/50">
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenProfile={() => setActiveTab('profile')}
         isAISidebarOpen={aiOpen}
         setIsAISidebarOpen={setAiOpen}
       />
@@ -67,10 +74,6 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-4 py-8 text-center">
             <h2 className="text-2xl font-bold">Calendário 2025</h2>
           </div>
-        )}
-
-        {activeTab === 'profile' && (
-          <ProfileView />
         )}
       </main>
 

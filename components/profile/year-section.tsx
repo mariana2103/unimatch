@@ -43,11 +43,9 @@ interface YearSectionProps {
 // ─── Grade pill ───────────────────────────────────────────────────────────────
 
 function GradePill({ grade }: { grade: number }) {
-  const color =
-    grade >= 17 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    : grade >= 14 ? 'bg-blue-50 text-blue-700 border-blue-200'
-    : grade >= 10 ? 'bg-amber-50 text-amber-700 border-amber-200'
-    : 'bg-red-50 text-red-700 border-red-200'
+  const color = grade < 10
+    ? 'bg-red-50 text-red-700 border-red-200'
+    : 'bg-muted text-foreground border-border/60'
 
   return (
     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-sm font-bold ${color}`}>
@@ -270,11 +268,9 @@ export function YearSection({
           {yearAvg !== null && (
             <Badge
               className={`border-none text-[10px] font-bold ${
-                yearAvg >= 14
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : yearAvg >= 10
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-red-100 text-red-700'
+                yearAvg < 10
+                  ? 'bg-red-100 text-red-700'
+                  : 'bg-navy text-white'
               }`}
             >
               Média {yearAvg}

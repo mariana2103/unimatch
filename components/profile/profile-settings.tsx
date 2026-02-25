@@ -5,7 +5,7 @@ import { MapPin, ShieldCheck, BookOpen } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DISTRICTS, CONTINGENTES, COURSE_GROUPS } from '@/lib/constants'
-import { updateProfileAction } from '@/app/actions/profile-actions'
+import { useUser } from '@/lib/user-context'
 import type { Profile } from '@/lib/types'
 
 interface ProfileSettingsProps {
@@ -13,23 +13,24 @@ interface ProfileSettingsProps {
 }
 
 export function ProfileSettings({ profile }: ProfileSettingsProps) {
+  const { updateProfile } = useUser()
   const [isPending, startTransition] = useTransition()
 
   const handleDistrictChange = (value: string) => {
     startTransition(async () => {
-      await updateProfileAction(profile.id, { distrito_residencia: value })
+      await updateProfile({ distrito_residencia: value })
     })
   }
 
   const handleContingentChange = (value: string) => {
     startTransition(async () => {
-      await updateProfileAction(profile.id, { contingente_especial: value })
+      await updateProfile({ contingente_especial: value })
     })
   }
 
   const handleCourseGroupChange = (value: string) => {
     startTransition(async () => {
-      await updateProfileAction(profile.id, { course_group: value })
+      await updateProfile({ course_group: value })
     })
   }
 

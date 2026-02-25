@@ -9,17 +9,15 @@ import { cn } from '@/lib/utils'
 interface HeaderProps {
   activeTab: string
   onTabChange: (tab: string) => void
-  onOpenProfile: () => void
   isAISidebarOpen: boolean
   setIsAISidebarOpen: (open: boolean) => void
 }
 
-export function Header({ 
-  activeTab, 
-  onTabChange, 
-  onOpenProfile, 
-  isAISidebarOpen, 
-  setIsAISidebarOpen 
+export function Header({
+  activeTab,
+  onTabChange,
+  isAISidebarOpen,
+  setIsAISidebarOpen,
 }: HeaderProps) {
   const { isLoggedIn } = useUser()
 
@@ -76,7 +74,7 @@ export function Header({
 
           <div className="flex items-center">
             {isLoggedIn ? (
-              <UserMenu onOpenProfile={onOpenProfile} />
+              <UserMenu />
             ) : (
               <AuthDialog />
             )}

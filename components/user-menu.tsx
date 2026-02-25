@@ -1,6 +1,7 @@
 'use client'
 
 import { LogOut, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/user-context'
 import { UserAvatar } from './user-avatar'
 import {
@@ -12,12 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-interface UserMenuProps {
-  onOpenProfile: () => void
-}
-
-export function UserMenu({ onOpenProfile }: UserMenuProps) {
+export function UserMenu() {
   const { profile, logout } = useUser()
+  const router = useRouter()
   const firstName = profile?.full_name?.trim().split(' ')[0] || 'Utilizador'
 
   return (
@@ -30,7 +28,7 @@ export function UserMenu({ onOpenProfile }: UserMenuProps) {
           </span>
         </button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="end" className="w-48 mt-1">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
@@ -41,19 +39,17 @@ export function UserMenu({ onOpenProfile }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
-        {/* Item Perfil: Mudamos para fundo Navy e texto/ícone Branco no hover */}
-        <DropdownMenuItem 
-          onClick={onOpenProfile} 
+
+        <DropdownMenuItem
+          onClick={() => router.push('/profile')}
           className="cursor-pointer gap-2 transition-colors focus:bg-navy focus:text-white group"
         >
           <User className="h-4 w-4 text-muted-foreground group-focus:text-white" />
           <span>Perfil</span>
         </DropdownMenuItem>
-        
-        {/* Item Sair: Mantemos o estilo Destructive mas garantimos o ícone branco no focus */}
-        <DropdownMenuItem 
-          onClick={logout} 
+
+        <DropdownMenuItem
+          onClick={logout}
           className="cursor-pointer gap-2 text-destructive focus:bg-destructive focus:text-white group"
         >
           <LogOut className="h-4 w-4 text-destructive group-focus:text-white" />

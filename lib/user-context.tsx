@@ -35,7 +35,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [comparisonList, setComparisonList] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
-  const supabase = createClient()
+  // Stable client reference — createBrowserClient is a singleton but memoizing avoids lint warnings
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   const recalculateCFA = useCallback(async (userId: string, updatedGrades: UserGrade[], courseGroup: string) => {
@@ -124,11 +125,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const initialize = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          await loadUser(session.user.id, {
-            email: session.user.email,
-            full_name: session.user.user_metadata?.full_name,
+        // getUser() validates with the server — more reliable than getSession() on reload
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await loadUser(user.id, {
+            email: user.email,
+            full_name: user.user_metadata?.full_name,
           })
         }
       } finally {

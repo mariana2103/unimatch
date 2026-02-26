@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { AICounselor } from '@/components/ai-counselor'
+import { CourseExplorer } from '@/components/course-explorer'
 import { AlertCircle, X, Construction } from 'lucide-react'
 import Link from 'next/link'
 import { useUser } from '@/lib/user-context'
@@ -83,9 +84,7 @@ export default function Home() {
         </div>
 
         {activeTab === 'explorer' && (
-          <div className="mx-auto max-w-7xl px-4 py-8 text-center">
-            <h2 className="text-2xl font-bold">Explorar Cursos</h2>
-          </div>
+          <CourseExplorer />
         )}
 
         {activeTab === 'timeline' && (

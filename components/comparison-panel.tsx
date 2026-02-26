@@ -5,28 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useUser } from '@/lib/user-context'
-import { COURSES } from '@/lib/constants'
+import type { CourseUI } from '@/lib/types'
 
-export function ComparisonPanel() {
-  const { comparisonList, clearComparison, toggleComparison, profile } = useUser()
+interface ComparisonPanelProps {
+  courses: CourseUI[]
+}
+
+export function ComparisonPanel({ courses }: ComparisonPanelProps) {
+  const { comparisonList, clearComparison, toggleComparison } = useUser()
 
   const selectedCourses = comparisonList
-    .map(id => COURSES.find(c => c.id === id))
-    .filter(Boolean)
+    .map(id => courses.find(c => c.id === id))
+    .filter((c): c is CourseUI => c !== undefined)
 
   if (selectedCourses.length === 0) return null
 
-  const getNotaCorte = (course: typeof selectedCourses[0]) => {
-    if (!course) return 0
-    let nota = course.notaUltimoColocado
-    if (profile.contingentes.length > 0 && course.contingentes) {
-      for (const cId of profile.contingentes) {
-        if (course.contingentes[cId] !== undefined && course.contingentes[cId] < nota) {
-          nota = course.contingentes[cId]
-        }
-      }
-    }
-    return nota
+  const trend = (course: CourseUI) => {
+    if (!course.historico || course.historico.length < 2) return null
+    const first = course.historico[0].nota
+    const last = course.historico[course.historico.length - 1].nota
+    return last - first
   }
 
   return (
@@ -47,30 +45,33 @@ export function ComparisonPanel() {
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
             {selectedCourses.map(course => {
-              if (!course) return null
-              const nota = getNotaCorte(course)
+              const delta = trend(course)
               return (
                 <div key={course.id} className="relative flex flex-col gap-2.5 rounded-lg border border-border/50 bg-card p-3">
-                  <button onClick={() => toggleComparison(course.id)}
+                  <button
+                    onClick={() => toggleComparison(course.id)}
                     className="absolute right-2 top-2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    aria-label={`Remover ${course.name}`}>
+                    aria-label={`Remover ${course.nome}`}
+                  >
                     <X className="h-3 w-3" />
                   </button>
                   <div>
-                    <h4 className="pr-6 text-xs font-semibold text-foreground">{course.name}</h4>
-                    <p className="text-[10px] text-muted-foreground">{course.university}</p>
+                    <h4 className="pr-6 text-xs font-semibold text-foreground">{course.nome}</h4>
+                    <p className="text-[10px] text-muted-foreground">{course.instituicao}</p>
                   </div>
                   <div className="flex flex-col gap-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Ultimo colocado</span>
-                      <span className="font-bold tabular-nums text-navy">{nota.toFixed(1)}</span>
+                      <span className="font-bold tabular-nums text-navy">
+                        {course.notaUltimoColocado !== null ? course.notaUltimoColocado.toFixed(1) : '—'}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Vagas</span>
-                      <span className="font-semibold">{course.vagas}</span>
+                      <span className="font-semibold">{course.vagas ?? '—'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <MapPin className="h-2.5 w-2.5" />{course.district}
+                      <MapPin className="h-2.5 w-2.5" />{course.distrito}
                     </div>
                     <div className="flex flex-col gap-0.5">
                       {course.provasIngresso.map(p => (
@@ -79,10 +80,12 @@ export function ComparisonPanel() {
                         </span>
                       ))}
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <TrendingUp className="h-2.5 w-2.5" />
-                      +{(course.historico[2].nota - course.historico[0].nota).toFixed(1)} pts (3 anos)
-                    </div>
+                    {delta !== null && (
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <TrendingUp className="h-2.5 w-2.5" />
+                        {delta >= 0 ? '+' : ''}{delta.toFixed(1)} pts (histórico)
+                      </div>
+                    )}
                   </div>
                 </div>
               )

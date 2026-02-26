@@ -28,6 +28,7 @@ export interface UserExam {
   exam_year: number
 }
 
+// Raw DB row
 export interface Course {
   id: string
   nome: string
@@ -41,7 +42,25 @@ export interface Course {
   peso_exames: number | null
   link_oficial: string | null
   is_promoted: boolean
-  history: any 
+  history: any
+}
+
+// Enriched course used by all UI components
+export interface CourseUI {
+  id: string
+  nome: string
+  instituicao: string       // instituicao_nome in DB
+  distrito: string
+  area: string
+  tipo: 'publica' | 'privada'
+  vagas: number | null
+  notaUltimoColocado: number | null   // nota_ultimo_colocado
+  pesoSecundario: number | null       // peso_secundario
+  pesoExame: number | null            // peso_exames
+  notaMinima: number | null           // nota_minima_p_ingresso
+  provasIngresso: { code: string; name: string; weight: number }[]
+  historico: { year: number; nota: number }[] | null
+  link_oficial: string | null
 }
 
 export interface CourseRequirement {

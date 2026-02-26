@@ -1,60 +1,50 @@
 'use client'
 
-import { MapPin, BookOpen, Users, TrendingUp, CheckCircle2, XCircle, GitCompareArrows, Building2, Lock } from 'lucide-react'
+import { MapPin, BookOpen, TrendingUp, CheckCircle2, XCircle, GitCompareArrows, Lock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade } from '@/lib/data'
-import type { Course } from '@/lib/types'
+import type { CourseUI } from '@/lib/types'
 
 interface CourseCardProps {
-  course: Course
-  onViewDetails: (course: Course) => void
+  course: CourseUI
+  onViewDetails: (course: CourseUI) => void
 }
 
 const AREA_COLORS: Record<string, string> = {
-  'Engenharia': 'bg-blue-50 text-blue-700 border-blue-200',
-  'Saude': 'bg-rose-50 text-rose-700 border-rose-200',
-  'Ciencias': 'bg-teal-50 text-teal-700 border-teal-200',
-  'Economia e Gestao': 'bg-amber-50 text-amber-700 border-amber-200',
-  'Artes': 'bg-pink-50 text-pink-700 border-pink-200',
-  'Direito e Ciencias Sociais': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  'Educacao': 'bg-orange-50 text-orange-700 border-orange-200',
-  'Informatica': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Engenharia e Tecnologia': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Ciências da Vida e Saúde': 'bg-rose-50 text-rose-700 border-rose-200',
+  'Ciências Exatas e da Natureza': 'bg-teal-50 text-teal-700 border-teal-200',
+  'Economia, Gestão e Contabilidade': 'bg-amber-50 text-amber-700 border-amber-200',
+  'Artes e Design': 'bg-pink-50 text-pink-700 border-pink-200',
+  'Direito, Ciências Sociais e Humanas': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  'Educação e Desporto': 'bg-orange-50 text-orange-700 border-orange-200',
+  'Informática e Dados': 'bg-cyan-50 text-cyan-700 border-cyan-200',
 }
 
 export function CourseCard({ course, onViewDetails }: CourseCardProps) {
-  const { isLoggedIn, profile, comparisonList, toggleComparison } = useUser()
+  const { isLoggedIn, profile, exams, comparisonList, toggleComparison } = useUser()
   const isComparing = comparisonList.includes(course.id)
 
-  // Determine nota de corte based on user contingentes
-  let notaCorte = course.notaUltimoColocado
-  let contingentLabel = ''
-  if (profile.contingentes.length > 0 && course.contingentes) {
-    for (const cId of profile.contingentes) {
-      if (course.contingentes[cId] !== undefined && course.contingentes[cId] < notaCorte) {
-        notaCorte = course.contingentes[cId]
-        contingentLabel = cId
-      }
-    }
-  }
+  const notaCorte = course.notaUltimoColocado
 
   let userGrade = 0
   let meetsMinimum = false
   let hasRequiredExams = false
   let aboveCutoff = false
 
-  if (isLoggedIn && profile.mediaSecundario > 0) {
+  if (isLoggedIn && profile && profile.media_final_calculada > 0) {
     const result = calculateAdmissionGrade(
-      profile.mediaSecundario,
-      profile.exams.map(e => ({ subjectCode: e.subjectCode, grade: e.grade })),
+      profile.media_final_calculada,
+      exams.map(e => ({ subjectCode: e.exam_code, grade: e.grade })),
       course
     )
     userGrade = result.grade
     meetsMinimum = result.meetsMinimum
     hasRequiredExams = result.hasRequiredExams
-    aboveCutoff = userGrade >= notaCorte
+    aboveCutoff = notaCorte !== null && userGrade >= notaCorte
   }
 
   return (
@@ -67,16 +57,16 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <h3 className="truncate text-sm font-semibold text-foreground">{course.name}</h3>
+              <h3 className="truncate text-sm font-semibold text-foreground">{course.nome}</h3>
               {course.tipo === 'privada' && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
             </div>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.university}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.instituicao}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1" onClick={e => e.stopPropagation()}>
             <Checkbox
               checked={isComparing}
               onCheckedChange={() => toggleComparison(course.id)}
-              aria-label={`Comparar ${course.name}`}
+              aria-label={`Comparar ${course.nome}`}
               className="h-4 w-4 border-border data-[state=checked]:bg-navy data-[state=checked]:text-primary-foreground"
             />
             <GitCompareArrows className="h-3 w-3 text-muted-foreground" />
@@ -90,7 +80,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           </Badge>
           <Badge variant="outline" className="gap-0.5 text-[10px] py-0 px-1.5">
             <MapPin className="h-2.5 w-2.5" />
-            {course.district}
+            {course.distrito}
           </Badge>
           <Badge variant="outline" className="text-[10px] py-0 px-1.5">
             {course.tipo === 'publica' ? 'Publica' : 'Privada'}
@@ -101,35 +91,42 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] text-muted-foreground">Ultimo colocado</span>
-            <span className="text-base font-bold tabular-nums text-navy">{notaCorte.toFixed(1)}</span>
-            {contingentLabel && <span className="text-[9px] text-muted-foreground">cont. {contingentLabel}</span>}
+            <span className="text-base font-bold tabular-nums text-navy">
+              {notaCorte !== null ? notaCorte.toFixed(1) : '—'}
+            </span>
           </div>
           <div className="h-8 w-px bg-border/60" />
           <div className="flex flex-col">
             <span className="text-[10px] text-muted-foreground">Vagas</span>
-            <span className="text-base font-bold tabular-nums text-foreground">{course.vagas}</span>
+            <span className="text-base font-bold tabular-nums text-foreground">
+              {course.vagas ?? '—'}
+            </span>
           </div>
           <div className="h-8 w-px bg-border/60" />
           <div className="flex flex-col">
             <span className="text-[10px] text-muted-foreground">Pesos</span>
             <span className="text-xs font-semibold text-foreground">
-              {(course.pesoSecundario * 100).toFixed(0)}/{(course.pesoExame * 100).toFixed(0)}
+              {course.pesoSecundario !== null && course.pesoExame !== null
+                ? `${(course.pesoSecundario * 100).toFixed(0)}/${(course.pesoExame * 100).toFixed(0)}`
+                : '—'}
             </span>
           </div>
         </div>
 
         {/* Provas */}
-        <div className="flex flex-wrap gap-1">
-          {course.provasIngresso.map(p => (
-            <span key={p.code} className="inline-flex items-center gap-0.5 rounded bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-              <BookOpen className="h-2.5 w-2.5" />
-              {p.code} {p.name} ({(p.weight * 100).toFixed(0)}%)
-            </span>
-          ))}
-        </div>
+        {course.provasIngresso.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {course.provasIngresso.map(p => (
+              <span key={p.code} className="inline-flex items-center gap-0.5 rounded bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <BookOpen className="h-2.5 w-2.5" />
+                {p.code} {p.name} ({(p.weight * 100).toFixed(0)}%)
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* User grade result */}
-        {isLoggedIn && profile.mediaSecundario > 0 && (
+        {isLoggedIn && profile && profile.media_final_calculada > 0 && (
           <div className={`rounded-lg border p-2.5 ${
             !hasRequiredExams
               ? 'border-border/40 bg-muted/20'
@@ -154,10 +151,12 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                       {!meetsMinimum ? 'Nota minima' : 'Abaixo do corte'}
                     </span>
                   )}
-                  <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                    <TrendingUp className="h-2.5 w-2.5" />
-                    {(userGrade - notaCorte) >= 0 ? '+' : ''}{(userGrade - notaCorte).toFixed(1)} pts
-                  </span>
+                  {notaCorte !== null && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                      <TrendingUp className="h-2.5 w-2.5" />
+                      {(userGrade - notaCorte) >= 0 ? '+' : ''}{(userGrade - notaCorte).toFixed(1)} pts
+                    </span>
+                  )}
                 </div>
               </div>
             ) : (

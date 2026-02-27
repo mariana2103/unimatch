@@ -107,7 +107,7 @@ def natureza_to_tipo(natureza: str) -> str:
     return "publica"
 
 def tipo_instituicao_to_tipo(tipo: str) -> str:
-    """Convert vagas.csv 'TIPO INSTITUICAO' column to DB tipo."""
+    """Convert vagas.csv 'SUBSISTEMA' column ("Público"/"Privado") to DB tipo."""
     t = tipo.strip().lower()
     if "priv" in t or "concord" in t or "cooper" in t:
         return "privada"
@@ -126,18 +126,11 @@ def build_history(row: dict) -> list | None:
     entries = []
     for year in YEARS:
         nota = row.get(f"NotaIngressoMedia{year}", "").strip()
-        pct  = row.get(f"PercentilMedio{year}", "").strip()
-        matr = row.get(f"NumeroMatriculadosCNA{year}", "").strip()
         try:
             nota_f = to_float(nota)
             if nota_f == 0:
                 continue
-            entry: dict = {"year": year, "nota": nota_f}
-            if pct:
-                entry["percentil"] = to_float(pct)
-            if matr:
-                entry["matriculados"] = int(to_float(matr))
-            entries.append(entry)
+            entries.append({"year": year, "nota": nota_f})
         except (ValueError, TypeError):
             pass
     return entries if entries else None
@@ -286,7 +279,7 @@ def main():
 
         nome        = vrow.get("CURSO", "").strip()
         instituicao = vrow.get("IES", "").strip()
-        tipo        = tipo_instituicao_to_tipo(vrow.get("TIPO INSTITUICAO", ""))
+        tipo        = tipo_instituicao_to_tipo(vrow.get("SUBSISTEMA", ""))
         cnaef       = vrow.get("COD CNAEF", "").strip()
         try:
             vagas_val = int(vrow.get("TOTAL VAGAS", ""))

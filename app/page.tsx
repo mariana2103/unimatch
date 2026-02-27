@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { AICounselor } from '@/components/ai-counselor'
 import { CourseExplorer } from '@/components/course-explorer'
+import { DGESTimeline } from '@/components/dges-timeline'
 import { AlertCircle, X } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 
@@ -69,11 +70,7 @@ export default function Home() {
           <CourseExplorer />
         )}
 
-        {activeTab === 'timeline' && (
-          <div className="mx-auto max-w-7xl px-4 py-8 text-center">
-            <h2 className="text-2xl font-bold">Calendário 2025</h2>
-          </div>
-        )}
+        {activeTab === 'timeline' && <DGESTimeline />}
       </main>
 
       <AICounselor isOpen={aiOpen} onClose={() => setAiOpen(false)} />

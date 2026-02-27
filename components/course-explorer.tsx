@@ -71,14 +71,27 @@ export function CourseExplorer() {
   const deferredFilters = useDeferredValue(filters)
 
   useEffect(() => {
+    const fetchAll = async (table: string, supabase: ReturnType<typeof createClient>) => {
+      const PAGE = 1000
+      const all: any[] = []
+      let from = 0
+      while (true) {
+        const { data, error } = await supabase.from(table).select('*').range(from, from + PAGE - 1)
+        if (error || !data || data.length === 0) break
+        all.push(...data)
+        if (data.length < PAGE) break
+        from += PAGE
+      }
+      return all
+    }
+
     const fetchCourses = async () => {
       const supabase = createClient()
-      const [{ data: courseRows }, { data: reqRows }] = await Promise.all([
-        supabase.from('courses').select('*').order('nome'),
-        supabase.from('course_requirements').select('*'),
+      const [courseRows, reqs] = await Promise.all([
+        fetchAll('courses', supabase),
+        fetchAll('course_requirements', supabase),
       ])
-      const reqs = reqRows ?? []
-      setCourses((courseRows ?? []).map(row => transformCourse(row, reqs)))
+      setCourses(courseRows.sort((a, b) => a.nome.localeCompare(b.nome, 'pt')).map(row => transformCourse(row, reqs)))
       setLoading(false)
     }
     fetchCourses()

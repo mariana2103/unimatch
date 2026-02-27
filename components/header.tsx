@@ -1,6 +1,6 @@
 'use client'
 
-import { GraduationCap, CalendarDays, Search } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search, Sparkles } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'
 import { UserMenu } from './user-menu'
@@ -69,8 +69,22 @@ export function Header({
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
+        <div className="flex items-center gap-3">
+          {/* AI Counselor toggle */}
+          <button
+            onClick={() => setIsAISidebarOpen(!isAISidebarOpen)}
+            className={cn(
+              'hidden sm:inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-all border',
+              isAISidebarOpen
+                ? 'bg-navy text-white border-navy shadow-sm shadow-navy/20'
+                : 'border-border/60 text-muted-foreground hover:text-foreground hover:border-navy/30 hover:bg-navy/5',
+            )}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Conselheiro IA
+          </button>
+
+          <div className="h-6 w-px bg-border/60 hidden sm:block" />
 
           <div className="flex items-center">
             {isLoggedIn ? (

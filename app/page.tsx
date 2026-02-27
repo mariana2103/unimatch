@@ -5,9 +5,11 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { AICounselor } from '@/components/ai-counselor'
 import { CourseExplorer } from '@/components/course-explorer'
+import { CourseDetailDialog } from '@/components/course-detail-dialog'
 import { DGESTimeline } from '@/components/dges-timeline'
 import { AlertCircle, X } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
+import type { CourseUI } from '@/lib/types'
 
 function AuthErrorBanner() {
   const searchParams = useSearchParams()
@@ -41,6 +43,8 @@ function AuthErrorBanner() {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('explorer')
   const [aiOpen, setAiOpen] = useState(false)
+  const [allCourses, setAllCourses] = useState<CourseUI[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<CourseUI | null>(null)
   const { isNewUser, clearNewUser } = useUser()
   const router = useRouter()
 
@@ -67,13 +71,29 @@ export default function Home() {
 
       <main className="flex-1">
         {activeTab === 'explorer' && (
-          <CourseExplorer />
+          <CourseExplorer
+            onCoursesLoaded={setAllCourses}
+            onViewDetails={setSelectedCourse}
+          />
         )}
 
         {activeTab === 'timeline' && <DGESTimeline />}
       </main>
 
-      <AICounselor isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+      <AICounselor
+        isOpen={aiOpen}
+        onClose={() => setAiOpen(false)}
+        courses={allCourses}
+        onViewDetails={course => {
+          setSelectedCourse(course)
+          setAiOpen(false)
+        }}
+      />
+
+      <CourseDetailDialog
+        course={selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+      />
 
       <footer className="border-t border-border/40 bg-white py-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4">

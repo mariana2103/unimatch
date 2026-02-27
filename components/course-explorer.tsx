@@ -1,18 +1,19 @@
 'use client'
 
 import { useState, useEffect, useMemo, useDeferredValue } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/user-context'
 import { CourseFilters, type Filters } from './course-filters'
 import { CourseCard } from './course-card'
-import { CourseDetailDialog } from './course-detail-dialog'
 import { ComparisonPanel } from './comparison-panel'
 import { EXAM_SUBJECTS } from '@/lib/constants'
 import { calculateAdmissionGrade } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
 
 type SortOrder = 'none' | 'asc' | 'desc'
+
+const COURSES_PER_PAGE = 99
 
 function transformCourse(row: any, reqs: any[]): CourseUI {
   return {
@@ -59,16 +60,26 @@ const SORT_LABELS: Record<SortOrder, { label: string; icon: typeof ArrowUpDown }
   desc: { label: 'Nota ↓', icon: ArrowDown },
 }
 
-export function CourseExplorer() {
+interface CourseExplorerProps {
+  onCoursesLoaded?: (courses: CourseUI[]) => void
+  onViewDetails?: (course: CourseUI) => void
+}
+
+export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplorerProps) {
   const { isLoggedIn, profile, exams, comparisonList } = useUser()
   const [courses, setCourses] = useState<CourseUI[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [sortOrder, setSortOrder] = useState<SortOrder>('none')
-  const [selectedCourse, setSelectedCourse] = useState<CourseUI | null>(null)
+  const [currentPage, setCurrentPage] = useState(0)
 
   // Defer the filter state so typing in search doesn't block the UI
   const deferredFilters = useDeferredValue(filters)
+
+  // Reset to page 0 when filters change
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [deferredFilters, sortOrder])
 
   useEffect(() => {
     const fetchAll = async (table: string, supabase: ReturnType<typeof createClient>) => {
@@ -91,7 +102,11 @@ export function CourseExplorer() {
         fetchAll('courses', supabase),
         fetchAll('course_requirements', supabase),
       ])
-      setCourses(courseRows.sort((a, b) => a.nome.localeCompare(b.nome, 'pt')).map(row => transformCourse(row, reqs)))
+      const transformed = courseRows
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt'))
+        .map(row => transformCourse(row, reqs))
+      setCourses(transformed)
+      onCoursesLoaded?.(transformed)
       setLoading(false)
     }
     fetchCourses()
@@ -153,6 +168,12 @@ export function CourseExplorer() {
     return result
   }, [courses, deferredFilters, userExamCodes, userGradeMap, sortOrder])
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / COURSES_PER_PAGE))
+  const safePage = Math.min(currentPage, totalPages - 1)
+  const pageStart = safePage * COURSES_PER_PAGE
+  const pageEnd = pageStart + COURSES_PER_PAGE
+  const paginated = filtered.slice(pageStart, pageEnd)
+
   const cycleSortOrder = () => {
     setSortOrder(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none')
   }
@@ -183,6 +204,11 @@ export function CourseExplorer() {
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
           {filtered.length} {filtered.length === 1 ? 'curso encontrado' : 'cursos encontrados'}
+          {totalPages > 1 && (
+            <span className="ml-1.5 text-muted-foreground/60">
+              · página {safePage + 1} de {totalPages}
+            </span>
+          )}
         </p>
         <button
           onClick={cycleSortOrder}
@@ -197,13 +223,13 @@ export function CourseExplorer() {
         </button>
       </div>
 
-      {filtered.length > 0 ? (
+      {paginated.length > 0 ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(course => (
+          {paginated.map(course => (
             <CourseCard
               key={course.id}
               course={course}
-              onViewDetails={setSelectedCourse}
+              onViewDetails={onViewDetails ?? (() => {})}
             />
           ))}
         </div>
@@ -214,10 +240,55 @@ export function CourseExplorer() {
         </div>
       )}
 
-      <CourseDetailDialog
-        course={selectedCourse}
-        onClose={() => setSelectedCourse(null)}
-      />
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+            disabled={safePage === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-navy/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Anterior
+          </button>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let page = i
+              if (totalPages > 7) {
+                // Show pages around current
+                const half = 3
+                let start = Math.max(0, safePage - half)
+                const end = Math.min(totalPages - 1, start + 6)
+                start = Math.max(0, end - 6)
+                page = start + i
+              }
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`h-8 w-8 rounded-lg text-sm font-medium transition-all ${
+                    page === safePage
+                      ? 'bg-navy text-white shadow-sm'
+                      : 'text-muted-foreground hover:bg-slate-100 hover:text-foreground'
+                  }`}
+                >
+                  {page + 1}
+                </button>
+              )
+            })}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={safePage >= totalPages - 1}
+            className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-navy/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          >
+            Seguinte
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -52,6 +52,51 @@ interface RankedCourse {
   score: number
 }
 
+// ─── Course context builder ────────────────────────────────────────────────────
+// Searches loaded courses by the user's message keywords and returns a
+// compact context block with real DB numbers for the AI to cite.
+
+function buildCourseContext(message: string, courses: CourseUI[]): string {
+  if (courses.length === 0) return ''
+
+  const q = message.toLowerCase()
+  const words = q.split(/\s+/).filter(w => w.length >= 3)
+  if (words.length === 0) return ''
+
+  // Score each course by how many query words appear in its searchable fields
+  const scored = courses
+    .map(c => {
+      const haystack = `${c.nome} ${c.area} ${c.instituicao}`.toLowerCase()
+      let score = 0
+      for (const w of words) {
+        if (haystack.includes(w)) score++
+      }
+      return { c, score }
+    })
+    .filter(x => x.score > 0)
+
+  if (scored.length === 0) return ''
+
+  // If asking for the lowest/easiest entry, sort ascending by cutoff
+  const wantsLowest = /baixa|baixo|m[íi]nima|menor|m[íi]nimo|mais f[áa]cil|f[áa]cil/.test(q)
+  const sorted = wantsLowest
+    ? scored
+        .filter(x => x.c.notaUltimoColocado !== null)
+        .sort((a, b) => (a.c.notaUltimoColocado ?? 999) - (b.c.notaUltimoColocado ?? 999))
+    : scored.sort((a, b) => b.score - a.score)
+
+  const top = sorted.slice(0, 15)
+
+  const lines = top.map(({ c }) => {
+    const corte = c.notaUltimoColocado !== null
+      ? (c.notaUltimoColocado / 10).toFixed(1)
+      : 'sem dados'
+    return `• ${c.nome} — ${c.instituicao} (${c.distrito}) | Último colocado: ${corte} | Vagas: ${c.vagas ?? '?'}`
+  }).join('\n')
+
+  return `\n\n[Dados reais da base de dados UniMatch — ${top.length} cursos relevantes:\n${lines}\nResponde sempre com base nestes dados concretos.]`
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const RESULTS_PER_PAGE = 30
@@ -180,6 +225,10 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     if (isLoggedIn && profile && chatMessages.length === 0) {
       content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20), Distrito: ${(profile as any).distrito_residencia || 'N/D'}]`
     }
+
+    // Inject real course data from the loaded DB whenever the query matches courses
+    const courseCtx = buildCourseContext(text, courses)
+    if (courseCtx) content += courseCtx
 
     setChatMessages(prev => [...prev, { role: 'user', content }])
     setIsChatLoading(true)

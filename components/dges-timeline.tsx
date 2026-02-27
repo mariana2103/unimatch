@@ -61,7 +61,7 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
   return (
     <div className={`relative rounded-2xl border p-4 transition-all ${
       status === 'past'
-        ? 'border-border/50 bg-slate-50 opacity-60'
+        ? 'border-border/50 bg-slate-50 opacity-90'
         : status === 'active'
           ? 'border-emerald-200 bg-emerald-50 shadow-sm'
           : 'border-border/60 bg-white shadow-sm hover:border-navy/20 hover:shadow'

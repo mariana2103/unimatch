@@ -146,7 +146,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         })()}
 
         {/* User grade result */}
-        {isLoggedIn && profile && profile.media_final_calculada > 0 && (
+        {isLoggedIn && profile && profile.media_final_calculada > 0 && notaCorte !== null && (
           <div className={`rounded-xl border px-3.5 py-3 ${
             !hasRequiredExams
               ? 'border-border/40 bg-muted/20'

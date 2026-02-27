@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  Area, AreaChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
+  Area, AreaChart, XAxis, YAxis, CartesianGrid,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
@@ -34,30 +34,29 @@ export function GradeEvolutionChart({ historico }: Props) {
           config={{ nota: { label: 'Nota', color: navyColor } }}
           className="h-[160px] w-full"
         >
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={historico} margin={{ top: 8, right: 10, left: 0, bottom: 5 }}>
-              <defs>
-                <linearGradient id="gradNota" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={navyColor} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={navyColor} stopOpacity={0.01} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="year" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-              <YAxis domain={[minY, maxY]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={32} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area
-                type="monotoneX"
-                dataKey="nota"
-                stroke={navyColor}
-                strokeWidth={2.5}
-                fill="url(#gradNota)"
-                dot={{ r: 3.5, fill: navyColor, stroke: navyColor, strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: navyColor, stroke: '#fff', strokeWidth: 2 }}
-                name="Nota"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <AreaChart data={historico} margin={{ top: 8, right: 10, left: 0, bottom: 5 }}>
+            <defs>
+              <linearGradient id="gradNota" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={navyColor} stopOpacity={0.15} />
+                <stop offset="95%" stopColor={navyColor} stopOpacity={0.01} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <XAxis dataKey="year" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+            <YAxis domain={[minY, maxY]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={32} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Area
+              type="monotoneX"
+              dataKey="nota"
+              stroke={navyColor}
+              strokeWidth={2.5}
+              fill="url(#gradNota)"
+              dot={{ r: 3.5, fill: navyColor, stroke: navyColor, strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: navyColor, stroke: '#fff', strokeWidth: 2 }}
+              name="Nota"
+              isAnimationActive={false}
+            />
+          </AreaChart>
         </ChartContainer>
         <div className="mt-1 flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
           <TrendingUp className={`h-2.5 w-2.5 ${trend >= 0 ? 'text-navy' : 'text-destructive'}`} />

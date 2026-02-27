@@ -104,7 +104,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             )
           })()}
 
-          {isLoggedIn && profile && profile.media_final_calculada > 0 && (
+          {isLoggedIn && profile && profile.media_final_calculada > 0 && notaCorte !== null && (
             <div className={`rounded-lg border p-3 ${
               !hasRequiredExams
                 ? 'border-border/40 bg-muted/20'

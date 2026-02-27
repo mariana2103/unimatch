@@ -168,7 +168,7 @@ export function CourseExplorer() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8 flex flex-col gap-6">
+    <div className="mx-[10%] max-w-7xl px-6 py-8 flex flex-col gap-6">
       <CourseFilters
         filters={filters}
         onFiltersChange={setFilters}

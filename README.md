@@ -1,57 +1,59 @@
+
 # <img src="assets/uni-match-icon.png" height="45" /> UniMatch
 
 <p align="left">
-  <img src="https://img.shields.io/badge/Status-In_Development-ebbcba?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge" />
-  <a href="https://www.unimatch.pt/"><img src="https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge" /></a>
+<img src="[https://img.shields.io/badge/Status-Beta-ebbcba?style=for-the-badge](https://www.google.com/search?q=https://img.shields.io/badge/Status-Beta-ebbcba%3Fstyle%3Dfor-the-badge)" />
+<img src="[https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge](https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge)" />
+<a href="[https://www.unimatch.pt/](https://www.unimatch.pt/)"><img src="[https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge](https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge)" /></a>
 </p>
 
 **UniMatch** is a data-driven ecosystem designed to replace the anxiety of Portuguese university applications with clarity.
 
-Beyond just calculating grades, UniMatch bridges the gap between ambition and eligibility. Whether you're struggling with complex rounding rules, facing grades lower than your dream course requires, or feeling lost among thousands of options, UniMatch provides a map. By leveraging semantic AI and predictive analytics, we turn fragmented data into a personalized strategy, helping every student find their place in Higher Education, even when they don't yet know where they belong.
+In a landscape where admission data is scattered across PDFs and fragmented portals, UniMatch centralizes the journey. We don't just calculate grades; we bridge the gap between ambition and eligibility. By turning complex DGES rounding rules and historical cut-offs into a personalized strategy, we help students navigate the "Match" between their results and their future.
 
 ---
 
-## 💻 Tech Stack
+## 🚀 Live Functionalities
+
+* **Precision GPA Engine:** Full support for internal secondary school average (CFA) calculations for both **Scientific-Humanistic** and **Professional** pathways, following official rounding rules.
+* **The Match Algorithm:** A relational engine that cross-references your exam grades with specific university weightings to tell you exactly where you stand.
+* **Eligibility & Exam Filtering:** Instantly see which courses you can actually apply for based on the exams you've taken and the minimum GPA requirements.
+* **Unified Directory:** Search and filter Public and Private institutions by district, academic area, and type.
+* **Application Timeline:** A dynamic calendar view for national exam dates and application phases to ensure no deadlines are missed.
+* **Student Dashboard:** Secure Google/Email authentication to track your grades, save favorite courses, and monitor your progress.
+
+---
+
+## 🛠 Tech Stack
 
 <p align="left">
-  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+<img src="[https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)" />
+<img src="[https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)" />
+<img src="[https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)" />
+<img src="[https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)" />
+<img src="[https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)" />
 </p>
 
 ---
 
-## ✨ Key Features
+## 🗺️ Roadmap & Current Status
 
-* **Precision GPA Engine:** Automated calculation of the internal secondary school average (CFA) following official DGES rounding rules.
-* **The Match Algorithm:** A relational engine that cross-references your exam grades with specific university course weightings and historical cut-offs.
-* **Unified Search:** A single source of truth for both Public and Private institutions.
-* **Smart Eligibility:** Instant feedback on whether you meet the minimum entry requirements for a specific course.
+### ✅ Completed
 
----
+* **Relational Database:** Core architecture for institutions and courses.
+* **Logic Engine:** Official grade calculations and eligibility checks.
+* **Authentication & Profiles:** Full User Dashboard integration.
+* **Timeline System:** Key dates for the 2025/26 cycle.
 
-## 🗺️ Roadmap
+### 🚧 Under Construction
 
-### 📍 Phase 1: Foundation (Current Focus)
+* **Data Refinement:** We are currently cleaning and unifying scattered data sources to ensure 100% accuracy for open spots (vagas) and historical minimum grades.
+* **AI Counselor (Beta):** The recommendation engine is live but undergoing tuning. Our LLM assistant (via `pgvector`) is currently being debugged to improve intent-to-curricula matching.
+* **Security & Analytics:** Implementing advanced logging, rate limiting, and performance analytics to ensure a robust user experience.
 
-* [ X ] **Relational Course Directory:** Comprehensive database of Portuguese Public and Private institutions.
-* [ X ] **Exploration Engine:** Search and filter courses by **location (districts)**, **academic area**, and **institution type**.
-* [ X ] **Official Grade Logic:** Rigorous secondary school average calculation (CFA) for both Scientific-Humanistic and **Professional** pathways.
-* [ X ] ⏳**Auth Integration:** Robust Google OAuth and Email/Password flows.
-* [ X ] ⏳**Student Dashboard:** Personal profile to track grades and save favorite courses.
+### 📍 Phase 3: Predictive Analytics (Coming Soon)
 
-### 📍 Phase 2: Intelligence & Semantics
-
-* [ X ] **Smart Eligibility Filter:** Real-time filtering that hides courses you don't meet the minimum requirements for and highlights those where your grade is competitive.
-* [ X ] **AI Counselor:** An LLM-powered assistant using **Vector Embeddings** (`pgvector`) to suggest paths for students who aren't sure what to do with their lives, matching intent to curricula.
-
-### 📍 Phase 3: Predictive Analytics
-
-* [ ] **Trend Predictor:** A regression algorithm analyzing historical cut-offs and current-year exam difficulty to **predict the 2026/27 closing grades** before they are officially released.
-* [ ] **Vacancy Monitoring:** Real-time insights into course popularity and placement probability.
+* **Trend Predictor:** A regression algorithm to predict the 2026/27 closing grades based on exam difficulty trends.
 
 ---
 
@@ -74,11 +76,11 @@ npm run dev
 > "Information is everywhere, yet clarity is nowhere. UniMatch was built for the student who has the grades but lacks a map, turning the overwhelming noise of higher education into a clear path for those still figuring out what to do with their lives."
 
 <p align="left">
-  <a href="https://github.com/mariana2103">
-    <img src="https://img.shields.io/badge/Mariana_Almeida-ebbcba?style=for-the-badge&logo=github&logoColor=191724" alt="GitHub" />
-  </a>
-  &nbsp;
-  <a href="https://www.linkedin.com/in/mcaalmeida/">
-    <img src="https://img.shields.io/badge/LinkedIn-e0def4?style=for-the-badge&logo=linkedin&logoColor=191724" height="28" alt="LinkedIn" />
-  </a>
+<a href="[https://github.com/mariana2103](https://github.com/mariana2103)">
+<img src="[https://img.shields.io/badge/Mariana_Almeida-ebbcba?style=for-the-badge&logo=github&logoColor=191724](https://img.shields.io/badge/Mariana_Almeida-ebbcba?style=for-the-badge&logo=github&logoColor=191724)" alt="GitHub" />
+</a>
+&nbsp;
+<a href="[https://www.linkedin.com/in/mcaalmeida/](https://www.linkedin.com/in/mcaalmeida/)">
+<img src="[https://img.shields.io/badge/LinkedIn-e0def4?style=for-the-badge&logo=linkedin&logoColor=191724](https://img.shields.io/badge/LinkedIn-e0def4?style=for-the-badge&logo=linkedin&logoColor=191724)" height="28" alt="LinkedIn" />
+</a>
 </p>

@@ -70,19 +70,39 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             ))}
           </div>
 
-          {course.provasIngresso.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Provas de Ingresso</span>
-              <div className="flex flex-wrap gap-1.5">
-                {course.provasIngresso.map(p => (
-                  <Badge key={p.code} variant="secondary" className="gap-1 py-1 text-[10px]">
-                    <BookOpen className="h-3 w-3" />
-                    {p.code} {p.name} - {(p.weight * 100).toFixed(0)}%
-                  </Badge>
+          {course.provasIngresso.length > 0 && (() => {
+            const conjuntoMap = new Map<number, typeof course.provasIngresso>()
+            for (const p of course.provasIngresso) {
+              const cid = p.conjunto_id ?? 1
+              if (!conjuntoMap.has(cid)) conjuntoMap.set(cid, [])
+              conjuntoMap.get(cid)!.push(p)
+            }
+            const groups = Array.from(conjuntoMap.values())
+            return (
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Provas de Ingresso</span>
+                {groups.map((exams, i) => (
+                  <div key={i} className="flex flex-col gap-1">
+                    {i > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-px flex-1 bg-border/40" />
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">ou</span>
+                        <div className="h-px flex-1 bg-border/40" />
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {exams.map(p => (
+                        <Badge key={p.code} variant="secondary" className="gap-1.5 py-1 px-2.5 text-[10px]">
+                          <BookOpen className="h-3 w-3" />
+                          {p.code} · {p.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {isLoggedIn && profile && profile.media_final_calculada > 0 && (
             <div className={`rounded-lg border p-3 ${
@@ -117,7 +137,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             </div>
           )}
 
-          <GradeEvolutionChart historico={course.historico} courseName={course.nome} />
+          {course.historico && <GradeEvolutionChart historico={course.historico} />}
         </div>
       </DialogContent>
     </Dialog>

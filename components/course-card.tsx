@@ -13,14 +13,14 @@ interface CourseCardProps {
 }
 
 const AREA_COLORS: Record<string, { badge: string; accent: string }> = {
-  'Engenharia e Tecnologia':            { badge: 'bg-blue-50 text-blue-700 border-blue-200',    accent: 'bg-blue-500' },
-  'Ciências da Vida e Saúde':           { badge: 'bg-rose-50 text-rose-700 border-rose-200',    accent: 'bg-rose-500' },
-  'Ciências Exatas e da Natureza':      { badge: 'bg-teal-50 text-teal-700 border-teal-200',    accent: 'bg-teal-500' },
-  'Economia, Gestão e Contabilidade':   { badge: 'bg-amber-50 text-amber-700 border-amber-200', accent: 'bg-amber-500' },
-  'Artes e Design':                     { badge: 'bg-pink-50 text-pink-700 border-pink-200',    accent: 'bg-pink-500' },
-  'Direito, Ciências Sociais e Humanas':{ badge: 'bg-indigo-50 text-indigo-700 border-indigo-200', accent: 'bg-indigo-500' },
-  'Educação e Desporto':                { badge: 'bg-orange-50 text-orange-700 border-orange-200', accent: 'bg-orange-500' },
-  'Informática e Dados':                { badge: 'bg-cyan-50 text-cyan-700 border-cyan-200',    accent: 'bg-cyan-500' },
+  'Engenharia e Tecnologia':            { badge: 'bg-blue-50 text-blue-600 border-blue-100',    accent: 'bg-blue-200' },
+  'Ciências da Vida e Saúde':           { badge: 'bg-rose-50 text-rose-600 border-rose-100',    accent: 'bg-rose-200' },
+  'Ciências Exatas e da Natureza':      { badge: 'bg-teal-50 text-teal-600 border-teal-100',    accent: 'bg-teal-200' },
+  'Economia, Gestão e Contabilidade':   { badge: 'bg-amber-50 text-amber-600 border-amber-100', accent: 'bg-amber-200' },
+  'Artes e Design':                     { badge: 'bg-pink-50 text-pink-600 border-pink-100',    accent: 'bg-pink-200' },
+  'Direito, Ciências Sociais e Humanas':{ badge: 'bg-indigo-50 text-indigo-600 border-indigo-100', accent: 'bg-indigo-200' },
+  'Educação e Desporto':                { badge: 'bg-orange-50 text-orange-600 border-orange-100', accent: 'bg-orange-200' },
+  'Informática e Dados':                { badge: 'bg-cyan-50 text-cyan-600 border-cyan-100',    accent: 'bg-cyan-200' },
 }
 
 export function CourseCard({ course, onViewDetails }: CourseCardProps) {
@@ -114,20 +114,36 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           </div>
         </div>
 
-        {/* Provas */}
-        {course.provasIngresso.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {course.provasIngresso.map(p => (
-              <span
-                key={p.code}
-                className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600"
-              >
-                <BookOpen className="h-2.5 w-2.5 shrink-0" />
-                {p.code} · {p.name}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Provas grouped by conjunto */}
+        {course.provasIngresso.length > 0 && (() => {
+          const conjuntoMap = new Map<number, typeof course.provasIngresso>()
+          for (const p of course.provasIngresso) {
+            const cid = p.conjunto_id ?? 1
+            if (!conjuntoMap.has(cid)) conjuntoMap.set(cid, [])
+            conjuntoMap.get(cid)!.push(p)
+          }
+          const groups = Array.from(conjuntoMap.values())
+          return (
+            <div className="flex flex-col gap-1">
+              {groups.map((exams, i) => (
+                <div key={i} className="flex items-center flex-wrap gap-1">
+                  {i > 0 && (
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 px-0.5">ou</span>
+                  )}
+                  {exams.map(p => (
+                    <span
+                      key={p.code}
+                      className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500"
+                    >
+                      <BookOpen className="h-2.5 w-2.5 shrink-0" />
+                      {p.code} · {p.name}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )
+        })()}
 
         {/* User grade result */}
         {isLoggedIn && profile && profile.media_final_calculada > 0 && (

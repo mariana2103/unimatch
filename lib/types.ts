@@ -58,7 +58,7 @@ export interface CourseUI {
   pesoSecundario: number | null       // peso_secundario
   pesoExame: number | null            // peso_exames
   notaMinima: number | null           // nota_minima_p_ingresso
-  provasIngresso: { code: string; name: string; weight: number }[]
+  provasIngresso: { code: string; name: string; weight: number; conjunto_id: number }[]
   historico: { year: number; nota: number }[] | null
   link_oficial: string | null
 }

@@ -9,10 +9,9 @@ import { TrendingUp } from 'lucide-react'
 
 interface Props {
   historico: { year: number; nota: number }[]
-  courseName: string
 }
 
-export function GradeEvolutionChart({ historico, courseName }: Props) {
+export function GradeEvolutionChart({ historico }: Props) {
   if (!historico || historico.length === 0) return null
 
   const trend = historico[historico.length - 1].nota - historico[0].nota
@@ -20,16 +19,15 @@ export function GradeEvolutionChart({ historico, courseName }: Props) {
   const maxY = Math.ceil(Math.max(...historico.map(h => h.nota)) / 5) * 5 + 5
 
   const navyColor = '#1a2e4a'
-  const emeraldColor = '#10b981'
 
   return (
     <Card className="border-border/40">
       <CardHeader className="pb-1">
         <CardTitle className="flex items-center gap-1.5 text-xs text-navy">
           <TrendingUp className="h-3.5 w-3.5" />
-          Evolucao da Nota do Ultimo Colocado
+          Evolução da Nota do Último Colocado
         </CardTitle>
-        <CardDescription className="text-[10px]">Ultimos 3 anos</CardDescription>
+        <CardDescription className="text-[10px]">Histórico de entrada</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer
@@ -37,30 +35,33 @@ export function GradeEvolutionChart({ historico, courseName }: Props) {
           className="h-[160px] w-full"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={historico} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <AreaChart data={historico} margin={{ top: 8, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="gradNota" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={navyColor} stopOpacity={0.12} />
+                  <stop offset="5%"  stopColor={navyColor} stopOpacity={0.15} />
                   <stop offset="95%" stopColor={navyColor} stopOpacity={0.01} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey="year" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-              <YAxis domain={[minY, maxY]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis domain={[minY, maxY]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={32} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area
-                type="monotone" dataKey="nota" stroke={navyColor} strokeWidth={2}
+                type="monotoneX"
+                dataKey="nota"
+                stroke={navyColor}
+                strokeWidth={2.5}
                 fill="url(#gradNota)"
-                dot={{ r: 4, fill: navyColor, stroke: '#fff', strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: emeraldColor, stroke: '#fff', strokeWidth: 2 }}
+                dot={{ r: 3.5, fill: navyColor, stroke: navyColor, strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: navyColor, stroke: '#fff', strokeWidth: 2 }}
                 name="Nota"
               />
             </AreaChart>
           </ResponsiveContainer>
         </ChartContainer>
         <div className="mt-1 flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-          <TrendingUp className={`h-2.5 w-2.5 ${trend >= 0 ? 'text-emerald' : 'text-destructive'}`} />
-          {trend >= 0 ? '+' : ''}{trend.toFixed(1)} pontos em 3 anos
+          <TrendingUp className={`h-2.5 w-2.5 ${trend >= 0 ? 'text-navy' : 'text-destructive'}`} />
+          {trend >= 0 ? '+' : ''}{trend.toFixed(1)} pts desde {historico[0].year}
         </div>
       </CardContent>
     </Card>

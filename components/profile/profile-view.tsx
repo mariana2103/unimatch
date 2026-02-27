@@ -18,7 +18,7 @@ export function ProfileView() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl py-8 px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="mx-auto max-w-4xl py-12 px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <ProfileHeader profile={profile} />
 
       <div className="grid gap-8 md:grid-cols-1">

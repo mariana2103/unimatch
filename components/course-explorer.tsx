@@ -33,6 +33,7 @@ function transformCourse(row: any, reqs: any[]): CourseUI {
         code: r.exam_code,
         name: EXAM_SUBJECTS.find(e => e.code === r.exam_code)?.name ?? r.exam_code,
         weight: r.weight,
+        conjunto_id: r.conjunto_id ?? 1,
       })),
     historico: row.history ?? null,
     link_oficial: row.link_oficial,

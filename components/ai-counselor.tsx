@@ -184,6 +184,9 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     setChatMessages(prev => [...prev, { role: 'user', content }])
     setIsChatLoading(true)
 
+    let assistantContent = ''
+    let bubbleAdded = false
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -195,9 +198,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
-      let assistantContent = ''
-
-      setChatMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
       while (true) {
         const { done, value } = await reader.read()
@@ -211,13 +211,21 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
           if (!raw || raw === '[DONE]') continue
           try {
             const { text: t } = JSON.parse(raw)
-            assistantContent += t ?? ''
-            setChatMessages(prev => [
-              ...prev.slice(0, -1),
-              { role: 'assistant', content: assistantContent },
-            ])
+            if (t) {
+              assistantContent += t
+              if (!bubbleAdded) {
+                setChatMessages(prev => [...prev, { role: 'assistant', content: assistantContent }])
+                bubbleAdded = true
+              } else {
+                setChatMessages(prev => [...prev.slice(0, -1), { role: 'assistant', content: assistantContent }])
+              }
+            }
           } catch { /* skip malformed chunks */ }
         }
+      }
+
+      if (!bubbleAdded) {
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem resposta do servidor. Tenta novamente.' }])
       }
     } catch {
       setChatMessages(prev => [

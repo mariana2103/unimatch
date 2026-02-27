@@ -5,7 +5,12 @@ const API_KEY = process.env.IAEDU_API_KEY!
 const CHANNEL_ID = process.env.IAEDU_CHANNEL_ID!
 
 export async function POST(req: Request) {
-  const { message, thread_id } = await req.json()
+  const body = await req.json().catch(() => ({}))
+  const { message, thread_id } = body
+
+  if (!message || typeof message !== 'string') {
+    return Response.json({ error: 'Message is required' }, { status: 400 })
+  }
 
   const formData = new FormData()
   formData.append('channel_id', CHANNEL_ID)

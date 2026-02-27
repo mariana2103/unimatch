@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, BookOpen, Users, CheckCircle2, XCircle } from 'lucide-react'
+import { MapPin, BookOpen, Users, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
@@ -36,6 +36,8 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
     meetsMinimum = result.meetsMinimum
     hasRequiredExams = result.hasRequiredExams
   }
+
+  const nearCutoff = hasRequiredExams && meetsMinimum && notaCorte !== null && Math.abs(userGrade - notaCorte) <= 5
 
   return (
     <Dialog open={!!course} onOpenChange={open => { if (!open) onClose() }}>
@@ -108,9 +110,11 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             <div className={`rounded-lg border p-3 ${
               !hasRequiredExams
                 ? 'border-border/40 bg-muted/20'
-                : userGrade >= (notaCorte ?? 0) && meetsMinimum
-                  ? 'border-emerald/20 bg-emerald/[0.04]'
-                  : 'border-destructive/20 bg-destructive/[0.04]'
+                : nearCutoff
+                  ? 'border-yellow-200 bg-yellow-50'
+                  : userGrade >= (notaCorte ?? 0) && meetsMinimum
+                    ? 'border-emerald/20 bg-emerald/[0.04]'
+                    : 'border-destructive/20 bg-destructive/[0.04]'
             }`}>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">A tua candidatura</span>
               {hasRequiredExams ? (
@@ -121,18 +125,22 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                       ({profile.media_final_calculada.toFixed(1)} x {course.pesoSecundario !== null ? (course.pesoSecundario * 100).toFixed(0) : '?'}%) + (Exames x {course.pesoExame !== null ? (course.pesoExame * 100).toFixed(0) : '?'}%)
                     </div>
                   </div>
-                  {userGrade >= (notaCorte ?? 0) && meetsMinimum ? (
+                  {nearCutoff ? (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-yellow-600">
+                      <AlertCircle className="h-4 w-4" /> Próximo ao corte
+                    </span>
+                  ) : userGrade >= (notaCorte ?? 0) && meetsMinimum ? (
                     <span className="flex items-center gap-1 text-xs font-semibold text-emerald">
                       <CheckCircle2 className="h-4 w-4" /> Acima do corte
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-xs font-semibold text-destructive">
-                      <XCircle className="h-4 w-4" /> {!meetsMinimum ? 'Nota minima' : 'Abaixo do corte'}
+                      <XCircle className="h-4 w-4" /> {!meetsMinimum ? 'Nota mínima' : 'Abaixo do corte'}
                     </span>
                   )}
                 </div>
               ) : (
-                <p className="mt-1 text-[10px] text-muted-foreground">Adiciona as provas necessarias no teu perfil.</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">Adiciona as provas necessárias no teu perfil.</p>
               )}
             </div>
           )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, BookOpen, TrendingUp, CheckCircle2, XCircle, GitCompareArrows, Lock } from 'lucide-react'
+import { MapPin, BookOpen, TrendingUp, CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useUser } from '@/lib/user-context'
@@ -46,6 +46,8 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
     hasRequiredExams = result.hasRequiredExams
     aboveCutoff = notaCorte !== null && userGrade >= notaCorte
   }
+
+  const nearCutoff = hasRequiredExams && meetsMinimum && notaCorte !== null && Math.abs(userGrade - notaCorte) <= 5
 
   return (
     <div
@@ -114,32 +116,21 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           </div>
         </div>
 
-        {/* Provas grouped by conjunto */}
+        {/* Provas — unique names only (groups shown in detail dialog) */}
         {course.provasIngresso.length > 0 && (() => {
-          const conjuntoMap = new Map<number, typeof course.provasIngresso>()
-          for (const p of course.provasIngresso) {
-            const cid = p.conjunto_id ?? 1
-            if (!conjuntoMap.has(cid)) conjuntoMap.set(cid, [])
-            conjuntoMap.get(cid)!.push(p)
-          }
-          const groups = Array.from(conjuntoMap.values())
+          const unique = Array.from(
+            new Map(course.provasIngresso.map(p => [p.code, p])).values()
+          )
           return (
-            <div className="flex flex-col gap-1">
-              {groups.map((exams, i) => (
-                <div key={i} className="flex items-center flex-wrap gap-1">
-                  {i > 0 && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 px-0.5">ou</span>
-                  )}
-                  {exams.map(p => (
-                    <span
-                      key={p.code}
-                      className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500"
-                    >
-                      <BookOpen className="h-2.5 w-2.5 shrink-0" />
-                      {p.code} · {p.name}
-                    </span>
-                  ))}
-                </div>
+            <div className="flex flex-wrap gap-1">
+              {unique.map(p => (
+                <span
+                  key={p.code}
+                  className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500"
+                >
+                  <BookOpen className="h-2.5 w-2.5 shrink-0" />
+                  {p.name}
+                </span>
               ))}
             </div>
           )
@@ -150,9 +141,11 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           <div className={`rounded-xl border px-3.5 py-3 ${
             !hasRequiredExams
               ? 'border-border/40 bg-muted/20'
-              : aboveCutoff && meetsMinimum
-                ? 'border-emerald-200 bg-emerald-50'
-                : 'border-red-200 bg-red-50'
+              : nearCutoff
+                ? 'border-yellow-200 bg-yellow-50'
+                : aboveCutoff && meetsMinimum
+                  ? 'border-emerald-200 bg-emerald-50'
+                  : 'border-red-200 bg-red-50'
           }`}>
             {hasRequiredExams ? (
               <div className="flex items-center justify-between">
@@ -161,7 +154,11 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                   <div className="text-xl font-bold tabular-nums leading-tight">{(userGrade / 10).toFixed(1)}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  {aboveCutoff && meetsMinimum ? (
+                  {nearCutoff ? (
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-yellow-600">
+                      <AlertCircle className="h-3.5 w-3.5" /> Próximo ao corte
+                    </span>
+                  ) : aboveCutoff && meetsMinimum ? (
                     <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
                       <CheckCircle2 className="h-3.5 w-3.5" /> Acima do corte
                     </span>

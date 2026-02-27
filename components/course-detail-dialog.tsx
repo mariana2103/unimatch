@@ -57,8 +57,8 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
 
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Ultimo Colocado', value: notaCorte !== null ? notaCorte.toFixed(1) : '—', highlight: true },
-              { label: 'Nota Minima', value: course.notaMinima !== null ? String(course.notaMinima) : '—', highlight: false },
+              { label: 'Ultimo Colocado', value: notaCorte !== null ? (notaCorte / 10).toFixed(1) : '—', highlight: true },
+              { label: 'Nota Minima', value: course.notaMinima !== null ? (course.notaMinima / 10).toFixed(1) : '—', highlight: false },
               { label: 'Pesos Sec/Exam', value: course.pesoSecundario !== null && course.pesoExame !== null
                   ? `${(course.pesoSecundario * 100).toFixed(0)}/${(course.pesoExame * 100).toFixed(0)}`
                   : '—', highlight: false },
@@ -116,7 +116,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
               {hasRequiredExams ? (
                 <div className="mt-1 flex items-center justify-between">
                   <div>
-                    <div className="text-xl font-bold tabular-nums">{userGrade.toFixed(1)}</div>
+                    <div className="text-xl font-bold tabular-nums">{(userGrade / 10).toFixed(1)}</div>
                     <div className="text-[10px] text-muted-foreground">
                       ({profile.media_final_calculada.toFixed(1)} x {course.pesoSecundario !== null ? (course.pesoSecundario * 100).toFixed(0) : '?'}%) + (Exames x {course.pesoExame !== null ? (course.pesoExame * 100).toFixed(0) : '?'}%)
                     </div>

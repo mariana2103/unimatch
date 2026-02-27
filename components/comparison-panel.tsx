@@ -63,7 +63,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Ultimo colocado</span>
                       <span className="font-bold tabular-nums text-navy text-base">
-                        {course.notaUltimoColocado !== null ? course.notaUltimoColocado.toFixed(1) : '—'}
+                        {course.notaUltimoColocado !== null ? (course.notaUltimoColocado / 10).toFixed(1) : '—'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">

@@ -160,11 +160,21 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
   const [aiProfile, setAiProfile] = useState<AIProfile | null>(null)
   const [profileSummary, setProfileSummary] = useState<string>('')
 
-  // ── Free chat ──
-  const { messages, input, handleInputChange, handleSubmit, append, status } = (useChat as any)({
-    api: '/api/chat',
-  })
+  // ── Free chat — use local state to avoid useChat input binding issues ──
+  const [chatInput, setChatInput] = useState('')
+  const { messages, append, status } = (useChat as any)({ api: '/api/chat' })
   const isChatLoading = status === 'streaming' || status === 'submitted'
+
+  const sendChatMessage = () => {
+    const text = chatInput.trim()
+    if (!text || isChatLoading) return
+    setChatInput('')
+    let content = text
+    if (isLoggedIn && profile && messages?.length === 0) {
+      content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? (profile.media_final_calculada).toFixed(1) : 'N/D'} (escala 0-20), Distrito: ${profile.distrito_residencia || 'N/D'}]`
+    }
+    append({ role: 'user', content })
+  }
 
   // Auto-scroll
   useEffect(() => {
@@ -210,6 +220,31 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     setInputValue('')
   }, [questionStep, answers, conversation])
 
+  // Grade on 0-200 scale (profile.media_final_calculada is 0-20, multiply by 10)
+  const userGrade200 = isLoggedIn && profile && profile.media_final_calculada > 0
+    ? profile.media_final_calculada * 10
+    : null
+
+  // Apply grade-aware multiplier: boost courses within reach, penalise far-above ones
+  const applyGradeBoost = (scored: { id: string; score: number }[]): RankedCourse[] => {
+    return scored
+      .map(({ id, score }) => {
+        const course = courses.find(c => c.id === id)
+        if (!course) return null
+        let s = score
+        if (userGrade200 !== null && course.notaUltimoColocado !== null) {
+          const diff = course.notaUltimoColocado - userGrade200
+          if (diff <= 10) s *= 1.35        // within 1 valor — best match
+          else if (diff <= 20) s *= 1.15   // slightly above — still good
+          else if (diff <= 40) s *= 0.85   // 2-4 valores above — attainable stretch
+          else s *= 0.55                   // too far above — deprioritise
+        }
+        return { course, score: s }
+      })
+      .filter((r): r is RankedCourse => r !== null)
+      .sort((a, b) => b.score - a.score)
+  }
+
   const analyzeAndRank = useCallback(async (finalAnswers: Answers) => {
     try {
       const res = await fetch('/api/ai-recommend', {
@@ -218,25 +253,17 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
         body: JSON.stringify({ answers: finalAnswers }),
       })
 
-      let profile: AIProfile | undefined
+      let aiProfileData: AIProfile | undefined
       if (res.ok) {
         const data = await res.json()
-        profile = { areaWeights: data.areaWeights ?? {}, keywords: data.keywords ?? [] }
-        setAiProfile(profile)
+        aiProfileData = { areaWeights: data.areaWeights ?? {}, keywords: data.keywords ?? [] }
+        setAiProfile(aiProfileData)
         if (data.summary) setProfileSummary(data.summary)
       }
 
-      // Build combined query text from all answers
       const queryText = Object.values(finalAnswers).join(' ')
-
-      const scoredCourses = rankCourses(queryText, courses, profile)
-
-      const rankedWithCourse: RankedCourse[] = scoredCourses
-        .map(({ id, score }) => {
-          const course = courses.find(c => c.id === id)
-          return course ? { course, score } : null
-        })
-        .filter((r): r is RankedCourse => r !== null)
+      const scoredCourses = rankCourses(queryText, courses, aiProfileData)
+      const rankedWithCourse = applyGradeBoost(scoredCourses)
 
       setRanked(rankedWithCourse)
       setResultsPage(0)
@@ -244,15 +271,9 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       setTab('results')
     } catch (err) {
       setIsAnalyzing(false)
-      // Fallback: just rank by keyword match without AI profile
       const queryText = Object.values(finalAnswers).join(' ')
       const scoredCourses = rankCourses(queryText, courses)
-      const rankedWithCourse: RankedCourse[] = scoredCourses
-        .map(({ id, score }) => {
-          const course = courses.find(c => c.id === id)
-          return course ? { course, score } : null
-        })
-        .filter((r): r is RankedCourse => r !== null)
+      const rankedWithCourse = applyGradeBoost(scoredCourses)
       setRanked(rankedWithCourse)
       setResultsPage(0)
       setTab('results')
@@ -563,7 +584,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                   {['Cursos de engenharia?', 'Como funciona a nota?', 'Melhores cursos para medicina?'].map(s => (
                     <button
                       key={s}
-                      onClick={() => handleInputChange({ target: { value: s } } as any)}
+                      onClick={() => setChatInput(s)}
                       className="text-left rounded-xl border bg-white px-3 py-2 text-[11px] text-navy hover:bg-navy/5 transition-colors shadow-sm"
                     >
                       {s}
@@ -603,22 +624,12 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
           <div className="p-3 border-t bg-white shrink-0">
             <form
-              onSubmit={e => {
-                e.preventDefault()
-                if (!input?.trim() || isChatLoading) return
-                if (isLoggedIn && messages.length === 0) {
-                  const ctx = `\n\n[Média: ${profile?.media_final_calculada || 'N/D'}, Distrito: ${profile?.distrito_residencia || 'N/D'}]`
-                  append({ role: 'user', content: input + ctx })
-                  handleInputChange({ target: { value: '' } } as any)
-                } else {
-                  handleSubmit(e)
-                }
-              }}
+              onSubmit={e => { e.preventDefault(); sendChatMessage() }}
               className="relative"
             >
               <input
-                value={input}
-                onChange={handleInputChange}
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
                 placeholder="Pergunta algo..."
                 disabled={isChatLoading}
                 className="w-full rounded-full border bg-slate-50 py-2.5 pl-4 pr-12 text-xs focus:outline-none focus:ring-2 focus:ring-navy/20"
@@ -626,7 +637,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
               <Button
                 type="submit"
                 size="icon"
-                disabled={!(input || '').trim() || isChatLoading}
+                disabled={!chatInput.trim() || isChatLoading}
                 className="absolute right-1.5 top-1.5 h-7 w-7 rounded-full bg-navy hover:bg-navy/90"
               >
                 <Send className="h-3 w-3" />

@@ -22,8 +22,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
 
   const handleAdd = () => {
     const grade = parseFloat(newExamGrade)
-    if (!newExamCode || isNaN(grade)) return
-
+    if (!newExamCode || isNaN(grade) || grade < 0 || grade > 200) return
     startTransition(async () => {
       await addExam({ exam_code: newExamCode, grade, exam_year: new Date().getFullYear() })
       setNewExamCode('')

@@ -95,7 +95,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           <div className="flex flex-col items-center rounded-xl bg-slate-50 px-2 py-2.5">
             <span className="text-[10px] font-medium text-muted-foreground">Último corte</span>
             <span className="mt-0.5 text-lg font-bold tabular-nums text-navy leading-none">
-              {notaCorte !== null ? notaCorte.toFixed(1) : '—'}
+              {notaCorte !== null ? (notaCorte / 10).toFixed(1) : '—'}
             </span>
           </div>
           <div className="flex flex-col items-center rounded-xl bg-slate-50 px-2 py-2.5">
@@ -158,7 +158,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-medium text-muted-foreground">A tua nota</span>
-                  <div className="text-xl font-bold tabular-nums leading-tight">{userGrade.toFixed(1)}</div>
+                  <div className="text-xl font-bold tabular-nums leading-tight">{(userGrade / 10).toFixed(1)}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   {aboveCutoff && meetsMinimum ? (
@@ -174,7 +174,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                   {notaCorte !== null && (
                     <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
                       <TrendingUp className="h-2.5 w-2.5" />
-                      {(userGrade - notaCorte) >= 0 ? '+' : ''}{(userGrade - notaCorte).toFixed(1)} pts
+                      {(userGrade - notaCorte) >= 0 ? '+' : ''}{((userGrade - notaCorte) / 10).toFixed(1)} pts
                     </span>
                   )}
                 </div>

@@ -69,7 +69,7 @@ export function calculateAdmissionGrade(
 
     hasRequiredExams = true
 
-    // Grades are on 0-200 scale; weights sum to 1 within a conjunto
+    // Exam grades are stored on 0-200 scale; weights sum to 1 within a conjunto
     const examComponent = exams.reduce((sum, e) => {
       const u = safeUserExams.find(u => u.subjectCode === e.code)!
       return sum + u.grade * e.weight

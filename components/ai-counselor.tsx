@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useChat } from '@ai-sdk/react'
 import {
   X, Send, GraduationCap, Sparkles, RotateCcw, RefreshCw,
   ChevronLeft, ChevronRight, MessageSquare, Star, ArrowRight,
@@ -41,6 +40,11 @@ interface Answers {
 interface ConversationMsg {
   role: 'ai' | 'user'
   text: string
+}
+
+interface ChatMsg {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 interface RankedCourse {
@@ -148,7 +152,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
   const [tab, setTab] = useState<SidebarTab>('questionnaire')
 
   // ── Questionnaire state ──
-  const [questionStep, setQuestionStep] = useState(0) // current question index
+  const [questionStep, setQuestionStep] = useState(0)
   const [answers, setAnswers] = useState<Partial<Answers>>({})
   const [inputValue, setInputValue] = useState('')
   const [conversation, setConversation] = useState<ConversationMsg[]>([])
@@ -160,26 +164,75 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
   const [aiProfile, setAiProfile] = useState<AIProfile | null>(null)
   const [profileSummary, setProfileSummary] = useState<string>('')
 
-  // ── Free chat — use local state to avoid useChat input binding issues ──
+  // ── Chat state (manual streaming, no useChat hook) ──
   const [chatInput, setChatInput] = useState('')
-  const { messages, append, status } = (useChat as any)({ api: '/api/chat' })
-  const isChatLoading = status === 'streaming' || status === 'submitted'
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([])
+  const [isChatLoading, setIsChatLoading] = useState(false)
+  // Stable thread ID per sidebar session
+  const [threadId] = useState(() => Math.random().toString(36).slice(2, 12))
 
-  const sendChatMessage = () => {
+  const sendChatMessage = async () => {
     const text = chatInput.trim()
     if (!text || isChatLoading) return
     setChatInput('')
+
     let content = text
-    if (isLoggedIn && profile && messages?.length === 0) {
-      content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? (profile.media_final_calculada).toFixed(1) : 'N/D'} (escala 0-20), Distrito: ${profile.distrito_residencia || 'N/D'}]`
+    if (isLoggedIn && profile && chatMessages.length === 0) {
+      content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20), Distrito: ${(profile as any).distrito_residencia || 'N/D'}]`
     }
-    append({ role: 'user', content })
+
+    setChatMessages(prev => [...prev, { role: 'user', content }])
+    setIsChatLoading(true)
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content, thread_id: threadId }),
+      })
+
+      if (!response.ok || !response.body) throw new Error('API error')
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let assistantContent = ''
+
+      setChatMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        for (const line of chunk.split('\n')) {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('data:')) continue
+          const raw = trimmed.slice(5).trim()
+          if (!raw || raw === '[DONE]') continue
+          try {
+            const { text: t } = JSON.parse(raw)
+            assistantContent += t ?? ''
+            setChatMessages(prev => [
+              ...prev.slice(0, -1),
+              { role: 'assistant', content: assistantContent },
+            ])
+          } catch { /* skip malformed chunks */ }
+        }
+      }
+    } catch {
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: 'Ocorreu um erro. Tenta novamente.' },
+      ])
+    } finally {
+      setIsChatLoading(false)
+    }
   }
 
   // Auto-scroll
   useEffect(() => {
     if (isOpen) endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [conversation, messages, isOpen, ranked, tab])
+  }, [conversation, chatMessages, isOpen, ranked, tab])
 
   // Initialize first question
   useEffect(() => {
@@ -206,39 +259,46 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       setConversation(updatedConversation)
       setQuestionStep(prev => prev + 1)
     } else {
-      // All questions answered — analyze
       updatedConversation.push({
         role: 'ai',
         text: 'Perfeito! A analisar o teu perfil e a pesquisar os melhores cursos para ti...',
       })
       setConversation(updatedConversation)
       setIsAnalyzing(true)
-
       await analyzeAndRank(newAnswers as Answers)
     }
 
     setInputValue('')
   }, [questionStep, answers, conversation])
 
-  // Grade on 0-200 scale (profile.media_final_calculada is 0-20, multiply by 10)
+  // User grade on 0-200 scale
   const userGrade200 = isLoggedIn && profile && profile.media_final_calculada > 0
     ? profile.media_final_calculada * 10
     : null
 
-  // Apply grade-aware multiplier: boost courses within reach, penalise far-above ones
+  // Boost courses within reach + quality signal (higher cutoff = more prestigious)
   const applyGradeBoost = (scored: { id: string; score: number }[]): RankedCourse[] => {
     return scored
       .map(({ id, score }) => {
         const course = courses.find(c => c.id === id)
         if (!course) return null
         let s = score
+
+        // Reachability boost relative to user grade
         if (userGrade200 !== null && course.notaUltimoColocado !== null) {
           const diff = course.notaUltimoColocado - userGrade200
           if (diff <= 10) s *= 1.35        // within 1 valor — best match
           else if (diff <= 20) s *= 1.15   // slightly above — still good
-          else if (diff <= 40) s *= 0.85   // 2-4 valores above — attainable stretch
-          else s *= 0.55                   // too far above — deprioritise
+          else if (diff <= 40) s *= 0.85   // 2-4 valores above — stretch
+          else s *= 0.55                   // too far — deprioritise
         }
+
+        // Quality signal: higher cutoff = more competitive/sought-after course
+        if (course.notaUltimoColocado !== null) {
+          const quality = Math.min(1, course.notaUltimoColocado / 200)
+          s = s * 0.85 + quality * 0.15
+        }
+
         return { course, score: s }
       })
       .filter((r): r is RankedCourse => r !== null)
@@ -269,7 +329,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       setResultsPage(0)
       setIsAnalyzing(false)
       setTab('results')
-    } catch (err) {
+    } catch {
       setIsAnalyzing(false)
       const queryText = Object.values(finalAnswers).join(' ')
       const scoredCourses = rankCourses(queryText, courses)
@@ -306,7 +366,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
   const totalPages = Math.ceil(ranked.length / RESULTS_PER_PAGE)
 
   const currentQuestion = QUESTIONS[questionStep]
-  const isLastQuestion = questionStep === QUESTIONS.length - 1
   const questionnaireComplete = ranked.length > 0 || isAnalyzing
 
   // ── Render ──
@@ -366,7 +425,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       {/* ── QUESTIONNAIRE TAB ─────────────────────────────────────────────── */}
       {tab === 'questionnaire' && (
         <>
-          {/* Progress bar */}
           {!questionnaireComplete && (
             <div className="px-4 pt-3 shrink-0">
               <div className="flex items-center justify-between mb-1">
@@ -391,7 +449,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
             </div>
           )}
 
-          {/* Conversation */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
             {conversation.map((msg, i) => (
               <div
@@ -423,11 +480,9 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 </div>
               </div>
             )}
-
             <div ref={endRef} />
           </div>
 
-          {/* Quick-reply chips */}
           {!questionnaireComplete && !isAnalyzing && currentQuestion.chips.length > 0 && (
             <div className="px-3 pb-2 shrink-0">
               <div className="flex flex-wrap gap-1.5">
@@ -444,7 +499,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
             </div>
           )}
 
-          {/* Input */}
           <div className="p-3 border-t bg-white shrink-0">
             {questionnaireComplete ? (
               <button
@@ -456,10 +510,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
               </button>
             ) : (
               <form
-                onSubmit={e => {
-                  e.preventDefault()
-                  submitAnswer(inputValue)
-                }}
+                onSubmit={e => { e.preventDefault(); submitAnswer(inputValue) }}
                 className="relative"
               >
                 <input
@@ -500,7 +551,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
             </div>
           ) : (
             <>
-              {/* Profile summary */}
               {profileSummary && (
                 <div className="px-4 pt-3 pb-2 shrink-0">
                   <div className="rounded-xl bg-navy/5 border border-navy/10 px-3 py-2">
@@ -509,7 +559,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 </div>
               )}
 
-              {/* Courses list */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {currentPageResults.map((r, i) => (
                   <SidebarCourseCard
@@ -523,7 +572,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 <div ref={endRef} />
               </div>
 
-              {/* Pagination */}
               <div className="border-t bg-white p-3 shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <button
@@ -575,7 +623,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       {tab === 'chat' && (
         <>
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
-            {messages.length === 0 ? (
+            {chatMessages.length === 0 ? (
               <div className="space-y-3">
                 <div className="rounded-2xl bg-white border p-4 shadow-sm text-xs text-muted-foreground leading-relaxed">
                   Olá! Sou o teu orientador. Podes fazer-me qualquer pergunta sobre cursos, candidaturas ou o processo da DGES.
@@ -593,11 +641,11 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 </div>
               </div>
             ) : (
-              messages.map((m: any, idx: number) => (
+              chatMessages.map((m, idx) => (
                 <div key={idx} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
-                      'max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed',
+                      'max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed whitespace-pre-wrap',
                       m.role === 'user'
                         ? 'bg-navy text-white rounded-tr-none'
                         : 'bg-white border text-foreground rounded-tl-none',
@@ -608,7 +656,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 </div>
               ))
             )}
-            {isChatLoading && (
+            {isChatLoading && chatMessages[chatMessages.length - 1]?.role !== 'assistant' && (
               <div className="flex justify-start">
                 <div className="bg-white border rounded-2xl rounded-tl-none px-4 py-2.5">
                   <div className="flex gap-1">

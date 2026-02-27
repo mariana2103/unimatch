@@ -37,16 +37,16 @@ Beyond just calculating grades, UniMatch bridges the gap between ambition and el
 
 ### 📍 Phase 1: Foundation (Current Focus)
 
-* [ ] **Relational Course Directory:** Comprehensive database of Portuguese Public and Private institutions.
-* [ ] **Exploration Engine:** Search and filter courses by **location (districts)**, **academic area**, and **institution type**.
-* [ ] **Official Grade Logic:** Rigorous secondary school average calculation (CFA) for both Scientific-Humanistic and **Professional** pathways.
-* [ ] ⏳**Auth Integration:** Robust Google OAuth and Email/Password flows.
-* [ ] ⏳**Student Dashboard:** Personal profile to track grades and save favorite courses.
+* [ X ] **Relational Course Directory:** Comprehensive database of Portuguese Public and Private institutions.
+* [ X ] **Exploration Engine:** Search and filter courses by **location (districts)**, **academic area**, and **institution type**.
+* [ X ] **Official Grade Logic:** Rigorous secondary school average calculation (CFA) for both Scientific-Humanistic and **Professional** pathways.
+* [ X ] ⏳**Auth Integration:** Robust Google OAuth and Email/Password flows.
+* [ X ] ⏳**Student Dashboard:** Personal profile to track grades and save favorite courses.
 
 ### 📍 Phase 2: Intelligence & Semantics
 
-* [ ] **Smart Eligibility Filter:** Real-time filtering that hides courses you don't meet the minimum requirements for and highlights those where your grade is competitive.
-* [ ] **AI Counselor:** An LLM-powered assistant using **Vector Embeddings** (`pgvector`) to suggest paths for students who aren't sure what to do with their lives, matching intent to curricula.
+* [ X ] **Smart Eligibility Filter:** Real-time filtering that hides courses you don't meet the minimum requirements for and highlights those where your grade is competitive.
+* [ X ] **AI Counselor:** An LLM-powered assistant using **Vector Embeddings** (`pgvector`) to suggest paths for students who aren't sure what to do with their lives, matching intent to curricula.
 
 ### 📍 Phase 3: Predictive Analytics
 

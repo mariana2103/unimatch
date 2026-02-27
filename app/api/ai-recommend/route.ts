@@ -1,8 +1,8 @@
-import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
-import { z } from 'zod'
-
 export const maxDuration = 30
+
+const ENDPOINT = process.env.IAEDU_ENDPOINT!
+const API_KEY = process.env.IAEDU_API_KEY!
+const CHANNEL_ID = process.env.IAEDU_CHANNEL_ID!
 
 const AREAS = [
   'Artes e Design',
@@ -15,23 +15,29 @@ const AREAS = [
   'Informática e Dados',
 ]
 
-const schema = z.object({
-  areaWeights: z
-    .record(z.string(), z.number().min(0).max(1))
-    .describe(
-      `Relevance score (0-1) for each course area. Only include areas from this list: ${AREAS.join(', ')}. Higher = more relevant to the student.`,
-    ),
-  keywords: z
-    .array(z.string())
-    .max(20)
-    .describe(
-      'Portuguese keywords from course names or disciplines that match the student. Examples: "engenharia", "medicina", "programação", "design", "psicologia"',
-    ),
-  summary: z
-    .string()
-    .max(200)
-    .describe('One sentence in Portuguese summarizing the student profile and what kind of course suits them'),
-})
+async function readStream(body: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let full = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    const chunk = decoder.decode(value, { stream: true })
+    for (const line of chunk.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed.startsWith('data:')) continue
+      const raw = trimmed.slice(5).trim()
+      if (!raw || raw === '[DONE]') continue
+      try {
+        const parsed = JSON.parse(raw)
+        full += parsed.text ?? parsed.content ?? parsed.message ?? parsed.delta ?? ''
+      } catch {
+        full += raw
+      }
+    }
+  }
+  return full
+}
 
 export async function POST(req: Request) {
   try {
@@ -45,30 +51,48 @@ export async function POST(req: Request) {
       }
     }
 
-    const prompt = `Analisa o perfil deste estudante português e devolve pesos de relevância para as áreas de curso universitário, palavras-chave relevantes, e um resumo do perfil.
+    const prompt = `Analisa o perfil deste estudante português e responde APENAS com um objeto JSON válido (sem markdown, sem explicações).
 
 RESPOSTAS DO QUESTIONÁRIO:
-1. Interesses e paixões: "${answers.interests}"
-2. Ambiente de trabalho preferido: "${answers.environment}"
-3. Preferência social (equipa vs individual): "${answers.social}"
-4. Disciplinas favoritas: "${answers.subjects}"
-5. O que valoriza na carreira: "${answers.career_values}"
+1. Interesses: "${answers.interests}"
+2. Ambiente de trabalho: "${answers.environment}"
+3. Preferência social: "${answers.social}"
+4. Disciplinas: "${answers.subjects}"
+5. Valores de carreira: "${answers.career_values}"
 
-ÁREAS DISPONÍVEIS (só podes usar estas):
-${AREAS.map(a => `- ${a}`).join('\n')}
+ÁREAS DISPONÍVEIS: ${AREAS.join(', ')}
 
-Devolve pesos de 0 a 1 para cada área com base nas respostas acima (0 = nada relevante, 1 = muito relevante).
-Inclui também palavras-chave em português que correspondam a cursos relevantes para este estudante.`
+Responde com este JSON exato:
+{"areaWeights":{"Engenharia e Tecnologia":0.8,"Informática e Dados":0.6},"keywords":["engenharia","programação"],"summary":"Uma frase sobre o perfil do estudante."}`
 
-    const { object } = await generateObject({
-      model: anthropic('claude-haiku-4-5-20251001'),
-      schema,
-      prompt,
+    const formData = new FormData()
+    formData.append('channel_id', CHANNEL_ID)
+    formData.append('thread_id', `recommend-${Date.now()}`)
+    formData.append('user_info', '{}')
+    formData.append('message', prompt)
+
+    const upstream = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY },
+      body: formData,
     })
 
-    return Response.json(object)
+    if (!upstream.ok) throw new Error('API error')
+
+    const text = await readStream(upstream.body!)
+
+    // Extract JSON object from the response
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('No JSON in response')
+
+    const data = JSON.parse(jsonMatch[0])
+    return Response.json({
+      areaWeights: data.areaWeights ?? {},
+      keywords: data.keywords ?? [],
+      summary: data.summary ?? '',
+    })
   } catch (error) {
     console.error('ai-recommend error:', error)
-    return Response.json({ error: 'Falha ao gerar recomendações' }, { status: 500 })
+    return Response.json({ areaWeights: {}, keywords: [], summary: '' })
   }
 }

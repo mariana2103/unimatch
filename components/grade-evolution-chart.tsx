@@ -14,9 +14,10 @@ interface Props {
 export function GradeEvolutionChart({ historico }: Props) {
   if (!historico || historico.length === 0) return null
 
-  const trend = historico[historico.length - 1].nota - historico[0].nota
-  const minY = Math.floor(Math.min(...historico.map(h => h.nota)) / 5) * 5 - 5
-  const maxY = Math.ceil(Math.max(...historico.map(h => h.nota)) / 5) * 5 + 5
+  const data = historico.map(h => ({ ...h, nota: h.nota / 10 }))
+  const trend = data[data.length - 1].nota - data[0].nota
+  const minY = Math.floor(Math.min(...data.map(h => h.nota)) / 0.5) * 0.5 - 0.5
+  const maxY = Math.ceil(Math.max(...data.map(h => h.nota)) / 0.5) * 0.5 + 0.5
 
   const navyColor = '#1a2e4a'
 
@@ -34,7 +35,7 @@ export function GradeEvolutionChart({ historico }: Props) {
           config={{ nota: { label: 'Nota', color: navyColor } }}
           className="h-[160px] w-full"
         >
-          <AreaChart data={historico} margin={{ top: 8, right: 10, left: 0, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="gradNota" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%"  stopColor={navyColor} stopOpacity={0.15} />

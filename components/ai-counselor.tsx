@@ -119,7 +119,7 @@ function SidebarCourseCard({
             </span>
             {course.notaUltimoColocado && (
               <span className="text-[10px] font-bold text-navy ml-auto">
-                {course.notaUltimoColocado.toFixed(1)}
+                {(course.notaUltimoColocado / 10).toFixed(1)}
               </span>
             )}
           </div>

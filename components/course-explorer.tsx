@@ -13,7 +13,7 @@ import type { CourseUI } from '@/lib/types'
 
 type SortOrder = 'none' | 'asc' | 'desc'
 
-const COURSES_PER_PAGE = 99
+const COURSES_PER_PAGE = 48
 
 function transformCourse(row: any, reqs: any[]): CourseUI {
   return {
@@ -189,7 +189,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   }
 
   return (
-    <div className="mx-[10%] max-w-7xl px-6 py-8 flex flex-col gap-6">
+    <div className="mx-[6%] max-w-7xl px-6 py-8 flex flex-col gap-6">
       <CourseFilters
         filters={filters}
         onFiltersChange={setFilters}

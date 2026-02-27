@@ -83,7 +83,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                     {delta !== null && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <TrendingUp className="h-3 w-3" />
-                        {delta >= 0 ? '+' : ''}{delta.toFixed(1)} pts (histórico)
+                        {delta >= 0 ? '+' : ''}{(delta / 10).toFixed(1)} pts (histórico)
                       </div>
                     )}
                   </div>

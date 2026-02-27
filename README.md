@@ -2,9 +2,9 @@
 # <img src="assets/uni-match-icon.png" height="45" /> UniMatch
 
 <p align="left">
-<img src="[https://img.shields.io/badge/Status-Beta-ebbcba?style=for-the-badge](https://www.google.com/search?q=https://img.shields.io/badge/Status-Beta-ebbcba%3Fstyle%3Dfor-the-badge)" />
-<img src="[https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge](https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge)" />
-<a href="[https://www.unimatch.pt/](https://www.unimatch.pt/)"><img src="[https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge](https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge)" /></a>
+  <img src="https://img.shields.io/badge/Status-Beta-ebbcba?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Deployment-Live-e0def4?style=for-the-badge" />
+  <a href="https://www.unimatch.pt/"><img src="https://img.shields.io/badge/Website-unimatch.pt-31748f?style=for-the-badge" /></a>
 </p>
 
 **UniMatch** is a data-driven ecosystem designed to replace the anxiety of Portuguese university applications with clarity.
@@ -23,15 +23,14 @@ In a landscape where admission data is scattered across PDFs and fragmented port
 * **Student Dashboard:** Secure Google/Email authentication to track your grades, save favorite courses, and monitor your progress.
 
 ---
-
 ## 🛠 Tech Stack
 
 <p align="left">
-<img src="[https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)" />
-<img src="[https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)" />
-<img src="[https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)" />
-<img src="[https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)" />
-<img src="[https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)" />
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
 </p>
 
 ---

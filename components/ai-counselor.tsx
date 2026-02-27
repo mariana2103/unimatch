@@ -95,15 +95,19 @@ function buildCourseContext(message: string, courses: CourseUI[]): string {
 
   if (scored.length === 0) return ''
 
-  // If asking for the lowest/easiest entry, sort ascending by cutoff
+  // If asking for the lowest/easiest entry, sort ascending by cutoff.
+  // Courses with no cutoff data go at the end (not excluded entirely).
   const wantsLowest = /baixa|baixo|m[íi]nima|menor|m[íi]nimo|mais f[áa]cil|f[áa]cil/.test(q)
   const sorted = wantsLowest
-    ? scored
-        .filter(x => x.c.notaUltimoColocado !== null)
-        .sort((a, b) => (a.c.notaUltimoColocado ?? 999) - (b.c.notaUltimoColocado ?? 999))
+    ? [
+        ...scored
+          .filter(x => x.c.notaUltimoColocado !== null)
+          .sort((a, b) => (a.c.notaUltimoColocado ?? 999) - (b.c.notaUltimoColocado ?? 999)),
+        ...scored.filter(x => x.c.notaUltimoColocado === null),
+      ]
     : scored.sort((a, b) => b.score - a.score)
 
-  const top = sorted.slice(0, 15)
+  const top = sorted.slice(0, 25)
 
   const lines = top.map(({ c }) => {
     const corte = c.notaUltimoColocado !== null
@@ -112,7 +116,7 @@ function buildCourseContext(message: string, courses: CourseUI[]): string {
     return `• ${c.nome} — ${c.instituicao} (${c.distrito}) | Último colocado: ${corte} | Vagas: ${c.vagas ?? '?'}`
   }).join('\n')
 
-  return `\n\n[Dados reais da base de dados UniMatch — ${top.length} cursos relevantes:\n${lines}\nResponde sempre com base nestes dados concretos.]`
+  return `\n\n[DADOS ATUAIS UniMatch — usa APENAS estes dados, ignora quaisquer cursos mencionados antes nesta conversa:\n${lines}\n]`
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -241,13 +245,10 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
     let content = text
     if (isLoggedIn && profile && chatMessages.length === 0) {
-      content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20). Mostra resultados de todo o país a menos que o aluno especifique uma localização.]`
+      content += `\n\n[Perfil do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20). Quando fores apresentar cursos, usa SEMPRE os dados reais que te são fornecidos em cada mensagem, não inventas valores.]`
     }
 
-    // Inject real course data from the loaded DB whenever the query matches courses
-    const courseCtx = buildCourseContext(text, courses)
-    if (courseCtx) content += courseCtx
-
+    // Course DB lookup is now handled server-side in /api/chat
     // Show only the original text in the bubble; enriched content goes to the API silently
     setChatMessages(prev => [...prev, { role: 'user', content: text }])
     setIsChatLoading(true)

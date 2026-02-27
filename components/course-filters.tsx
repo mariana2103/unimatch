@@ -1,8 +1,7 @@
 'use client'
 
-import { Search, X, ChevronDown, Eye, Target, Check } from 'lucide-react'
+import { Search, X, ChevronDown, Eye, Target, Check, SlidersHorizontal } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DISTRICTS, AREAS, EXAM_SUBJECTS } from '@/lib/constants'
@@ -36,43 +35,44 @@ function MultiSelectPopover({
   selected: string[]
   onToggle: (v: string) => void
 }) {
+  const isActive = selected.length > 0
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${
-            selected.length > 0
-              ? 'border-navy/40 bg-navy/5 text-navy'
-              : 'border-border/60 text-muted-foreground hover:border-navy/30 hover:text-foreground'
+          className={`inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition-all ${
+            isActive
+              ? 'border-navy/40 bg-navy/5 text-navy shadow-sm'
+              : 'border-border/60 bg-white text-muted-foreground hover:border-navy/30 hover:text-foreground hover:bg-slate-50'
           }`}
         >
           {label}
-          {selected.length > 0 && (
-            <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-navy px-1 text-[10px] font-semibold text-white">
+          {isActive && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-navy px-1.5 text-[10px] font-bold text-white">
               {selected.length}
             </span>
           )}
-          <ChevronDown className="h-3 w-3 opacity-50" />
+          <ChevronDown className="h-3.5 w-3.5 opacity-40" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-52 p-1.5" align="start">
-        <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+      <PopoverContent className="w-56 p-2" align="start">
+        <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
           {options.map(opt => {
             const active = selected.includes(opt.value)
             return (
               <button
                 key={opt.value}
                 onClick={() => onToggle(opt.value)}
-                className={`flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors ${
-                  active ? 'bg-navy text-white' : 'text-foreground hover:bg-muted'
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                  active ? 'bg-navy text-white' : 'text-foreground hover:bg-slate-50'
                 }`}
               >
-                <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border ${
-                  active ? 'border-white/50 bg-white/20' : 'border-border'
+                <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                  active ? 'border-white/40 bg-white/20' : 'border-border'
                 }`}>
-                  {active && <Check className="h-2.5 w-2.5" />}
+                  {active && <Check className="h-3 w-3" />}
                 </div>
-                <span className="truncate">{opt.label}</span>
+                <span className="truncate text-xs">{opt.label}</span>
               </button>
             )
           })}
@@ -96,10 +96,10 @@ function SmartFilterButton({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${
+      className={`inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition-all ${
         active
-          ? 'border-navy bg-navy text-white'
-          : 'border-border/60 text-muted-foreground hover:border-navy/30 hover:text-foreground'
+          ? 'border-navy bg-navy text-white shadow-sm'
+          : 'border-border/60 bg-white text-muted-foreground hover:border-navy/30 hover:text-foreground hover:bg-slate-50'
       }`}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -137,7 +137,6 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
       withinRange: false,
     })
 
-  // Active chips for quick removal
   const chips: { label: string; onRemove: () => void }[] = [
     ...filters.areas.map(a => ({ label: a, onRemove: () => toggle('areas', a) })),
     ...filters.districts.map(d => ({ label: d, onRemove: () => toggle('districts', d) })),
@@ -157,20 +156,33 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
   ]
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="rounded-2xl border border-border/50 bg-white p-5 shadow-sm flex flex-col gap-4">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
         <Input
           placeholder="Pesquisar curso ou universidade..."
           value={filters.search}
           onChange={e => update('search', e.target.value)}
-          className="h-9 pl-9"
+          className="h-11 pl-10 rounded-xl border-border/60 bg-slate-50/80 text-sm focus:bg-white transition-colors"
         />
+        {filters.search && (
+          <button
+            onClick={() => update('search', '')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Filter row */}
       <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground/70 mr-1">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtrar por
+        </div>
+
         <MultiSelectPopover
           label="Área"
           options={AREAS.map(a => ({ value: a, label: a }))}
@@ -187,21 +199,21 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
 
         <MultiSelectPopover
           label="Provas"
-          options={EXAM_SUBJECTS.map(e => ({ value: e.code, label: `${e.code} ${e.name}` }))}
+          options={EXAM_SUBJECTS.map(e => ({ value: e.code, label: `${e.code} · ${e.name}` }))}
           selected={filters.provasIngresso}
           onToggle={v => toggle('provasIngresso', v)}
         />
 
-        {/* Tipo inline toggle */}
-        <div className="flex overflow-hidden rounded-md border border-border/60">
+        {/* Tipo segmented control */}
+        <div className="flex overflow-hidden rounded-xl border border-border/60 bg-slate-50">
           {(['', 'publica', 'privada'] as const).map(t => (
             <button
               key={t || 'all'}
               onClick={() => update('tipo', t)}
-              className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`px-3.5 py-2 text-xs font-medium transition-colors ${
                 filters.tipo === t
-                  ? 'bg-navy text-white'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? 'bg-navy text-white shadow-sm'
+                  : 'text-muted-foreground hover:bg-white hover:text-foreground'
               }`}
             >
               {t === '' ? 'Todas' : t === 'publica' ? 'Pública' : 'Privada'}
@@ -232,24 +244,24 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
             variant="ghost"
             size="sm"
             onClick={clearAll}
-            className="ml-auto h-8 gap-1 text-xs text-muted-foreground"
+            className="ml-auto h-9 gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-xl"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3.5 w-3.5" />
             Limpar ({activeCount})
           </Button>
         )}
       </div>
 
-      {/* Active filter chips */}
+      {/* Active chips */}
       {chips.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {chips.map((chip, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1 rounded-full bg-navy/10 px-2 py-0.5 text-[11px] font-medium text-navy"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-navy/8 px-2.5 py-1 text-[11px] font-medium text-navy"
             >
               {chip.label}
-              <button onClick={chip.onRemove} className="hover:opacity-70">
+              <button onClick={chip.onRemove} className="hover:opacity-60 transition-opacity">
                 <X className="h-2.5 w-2.5" />
               </button>
             </span>

@@ -106,10 +106,21 @@ def natureza_to_tipo(natureza: str) -> str:
         return "privada"
     return "publica"
 
+def tipo_instituicao_to_tipo(tipo: str) -> str:
+    """Convert vagas.csv 'TIPO INSTITUICAO' column to DB tipo."""
+    t = tipo.strip().lower()
+    if "priv" in t or "concord" in t or "cooper" in t:
+        return "privada"
+    return "publica"
+
 def make_id(cod_ies: str, cod_uo: str, cod_curso: str) -> str:
     return f"{cod_ies.zfill(4)}_{cod_uo.zfill(4)}_{cod_curso.zfill(4)}"
 
 YEARS = [2019, 2020, 2021, 2022, 2023, 2024]
+
+def to_float(s: str) -> float:
+    """Parse float with comma or dot decimal separator (Portuguese CSVs use comma)."""
+    return float(s.replace(",", "."))
 
 def build_history(row: dict) -> list | None:
     entries = []
@@ -118,14 +129,14 @@ def build_history(row: dict) -> list | None:
         pct  = row.get(f"PercentilMedio{year}", "").strip()
         matr = row.get(f"NumeroMatriculadosCNA{year}", "").strip()
         try:
-            nota_f = float(nota)
+            nota_f = to_float(nota)
             if nota_f == 0:
                 continue
             entry: dict = {"year": year, "nota": nota_f}
             if pct:
-                entry["percentil"] = float(pct)
+                entry["percentil"] = to_float(pct)
             if matr:
-                entry["matriculados"] = int(float(matr))
+                entry["matriculados"] = int(to_float(matr))
             entries.append(entry)
         except (ValueError, TypeError):
             pass
@@ -154,7 +165,7 @@ def load_medias() -> list[dict]:
         return list(csv.DictReader(f))
 
 def load_vagas() -> dict[tuple, dict]:
-    """Returns dict keyed by (COD IES, COD CURSO) → row."""
+    """Returns dict keyed by (COD IES, COD CURSO) → row (with accumulated TOTAL VAGAS)."""
     result: dict[tuple, dict] = {}
     with open(VAGAS, encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
@@ -171,6 +182,19 @@ def load_vagas() -> dict[tuple, dict]:
                 result[key] = row
     return result
 
+
+def load_vagas_full() -> list[dict]:
+    """Returns ALL rows from vagas.csv (deduplicated by COD IES + COD UO + COD CURSO)."""
+    seen: set[tuple] = set()
+    rows: list[dict] = []
+    with open(VAGAS, encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            key = (row["COD IES"].strip(), row["COD UO"].strip(), row["COD CURSO"].strip())
+            if key not in seen:
+                seen.add(key)
+                rows.append(row)
+    return rows
+
 # ─── Main ──────────────────────────────────────────────────────────────────
 def main():
     print(f"Reading {MEDIAS}...")
@@ -179,11 +203,13 @@ def main():
 
     print(f"Reading {VAGAS}...")
     vagas = load_vagas()
+    vagas_full = load_vagas_full()
     print(f"  {len(vagas)} unique courses in vagas")
 
     rows_sql: list[str] = []
     warnings: list[str] = []
     skipped = 0
+    seen_ids: set[str] = set()
 
     for row in medias:
         cod_ies   = row.get("CodigoEstabelecimento", "").strip()
@@ -204,7 +230,7 @@ def main():
         history   = build_history(row)
         nota_2024 = row.get("NotaIngressoMedia2024", "").strip()
         try:
-            nota_corte = float(nota_2024) if nota_2024 and float(nota_2024) > 0 else None
+            nota_corte = to_float(nota_2024) if nota_2024 and to_float(nota_2024) > 0 else None
         except ValueError:
             nota_corte = None
 
@@ -244,6 +270,43 @@ def main():
             f"{vagas_val if vagas_val is not None else 'NULL'}, "
             f"{history_sql})"
         )
+        seen_ids.add(course_id)
+
+    # ── Courses in vagas.csv not found in médias.csv (e.g. private institutions) ──
+    vagas_only = 0
+    for vrow in vagas_full:
+        cod_ies   = vrow.get("COD IES", "").strip()
+        cod_uo    = vrow.get("COD UO", "").strip()
+        cod_curso = vrow.get("COD CURSO", "").strip()
+        if not cod_ies or not cod_curso:
+            continue
+        course_id = make_id(cod_ies, cod_uo, cod_curso)
+        if course_id in seen_ids:
+            continue  # already emitted from médias
+
+        nome        = vrow.get("CURSO", "").strip()
+        instituicao = vrow.get("IES", "").strip()
+        tipo        = tipo_instituicao_to_tipo(vrow.get("TIPO INSTITUICAO", ""))
+        cnaef       = vrow.get("COD CNAEF", "").strip()
+        try:
+            vagas_val = int(vrow.get("TOTAL VAGAS", ""))
+        except (ValueError, TypeError):
+            vagas_val = None
+
+        distrito = DISTRITO_MAP.get(cod_ies, "Outros")
+        area     = cnaef_to_area(cnaef) if cnaef else "Outros"
+
+        rows_sql.append(
+            f"  ({esc(course_id)}, {esc(nome)}, {esc(instituicao)}, {esc(tipo)}, "
+            f"NULL, "                # nota_ultimo_colocado — no médias for private
+            f"{esc(distrito)}, {esc(area)}, "
+            f"NULL, NULL, "
+            f"95.0, "
+            f"{vagas_val if vagas_val is not None else 'NULL'}, "
+            f"NULL)"                 # no history
+        )
+        seen_ids.add(course_id)
+        vagas_only += 1
 
     # ── Write SQL ──
     sql_lines = [
@@ -271,7 +334,7 @@ def main():
     OUT.write_text("\n".join(sql_lines), encoding="utf-8")
 
     print(f"\nWritten to {OUT}")
-    print(f"  Inserted/updated: {len(rows_sql)} courses, skipped: {skipped}")
+    print(f"  Inserted/updated: {len(rows_sql)} courses ({len(rows_sql) - vagas_only} from médias + {vagas_only} vagas-only), skipped: {skipped}")
 
     if warnings:
         unique_warnings = sorted(set(warnings))

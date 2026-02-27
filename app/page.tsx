@@ -5,8 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { AICounselor } from '@/components/ai-counselor'
 import { CourseExplorer } from '@/components/course-explorer'
-import { AlertCircle, X, Construction } from 'lucide-react'
-import Link from 'next/link'
+import { AlertCircle, X } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 
 function AuthErrorBanner() {
@@ -66,23 +65,6 @@ export default function Home() {
       </Suspense>
 
       <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 pt-5">
-          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            <Construction className="mt-0.5 h-4 w-4 shrink-0" />
-            <p className="flex-1">
-              <span className="font-semibold">Em desenvolvimento.</span>{' '}
-              Já podes inserir as tuas notas do secundário e exames para calcular a tua média de candidatura.
-              Mais funcionalidades em breve.
-            </p>
-            <Link
-              href="/profile"
-              className="shrink-0 rounded-lg bg-amber-800 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-900 transition-colors"
-            >
-              Aceder ao Perfil
-            </Link>
-          </div>
-        </div>
-
         {activeTab === 'explorer' && (
           <CourseExplorer />
         )}

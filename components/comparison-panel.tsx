@@ -56,13 +56,13 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                     <X className="h-3 w-3" />
                   </button>
                   <div>
-                    <h4 className="pr-6 text-xs font-semibold text-foreground">{course.nome}</h4>
-                    <p className="text-[10px] text-muted-foreground">{course.instituicao}</p>
+                    <h4 className="pr-6 text-sm font-semibold text-foreground leading-snug">{course.nome}</h4>
+                    <p className="text-xs text-muted-foreground">{course.instituicao}</p>
                   </div>
-                  <div className="flex flex-col gap-1.5 text-xs">
+                  <div className="flex flex-col gap-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Ultimo colocado</span>
-                      <span className="font-bold tabular-nums text-navy">
+                      <span className="font-bold tabular-nums text-navy text-base">
                         {course.notaUltimoColocado !== null ? course.notaUltimoColocado.toFixed(1) : '—'}
                       </span>
                     </div>
@@ -70,19 +70,19 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                       <span className="text-muted-foreground">Vagas</span>
                       <span className="font-semibold">{course.vagas ?? '—'}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <MapPin className="h-2.5 w-2.5" />{course.distrito}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />{course.distrito}
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       {course.provasIngresso.map(p => (
-                        <span key={p.code} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <BookOpen className="h-2.5 w-2.5" />{p.code} {p.name}
+                        <span key={p.code} className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <BookOpen className="h-3 w-3" />{p.code} {p.name}
                         </span>
                       ))}
                     </div>
                     {delta !== null && (
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <TrendingUp className="h-2.5 w-2.5" />
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <TrendingUp className="h-3 w-3" />
                         {delta >= 0 ? '+' : ''}{delta.toFixed(1)} pts (histórico)
                       </div>
                     )}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useDeferredValue } from 'react'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/user-context'
 import { CourseFilters, type Filters } from './course-filters'
@@ -10,6 +11,8 @@ import { ComparisonPanel } from './comparison-panel'
 import { EXAM_SUBJECTS } from '@/lib/constants'
 import { calculateAdmissionGrade } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
+
+type SortOrder = 'none' | 'asc' | 'desc'
 
 function transformCourse(row: any, reqs: any[]): CourseUI {
   return {
@@ -49,12 +52,22 @@ const DEFAULT_FILTERS: Filters = {
 
 const WITHIN_RANGE_PTS = 20 // 0-200 scale
 
+const SORT_LABELS: Record<SortOrder, { label: string; icon: typeof ArrowUpDown }> = {
+  none: { label: 'Ordenar', icon: ArrowUpDown },
+  asc: { label: 'Nota ↑', icon: ArrowUp },
+  desc: { label: 'Nota ↓', icon: ArrowDown },
+}
+
 export function CourseExplorer() {
   const { isLoggedIn, profile, exams, comparisonList } = useUser()
   const [courses, setCourses] = useState<CourseUI[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('none')
   const [selectedCourse, setSelectedCourse] = useState<CourseUI | null>(null)
+
+  // Defer the filter state so typing in search doesn't block the UI
+  const deferredFilters = useDeferredValue(filters)
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -91,23 +104,24 @@ export function CourseExplorer() {
   const hasProfile = isLoggedIn && !!profile && profile.media_final_calculada > 0
 
   const filtered = useMemo(() => {
-    return courses.filter(c => {
-      if (filters.search) {
-        const q = filters.search.toLowerCase()
+    const f = deferredFilters
+    const result = courses.filter(c => {
+      if (f.search) {
+        const q = f.search.toLowerCase()
         if (!c.nome.toLowerCase().includes(q) && !c.instituicao.toLowerCase().includes(q)) return false
       }
-      if (filters.areas.length > 0 && !filters.areas.includes(c.area)) return false
-      if (filters.districts.length > 0 && !filters.districts.includes(c.distrito)) return false
-      if (filters.tipo && c.tipo !== filters.tipo) return false
-      if (filters.provasIngresso.length > 0) {
+      if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
+      if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
+      if (f.tipo && c.tipo !== f.tipo) return false
+      if (f.provasIngresso.length > 0) {
         const codes = c.provasIngresso.map(p => p.code)
-        if (!filters.provasIngresso.some(p => codes.includes(p))) return false
+        if (!f.provasIngresso.some(p => codes.includes(p))) return false
       }
-      if (filters.onlyQualified) {
+      if (f.onlyQualified) {
         const codes = c.provasIngresso.map(p => p.code)
         if (codes.length > 0 && !codes.every(code => userExamCodes.has(code))) return false
       }
-      if (filters.withinRange) {
+      if (f.withinRange) {
         const userGrade = userGradeMap.get(c.id)
         if (userGrade === undefined) return false
         if (c.notaUltimoColocado === null) return false
@@ -115,7 +129,21 @@ export function CourseExplorer() {
       }
       return true
     })
-  }, [courses, filters, userExamCodes, userGradeMap])
+
+    if (sortOrder === 'asc') {
+      result.sort((a, b) => (a.notaUltimoColocado ?? 0) - (b.notaUltimoColocado ?? 0))
+    } else if (sortOrder === 'desc') {
+      result.sort((a, b) => (b.notaUltimoColocado ?? 0) - (a.notaUltimoColocado ?? 0))
+    }
+
+    return result
+  }, [courses, deferredFilters, userExamCodes, userGradeMap, sortOrder])
+
+  const cycleSortOrder = () => {
+    setSortOrder(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none')
+  }
+
+  const SortIcon = SORT_LABELS[sortOrder].icon
 
   if (loading) {
     return (
@@ -126,7 +154,7 @@ export function CourseExplorer() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 flex flex-col gap-5">
+    <div className="mx-auto max-w-7xl px-6 py-8 flex flex-col gap-6">
       <CourseFilters
         filters={filters}
         onFiltersChange={setFilters}
@@ -138,12 +166,25 @@ export function CourseExplorer() {
         <ComparisonPanel courses={courses} />
       )}
 
-      <p className="text-sm text-muted-foreground">
-        {filtered.length} {filtered.length === 1 ? 'curso encontrado' : 'cursos encontrados'}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-muted-foreground">
+          {filtered.length} {filtered.length === 1 ? 'curso encontrado' : 'cursos encontrados'}
+        </p>
+        <button
+          onClick={cycleSortOrder}
+          className={`inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition-all ${
+            sortOrder !== 'none'
+              ? 'border-navy/40 bg-navy/5 text-navy shadow-sm'
+              : 'border-border/60 bg-white text-muted-foreground hover:border-navy/30 hover:text-foreground'
+          }`}
+        >
+          <SortIcon className="h-3.5 w-3.5" />
+          {SORT_LABELS[sortOrder].label}
+        </button>
+      </div>
 
       {filtered.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(course => (
             <CourseCard
               key={course.id}
@@ -153,8 +194,9 @@ export function CourseExplorer() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-muted-foreground">Nenhum curso encontrado com os filtros selecionados.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-base font-medium text-muted-foreground">Nenhum curso encontrado.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Tenta ajustar os filtros.</p>
         </div>
       )}
 

@@ -16,14 +16,34 @@ const STOP = new Set([
   'nível', 'área', 'áreas', 'tipo', 'tipos', 'vagas', 'pesos',
 ])
 
+// ─── Known course/field keywords — checked before generic extraction ──────────
+const COURSE_KEYWORDS = [
+  'medicina', 'direito', 'engenharia', 'economia', 'gestão', 'informática',
+  'psicologia', 'farmácia', 'enfermagem', 'arquitetura', 'biologia',
+  'matemática', 'física', 'química', 'história', 'filosofia', 'educação',
+  'veterinária', 'dentária', 'odontologia', 'biomédicas', 'bioquímica',
+  'nutrição', 'fisioterapia', 'sociologia', 'antropologia', 'geografia',
+  'turismo', 'comunicação', 'jornalismo', 'marketing', 'contabilidade',
+  'agronomia', 'desporto', 'teatro', 'música', 'belas',
+]
+
 // ─── Extract the primary search keyword from the user's message ───────────────
 function extractPrimaryTerm(message: string): string | null {
   const q = message.toLowerCase()
-  const term = q
+
+  // 1. Prefer an explicit course/field name if present
+  for (const kw of COURSE_KEYWORDS) {
+    if (q.includes(kw)) return kw
+  }
+
+  // 2. Fallback: use the LAST meaningful token (not the first) — in Portuguese
+  //    questions the subject ("Açores", "Porto") tends to come at the end.
+  const words = q
     .split(/\s+/)
     .map(w => w.replace(/[^a-záéíóúâêôãõàèìòùüïçñ]/gi, ''))
-    .find(w => w.length >= 4 && !STOP.has(w))
-  return term ?? null
+    .filter(w => w.length >= 4 && !STOP.has(w))
+
+  return words[words.length - 1] ?? null
 }
 
 // ─── Query Supabase and return a formatted context block ──────────────────────
@@ -39,11 +59,14 @@ async function fetchCourseContext(message: string): Promise<string> {
     ? 'nota_ultimo_colocado.asc.nullslast'
     : 'nota_ultimo_colocado.desc.nullslast'
 
-  // Build URL — the * must NOT be percent-encoded (PostgREST uses it as wildcard)
+  const encoded = encodeURIComponent(term)
+
+  // Search across nome, distrito AND instituicao_nome so that location-based
+  // queries like "Açores" or "Porto" actually return results from the DB.
   const url =
     `${SUPA_URL}/rest/v1/courses` +
-    `?nome=ilike.*${encodeURIComponent(term)}*` +
-    `&select=nome,nota_ultimo_colocado,vagas,distrito` +
+    `?or=(nome.ilike.*${encoded}*,distrito.ilike.*${encoded}*,instituicao_nome.ilike.*${encoded}*)` +
+    `&select=nome,instituicao_nome,nota_ultimo_colocado,vagas,distrito,history` +
     `&order=${order}` +
     `&limit=20`
 
@@ -54,18 +77,32 @@ async function fetchCourseContext(message: string): Promise<string> {
     })
     if (!res.ok) return ''
 
-    const data: { nome: string; nota_ultimo_colocado: number | null; vagas: number | null; distrito: string | null }[] =
-      await res.json()
+    const data: {
+      nome: string
+      instituicao_nome: string | null
+      nota_ultimo_colocado: number | null
+      vagas: number | null
+      distrito: string | null
+      history: Record<string, { nota_ultimo_colocado?: number }> | null
+    }[] = await res.json()
     if (!data?.length) return ''
+
+    // Determine the most recent year stored in history (or label as "mais recente")
+    const allYears = data.flatMap(c =>
+      c.history ? Object.keys(c.history).map(Number).filter(Boolean) : []
+    )
+    const latestYear = allYears.length ? Math.max(...allYears) : null
+    const yearLabel = latestYear ? `${latestYear}` : 'mais recente'
 
     const lines = data.map(c => {
       const corte = c.nota_ultimo_colocado != null
         ? Number(c.nota_ultimo_colocado).toFixed(1)
         : 'sem dados'
-      return `• ${c.nome} (${c.distrito ?? '?'}) | Último colocado: ${corte} | Vagas: ${c.vagas ?? '?'}`
+      const inst = c.instituicao_nome ?? c.distrito ?? '?'
+      return `• ${c.nome} — ${inst} | Último colocado (${yearLabel}): ${corte} | Vagas: ${c.vagas ?? '?'}`
     }).join('\n')
 
-    return `\n\n[DADOS REAIS da base de dados UniMatch — usa APENAS estes dados, ignora quaisquer cursos mencionados antes nesta conversa:\n${lines}\n]`
+    return `\n\n[DADOS REAIS da base de dados UniMatch (edição ${yearLabel}) — usa APENAS estes dados, não uses dados de anos anteriores nem conhecimento do teu treino:\n${lines}\n]`
   } catch {
     return ''
   }

@@ -56,6 +56,23 @@ interface RankedCourse {
 // Searches loaded courses by the user's message keywords and returns a
 // compact context block with real DB numbers for the AI to cite.
 
+// Portuguese letter set for whole-word boundary checks
+const PT_LETTER = /[a-záéíóúâêôãõàèìòùüïçñ]/i
+
+// Returns true only if `word` appears as a standalone word in `haystack`
+// (not as a substring of a longer word, e.g. "média" must NOT match "multimédia")
+function wholeWordMatch(haystack: string, word: string): boolean {
+  let start = 0
+  while (true) {
+    const idx = haystack.indexOf(word, start)
+    if (idx === -1) return false
+    const beforeOk = idx === 0 || !PT_LETTER.test(haystack[idx - 1])
+    const afterOk = idx + word.length >= haystack.length || !PT_LETTER.test(haystack[idx + word.length])
+    if (beforeOk && afterOk) return true
+    start = idx + 1
+  }
+}
+
 function buildCourseContext(message: string, courses: CourseUI[]): string {
   if (courses.length === 0) return ''
 
@@ -63,13 +80,14 @@ function buildCourseContext(message: string, courses: CourseUI[]): string {
   const words = q.split(/\s+/).filter(w => w.length >= 3)
   if (words.length === 0) return ''
 
-  // Score each course by how many query words appear in its searchable fields
+  // Score each course by how many query words appear as whole words in its fields
   const scored = courses
     .map(c => {
+      // Deliberately excludes c.distrito — location only matters when the user says so
       const haystack = `${c.nome} ${c.area} ${c.instituicao}`.toLowerCase()
       let score = 0
       for (const w of words) {
-        if (haystack.includes(w)) score++
+        if (wholeWordMatch(haystack, w)) score++
       }
       return { c, score }
     })
@@ -223,14 +241,15 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
     let content = text
     if (isLoggedIn && profile && chatMessages.length === 0) {
-      content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20), Distrito: ${(profile as any).distrito_residencia || 'N/D'}]`
+      content += `\n\n[Contexto do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20). Mostra resultados de todo o país a menos que o aluno especifique uma localização.]`
     }
 
     // Inject real course data from the loaded DB whenever the query matches courses
     const courseCtx = buildCourseContext(text, courses)
     if (courseCtx) content += courseCtx
 
-    setChatMessages(prev => [...prev, { role: 'user', content }])
+    // Show only the original text in the bubble; enriched content goes to the API silently
+    setChatMessages(prev => [...prev, { role: 'user', content: text }])
     setIsChatLoading(true)
 
     let assistantContent = ''

@@ -24,10 +24,10 @@ function transformCourse(row: any, reqs: any[]): CourseUI {
     area: row.area,
     tipo: row.tipo,
     vagas: row.vagas,
-    notaUltimoColocado: row.nota_ultimo_colocado,
+    notaUltimoColocado: row.nota_ultimo_colocado !== null ? Math.round(row.nota_ultimo_colocado * 10) : null,
     pesoSecundario: row.peso_secundario,
     pesoExame: row.peso_exames,
-    notaMinima: row.nota_minima_p_ingresso,
+    notaMinima: row.nota_minima_p_ingresso !== null ? Math.round(row.nota_minima_p_ingresso * 10) : null,
     provasIngresso: reqs
       .filter(r => r.course_id === row.id)
       .map(r => ({
@@ -36,7 +36,9 @@ function transformCourse(row: any, reqs: any[]): CourseUI {
         weight: r.weight,
         conjunto_id: r.conjunto_id ?? 1,
       })),
-    historico: row.history ?? null,
+    historico: row.history
+      ? row.history.map((h: { year: number; nota: number }) => ({ year: h.year, nota: Math.round(h.nota * 10) }))
+      : null,
     link_oficial: row.link_oficial,
   }
 }

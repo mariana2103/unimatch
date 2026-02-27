@@ -29,34 +29,41 @@ export async function POST(req: Request) {
     return Response.json({ error: 'AI service error' }, { status: 500 })
   }
 
-  // Transform upstream SSE into our own SSE stream
+  // Transform upstream newline-delimited JSON into our own SSE stream.
+  // iaedu format: {"run_id":"...","type":"token","content":"text chunk"}
+  //               {"run_id":"...","type":"message","content":{...}}
+  //               {"run_id":"...","type":"done","content":"..."}
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
       const reader = upstream.body!.getReader()
       const decoder = new TextDecoder()
+      let buffer = ''
 
       try {
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
-          const chunk = decoder.decode(value, { stream: true })
-          for (const line of chunk.split('\n')) {
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          // Keep the last (potentially incomplete) line in the buffer
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
             const trimmed = line.trim()
-            if (!trimmed.startsWith('data:')) continue
+            if (!trimmed) continue
 
-            const raw = trimmed.slice(5).trim()
-            if (!raw || raw === '[DONE]') continue
-
-            // iaedu may return plain text or JSON — normalise to { text }
-            let text = raw
             try {
-              const parsed = JSON.parse(raw)
-              text = parsed.text ?? parsed.content ?? parsed.message ?? parsed.delta ?? raw
-            } catch { /* plain text chunk */ }
+              const parsed = JSON.parse(trimmed)
 
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
+              if (parsed.type === 'token' && parsed.content) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: parsed.content })}\n\n`))
+              } else if (parsed.type === 'done') {
+                // Stream finished cleanly
+                return
+              }
+            } catch { /* skip malformed lines */ }
           }
         }
       } finally {

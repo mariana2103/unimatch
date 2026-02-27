@@ -15,25 +15,29 @@ const AREAS = [
   'Informática e Dados',
 ]
 
+// iaedu returns newline-delimited JSON: {"type":"token","content":"..."} per line
 async function readStream(body: ReadableStream<Uint8Array>): Promise<string> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
   let full = ''
+  let buffer = ''
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
-    const chunk = decoder.decode(value, { stream: true })
-    for (const line of chunk.split('\n')) {
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    for (const line of lines) {
       const trimmed = line.trim()
-      if (!trimmed.startsWith('data:')) continue
-      const raw = trimmed.slice(5).trim()
-      if (!raw || raw === '[DONE]') continue
+      if (!trimmed) continue
       try {
-        const parsed = JSON.parse(raw)
-        full += parsed.text ?? parsed.content ?? parsed.message ?? parsed.delta ?? ''
-      } catch {
-        full += raw
-      }
+        const parsed = JSON.parse(trimmed)
+        if (parsed.type === 'token' && parsed.content) {
+          full += parsed.content
+        } else if (parsed.type === 'done') {
+          return full
+        }
+      } catch { /* skip malformed lines */ }
     }
   }
   return full

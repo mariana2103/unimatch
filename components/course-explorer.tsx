@@ -8,6 +8,7 @@ import { CourseCard } from './course-card'
 import { CourseDetailDialog } from './course-detail-dialog'
 import { ComparisonPanel } from './comparison-panel'
 import { EXAM_SUBJECTS } from '@/lib/constants'
+import { calculateAdmissionGrade } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
 
 function transformCourse(row: any, reqs: any[]): CourseUI {
@@ -43,10 +44,13 @@ const DEFAULT_FILTERS: Filters = {
   tipo: '',
   onlyQualified: false,
   onlyGoodOptions: false,
+  withinRange: false,
 }
 
+const WITHIN_RANGE_PTS = 20 // 0-200 scale
+
 export function CourseExplorer() {
-  const { isLoggedIn, exams, comparisonList } = useUser()
+  const { isLoggedIn, profile, exams, comparisonList } = useUser()
   const [courses, setCourses] = useState<CourseUI[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
@@ -68,6 +72,24 @@ export function CourseExplorer() {
 
   const userExamCodes = useMemo(() => new Set(exams.map(e => e.exam_code)), [exams])
 
+  // Pre-compute user admission grade for every course (used by withinRange filter)
+  const userGradeMap = useMemo(() => {
+    if (!isLoggedIn || !profile || profile.media_final_calculada <= 0) return new Map<string, number>()
+    const userExams = exams.map(e => ({ subjectCode: e.exam_code, grade: e.grade }))
+    const map = new Map<string, number>()
+    for (const c of courses) {
+      const { grade, hasRequiredExams } = calculateAdmissionGrade(
+        profile.media_final_calculada,
+        userExams,
+        c,
+      )
+      if (hasRequiredExams) map.set(c.id, grade)
+    }
+    return map
+  }, [courses, isLoggedIn, profile, exams])
+
+  const hasProfile = isLoggedIn && !!profile && profile.media_final_calculada > 0
+
   const filtered = useMemo(() => {
     return courses.filter(c => {
       if (filters.search) {
@@ -83,11 +105,17 @@ export function CourseExplorer() {
       }
       if (filters.onlyQualified) {
         const codes = c.provasIngresso.map(p => p.code)
-        if (!codes.every(code => userExamCodes.has(code))) return false
+        if (codes.length > 0 && !codes.every(code => userExamCodes.has(code))) return false
+      }
+      if (filters.withinRange) {
+        const userGrade = userGradeMap.get(c.id)
+        if (userGrade === undefined) return false
+        if (c.notaUltimoColocado === null) return false
+        if (c.notaUltimoColocado - userGrade > WITHIN_RANGE_PTS) return false
       }
       return true
     })
-  }, [courses, filters, userExamCodes])
+  }, [courses, filters, userExamCodes, userGradeMap])
 
   if (loading) {
     return (
@@ -98,11 +126,12 @@ export function CourseExplorer() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 flex flex-col gap-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 flex flex-col gap-5">
       <CourseFilters
         filters={filters}
         onFiltersChange={setFilters}
         isLoggedIn={isLoggedIn}
+        hasProfile={hasProfile}
       />
 
       {comparisonList.length > 0 && (

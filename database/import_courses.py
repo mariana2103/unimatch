@@ -71,16 +71,16 @@ def cnaef_to_area(code: str) -> str:
     if 210 <= c <= 219:
         return "Artes e Design"
 
-    # Humanities → Social & Law
-    if 221 <= c <= 229 or 310 <= c <= 312 or 320 <= c <= 329 or 380 <= c <= 389 \
+    # Humanities / Social sciences / Law / Communications
+    if 221 <= c <= 229 or c == 310 or 319 <= c <= 329 or 380 <= c <= 389 \
             or 760 <= c <= 769 or 860 <= c <= 869:
         return "Direito, Ciências Sociais e Humanas"
 
-    # Economics, Management, Accounting
-    if 311 <= c <= 319 or 340 <= c <= 349:
+    # Economics, Management, Accounting, Tourism
+    if 311 <= c <= 318 or 340 <= c <= 349 or c in (811, 812):
         return "Economia, Gestão e Contabilidade"
 
-    # Life sciences / Biology / Environment
+    # Life sciences / Biology / Environment / Health
     if 420 <= c <= 429 or 580 <= c <= 589 or 620 <= c <= 649 \
             or 720 <= c <= 729 or 850 <= c <= 859:
         return "Ciências da Vida e Saúde"
@@ -220,15 +220,14 @@ def main():
             cnaef = vaga_row.get("COD CNAEF", "").strip()
 
         # ── Distrito ──
-        distrito = DISTRITO_MAP.get(cod_ies)
-        if not distrito:
+        distrito = DISTRITO_MAP.get(cod_ies, "Outros")
+        if distrito == "Outros":
             warnings.append(f"  No distrito for COD IES={cod_ies} ({instituicao})")
-            distrito = None
 
         # ── Area ──
-        area = cnaef_to_area(cnaef) if cnaef else None
-        if not area:
-            warnings.append(f"  No area for CNAEF={cnaef!r} course={nome!r}")
+        area = cnaef_to_area(cnaef) if cnaef else "Outros"
+        if area == "Outros":
+            warnings.append(f"  No CNAEF mapping for course={nome!r} (CNAEF={cnaef!r})")
 
         # ── History JSON ──
         history_sql = (

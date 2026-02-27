@@ -1,11 +1,10 @@
 'use client'
 
-import { Search, X, Filter, Eye } from 'lucide-react'
+import { Search, X, ChevronDown, Eye, Target, Check } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DISTRICTS, AREAS, EXAM_SUBJECTS } from '@/lib/constants'
 
 export interface Filters {
@@ -16,15 +15,17 @@ export interface Filters {
   tipo: '' | 'publica' | 'privada'
   onlyQualified: boolean
   onlyGoodOptions: boolean
+  withinRange: boolean
 }
 
 interface CourseFiltersProps {
   filters: Filters
   onFiltersChange: (filters: Filters) => void
   isLoggedIn: boolean
+  hasProfile: boolean
 }
 
-function MultiChipSelect({
+function MultiSelectPopover({
   label,
   options,
   selected,
@@ -33,130 +34,228 @@ function MultiChipSelect({
   label: string
   options: { value: string; label: string }[]
   selected: string[]
-  onToggle: (value: string) => void
+  onToggle: (v: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map(opt => {
-          const isActive = selected.includes(opt.value)
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onToggle(opt.value)}
-              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
-                isActive
-                  ? 'border-navy bg-navy text-primary-foreground'
-                  : 'border-border/60 bg-card text-muted-foreground hover:border-navy/40 hover:text-foreground'
-              }`}
-            >
-              {opt.label}
-            </button>
-          )
-        })}
-      </div>
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${
+            selected.length > 0
+              ? 'border-navy/40 bg-navy/5 text-navy'
+              : 'border-border/60 text-muted-foreground hover:border-navy/30 hover:text-foreground'
+          }`}
+        >
+          {label}
+          {selected.length > 0 && (
+            <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-navy px-1 text-[10px] font-semibold text-white">
+              {selected.length}
+            </span>
+          )}
+          <ChevronDown className="h-3 w-3 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-52 p-1.5" align="start">
+        <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+          {options.map(opt => {
+            const active = selected.includes(opt.value)
+            return (
+              <button
+                key={opt.value}
+                onClick={() => onToggle(opt.value)}
+                className={`flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                  active ? 'bg-navy text-white' : 'text-foreground hover:bg-muted'
+                }`}
+              >
+                <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border ${
+                  active ? 'border-white/50 bg-white/20' : 'border-border'
+                }`}>
+                  {active && <Check className="h-2.5 w-2.5" />}
+                </div>
+                <span className="truncate">{opt.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
-export function CourseFilters({ filters, onFiltersChange, isLoggedIn }: CourseFiltersProps) {
-  const update = <K extends keyof Filters>(key: K, value: Filters[K]) => {
-    onFiltersChange({ ...filters, [key]: value })
-  }
+function SmartFilterButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ElementType
+  label: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${
+        active
+          ? 'border-navy bg-navy text-white'
+          : 'border-border/60 text-muted-foreground hover:border-navy/30 hover:text-foreground'
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  )
+}
 
-  const toggleArrayItem = (key: 'areas' | 'districts' | 'provasIngresso', value: string) => {
+export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile }: CourseFiltersProps) {
+  const update = <K extends keyof Filters>(key: K, value: Filters[K]) =>
+    onFiltersChange({ ...filters, [key]: value })
+
+  const toggle = (key: 'areas' | 'districts' | 'provasIngresso', value: string) => {
     const arr = filters[key]
     update(key, arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value])
   }
 
-  const activeCount = filters.areas.length + filters.districts.length + filters.provasIngresso.length +
-    (filters.tipo ? 1 : 0) + (filters.onlyQualified ? 1 : 0)
+  const activeCount =
+    filters.areas.length +
+    filters.districts.length +
+    filters.provasIngresso.length +
+    (filters.tipo ? 1 : 0) +
+    (filters.onlyQualified ? 1 : 0) +
+    (filters.withinRange ? 1 : 0)
 
-  const clearAll = () => {
-    onFiltersChange({ search: '', areas: [], districts: [], provasIngresso: [], tipo: '', onlyQualified: false })
-  }
+  const clearAll = () =>
+    onFiltersChange({
+      search: '',
+      areas: [],
+      districts: [],
+      provasIngresso: [],
+      tipo: '',
+      onlyQualified: false,
+      onlyGoodOptions: false,
+      withinRange: false,
+    })
+
+  // Active chips for quick removal
+  const chips: { label: string; onRemove: () => void }[] = [
+    ...filters.areas.map(a => ({ label: a, onRemove: () => toggle('areas', a) })),
+    ...filters.districts.map(d => ({ label: d, onRemove: () => toggle('districts', d) })),
+    ...filters.provasIngresso.map(p => ({
+      label: EXAM_SUBJECTS.find(e => e.code === p)?.name ?? p,
+      onRemove: () => toggle('provasIngresso', p),
+    })),
+    ...(filters.tipo
+      ? [{ label: filters.tipo === 'publica' ? 'Pública' : 'Privada', onRemove: () => update('tipo', '') }]
+      : []),
+    ...(filters.onlyQualified
+      ? [{ label: 'Com provas', onRemove: () => update('onlyQualified', false) }]
+      : []),
+    ...(filters.withinRange
+      ? [{ label: '≤ 20 pts', onRemove: () => update('withinRange', false) }]
+      : []),
+  ]
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border/50 bg-card p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Filter className="h-4 w-4 text-navy" />
-          Filtros
-          {activeCount > 0 && (
-            <Badge className="bg-navy text-primary-foreground text-[10px] px-1.5">{activeCount}</Badge>
-          )}
-        </div>
-        {activeCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs text-muted-foreground">
-            <X className="h-3 w-3" /> Limpar
-          </Button>
-        )}
-      </div>
-
+    <div className="flex flex-col gap-2">
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Pesquisar curso ou universidade..."
           value={filters.search}
           onChange={e => update('search', e.target.value)}
-          className="pl-9"
+          className="h-9 pl-9"
         />
       </div>
 
-      <MultiChipSelect
-        label="Area"
-        options={AREAS.map(a => ({ value: a, label: a }))}
-        selected={filters.areas}
-        onToggle={v => toggleArrayItem('areas', v)}
-      />
+      {/* Filter row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <MultiSelectPopover
+          label="Área"
+          options={AREAS.map(a => ({ value: a, label: a }))}
+          selected={filters.areas}
+          onToggle={v => toggle('areas', v)}
+        />
 
-      <MultiChipSelect
-        label="Distrito"
-        options={DISTRICTS.map(d => ({ value: d, label: d }))}
-        selected={filters.districts}
-        onToggle={v => toggleArrayItem('districts', v)}
-      />
+        <MultiSelectPopover
+          label="Distrito"
+          options={DISTRICTS.map(d => ({ value: d, label: d }))}
+          selected={filters.districts}
+          onToggle={v => toggle('districts', v)}
+        />
 
-      <MultiChipSelect
-        label="Provas de Ingresso"
-        options={EXAM_SUBJECTS.map(e => ({ value: e.code, label: `${e.code} ${e.name}` }))}
-        selected={filters.provasIngresso}
-        onToggle={v => toggleArrayItem('provasIngresso', v)}
-      />
+        <MultiSelectPopover
+          label="Provas"
+          options={EXAM_SUBJECTS.map(e => ({ value: e.code, label: `${e.code} ${e.name}` }))}
+          selected={filters.provasIngresso}
+          onToggle={v => toggle('provasIngresso', v)}
+        />
 
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tipo:</span>
+        {/* Tipo inline toggle */}
+        <div className="flex overflow-hidden rounded-md border border-border/60">
           {(['', 'publica', 'privada'] as const).map(t => (
             <button
               key={t || 'all'}
               onClick={() => update('tipo', t)}
-              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${
                 filters.tipo === t
-                  ? 'border-navy bg-navy text-primary-foreground'
-                  : 'border-border/60 bg-card text-muted-foreground hover:border-navy/40 hover:text-foreground'
+                  ? 'bg-navy text-white'
+                  : 'text-muted-foreground hover:bg-muted'
               }`}
             >
-              {t === '' ? 'Todas' : t === 'publica' ? 'Publica' : 'Privada'}
+              {t === '' ? 'Todas' : t === 'publica' ? 'Pública' : 'Privada'}
             </button>
           ))}
         </div>
 
-        {isLoggedIn && (
-          <div className="flex items-center gap-2">
-            <Switch
-              id="only-qualified"
-              checked={filters.onlyQualified}
-              onCheckedChange={v => update('onlyQualified', v)}
+        {/* Smart filters — only when logged in with grades */}
+        {isLoggedIn && hasProfile && (
+          <>
+            <SmartFilterButton
+              active={filters.onlyQualified}
+              onClick={() => update('onlyQualified', !filters.onlyQualified)}
+              icon={Eye}
+              label="Tenho as provas"
             />
-            <Label htmlFor="only-qualified" className="flex cursor-pointer items-center gap-1 text-xs text-foreground">
-              <Eye className="h-3.5 w-3.5 text-navy" />
-              So cursos com provas completas
-            </Label>
-          </div>
+            <SmartFilterButton
+              active={filters.withinRange}
+              onClick={() => update('withinRange', !filters.withinRange)}
+              icon={Target}
+              label="≤ 20 pts de mim"
+            />
+          </>
+        )}
+
+        {activeCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAll}
+            className="ml-auto h-8 gap-1 text-xs text-muted-foreground"
+          >
+            <X className="h-3 w-3" />
+            Limpar ({activeCount})
+          </Button>
         )}
       </div>
+
+      {/* Active filter chips */}
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {chips.map((chip, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-1 rounded-full bg-navy/10 px-2 py-0.5 text-[11px] font-medium text-navy"
+            >
+              {chip.label}
+              <button onClick={chip.onRemove} className="hover:opacity-70">
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   TrendingUp, Sparkles, RotateCcw, ArrowUpRight,
-  Plus, X, Info, ChevronDown, Heart,
+  Plus, X, Info, ChevronDown, Heart, Lock,
 } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade } from '@/lib/data'
@@ -180,9 +180,10 @@ function AddExamPicker({
 export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: CourseUI) => void }) {
   const { isLoggedIn, profile, exams, favorites } = useUser()
 
-  const [phase, setPhase]           = useState<'1' | '2'>('1')
-  const [courses, setCourses]       = useState<CourseUI[]>([])
-  const [loadingCourses, setLoading] = useState(true)
+  const [phase, setPhase]             = useState<'1' | '2'>('1')
+  const [includePrivadas, setIncludePrivadas] = useState(false)
+  const [courses, setCourses]         = useState<CourseUI[]>([])
+  const [loadingCourses, setLoading]  = useState(true)
 
   // Simulated media interna (stored ×10 to match exam scale: 0–200)
   const [simMedia, setSimMedia]     = useState(0)
@@ -236,8 +237,11 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
   const realMediaScaled = realMedia / 10
 
   const favoriteCourses = useMemo(
-    () => courses.filter(c => favorites.includes(c.id)),
-    [courses, favorites],
+    () => courses.filter(c =>
+      favorites.includes(c.id) &&
+      (includePrivadas || c.tipo === 'publica')
+    ),
+    [courses, favorites, includePrivadas],
   )
 
   const results = useMemo(() => {
@@ -323,21 +327,35 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           </p>
         </div>
 
-        <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5 self-start">
-          {(['1', '2'] as const).map(p => (
-            <button
-              key={p}
-              onClick={() => setPhase(p)}
-              className={cn(
-                'rounded-md px-4 py-1.5 text-xs font-semibold transition-all',
-                phase === p
-                  ? 'bg-background shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {p}ª Fase
-            </button>
-          ))}
+        <div className="flex items-center gap-2 self-start flex-wrap">
+          <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5">
+            {(['1', '2'] as const).map(p => (
+              <button
+                key={p}
+                onClick={() => setPhase(p)}
+                className={cn(
+                  'rounded-md px-4 py-1.5 text-xs font-semibold transition-all',
+                  phase === p
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {p}ª Fase
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setIncludePrivadas(v => !v)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+              includePrivadas
+                ? 'border-border bg-muted text-foreground'
+                : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border',
+            )}
+          >
+            <Lock className="h-3 w-3" />
+            {includePrivadas ? 'Incluindo privadas' : 'Só públicas'}
+          </button>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useDeferredValue } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronDown, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/user-context'
 import { CourseFilters, type Filters } from './course-filters'
@@ -12,6 +12,53 @@ import { calculateAdmissionGrade } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
 
 type SortOrder = 'none' | 'asc' | 'desc'
+
+function PrivadaSection({
+  courses,
+  onViewDetails,
+}: {
+  courses: CourseUI[]
+  onViewDetails: (c: CourseUI) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-2xl border border-border/40 bg-muted/20">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
+      >
+        <div className="flex items-center gap-2.5">
+          <Lock className="h-4 w-4 text-muted-foreground/50" />
+          <span className="text-sm font-semibold text-foreground">
+            Ensino Privado
+          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            {courses.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="hidden text-xs text-muted-foreground sm:block">
+            Sem dados de acesso DGES — propinas aplicam-se
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground/60 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-border/30 px-5 pb-5 pt-4">
+          <p className="mb-4 text-xs text-muted-foreground">
+            As instituições privadas definem os seus próprios critérios de admissão.
+            Os valores de corte abaixo, quando existem, são indicativos e podem não reflectir os critérios actuais.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {courses.map(course => (
+              <CourseCard key={course.id} course={course} onViewDetails={onViewDetails} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const COURSES_PER_PAGE = 48
 
@@ -196,11 +243,18 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
     return result
   }, [courses, deferredFilters, userExamCodes, userGradeMap, sortOrder])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / COURSES_PER_PAGE))
+  // Split públicas / privadas — privadas go in their own collapsible section
+  const showingAll = deferredFilters.tipo === ''
+  const publicaCourses = showingAll ? filtered.filter(c => c.tipo === 'publica') : (deferredFilters.tipo === 'publica' ? filtered : [])
+  const privataCourses = showingAll ? filtered.filter(c => c.tipo === 'privada') : (deferredFilters.tipo === 'privada' ? filtered : [])
+  const mainCourses    = deferredFilters.tipo === 'privada' ? privataCourses : publicaCourses
+  const sideCourses    = showingAll ? privataCourses : []
+
+  const totalPages = Math.max(1, Math.ceil(mainCourses.length / COURSES_PER_PAGE))
   const safePage = Math.min(currentPage, totalPages - 1)
   const pageStart = safePage * COURSES_PER_PAGE
   const pageEnd = pageStart + COURSES_PER_PAGE
-  const paginated = filtered.slice(pageStart, pageEnd)
+  const paginated = mainCourses.slice(pageStart, pageEnd)
 
   const cycleSortOrder = () => {
     setSortOrder(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none')
@@ -231,10 +285,14 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
 
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
-          {filtered.length} {filtered.length === 1 ? 'curso encontrado' : 'cursos encontrados'}
+          {mainCourses.length} {deferredFilters.tipo === 'privada' ? 'privad' : 'público'}
+          {mainCourses.length === 1 ? (deferredFilters.tipo === 'privada' ? 'a' : 'o') : (deferredFilters.tipo === 'privada' ? 'as' : 'os')}
+          {showingAll && sideCourses.length > 0 && (
+            <span className="ml-1 text-muted-foreground/60">+ {sideCourses.length} privad{sideCourses.length === 1 ? 'a' : 'as'}</span>
+          )}
           {totalPages > 1 && (
             <span className="ml-1.5 text-muted-foreground/60">
-              · página {safePage + 1} de {totalPages}
+              · pág. {safePage + 1}/{totalPages}
             </span>
           )}
         </p>
@@ -243,7 +301,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
           className={`inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition-all ${
             sortOrder !== 'none'
               ? 'border-navy/40 bg-navy/5 text-navy shadow-sm'
-              : 'border-border/60 bg-white text-muted-foreground hover:border-navy/30 hover:text-foreground'
+              : 'border-border/60 bg-card text-muted-foreground hover:border-navy/30 hover:text-foreground'
           }`}
         >
           <SortIcon className="h-3.5 w-3.5" />
@@ -284,7 +342,6 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
             {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
               let page = i
               if (totalPages > 7) {
-                // Show pages around current
                 const half = 3
                 let start = Math.max(0, safePage - half)
                 const end = Math.min(totalPages - 1, start + 6)
@@ -298,7 +355,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
                   className={`h-8 w-8 rounded-lg text-sm font-medium transition-all ${
                     page === safePage
                       ? 'bg-navy text-white shadow-sm'
-                      : 'text-muted-foreground hover:bg-slate-100 hover:text-foreground'
+                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                   }`}
                 >
                   {page + 1}
@@ -316,6 +373,11 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
+      )}
+
+      {/* ── Privadas section — only when showing all types ───────────────── */}
+      {sideCourses.length > 0 && (
+        <PrivadaSection courses={sideCourses} onViewDetails={onViewDetails ?? (() => {})} />
       )}
     </div>
   )

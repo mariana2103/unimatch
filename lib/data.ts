@@ -39,14 +39,16 @@ export function calculateAdmissionGrade(
   const safeProvas: Array<{ code: string; weight: number; conjunto_id: number }> =
     course?.provasIngresso || []
 
-  if (safeProvas.length === 0) {
-    return { grade: 0, meetsMinimum: false, hasRequiredExams: false }
-  }
-
   const ms200    = (mediaSecundario || 0) * 10
   const pesoSec  = course.pesoSecundario ?? 0.5
-  const pesoExam = course.pesoExame      ?? 0.5
   const notaMin  = course.notaMinima     ?? 95
+
+  // No exam requirements — grade is purely based on média
+  if (safeProvas.length === 0) {
+    return { grade: ms200, meetsMinimum: ms200 >= notaMin, hasRequiredExams: true }
+  }
+
+  const pesoExam = course.pesoExame ?? 0.5
 
   // Group exams by conjunto_id (each conjunto is one valid alternative)
   const conjuntoMap = new Map<number, Array<{ code: string; weight: number }>>()

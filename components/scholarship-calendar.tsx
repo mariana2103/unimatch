@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, GraduationCap, Heart, Award, ChevronDown, ChevronUp, Calendar } from 'lucide-react'
+import { ExternalLink, GraduationCap, Heart, Award, ChevronDown, ChevronUp, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import scholarshipsData from '@/lib/scholarships.json'
 
 type Category = 'all' | 'social' | 'merit' | 'private'
 
@@ -10,86 +11,17 @@ interface Scholarship {
   name: string
   entity: string
   category: 'social' | 'merit' | 'private'
-  deadline: string          // ISO date string
-  deadlineLabel: string     // Human-readable
+  deadline: string
+  deadlineLabel: string
   amount: string
   eligibility: string
   link?: string
   automatic?: boolean
+  verified: boolean
+  lastVerified: string
 }
 
-const SCHOLARSHIPS: Scholarship[] = [
-  {
-    name: 'Bolsa de Acção Social (SAS)',
-    entity: 'DGES / SAS',
-    category: 'social',
-    deadline: '2026-10-31',
-    deadlineLabel: 'Out 2026 (abertura em Set)',
-    amount: 'Até €7 080/ano',
-    eligibility: 'Baseada no rendimento do agregado familiar (escalões)',
-    link: 'https://www.dges.gov.pt/pt/pagina/bolsas-de-estudo',
-  },
-  {
-    name: 'Bolsa de Mérito',
-    entity: 'DGES',
-    category: 'merit',
-    deadline: '2026-11-30',
-    deadlineLabel: 'Automática após resultados',
-    amount: 'Propina anual',
-    eligibility: 'Média ≥ 16 e top 5% da turma — atribuição automática',
-    automatic: true,
-  },
-  {
-    name: 'Novos Talentos — Ciência & Tecnologia',
-    entity: 'Fundação Calouste Gulbenkian',
-    category: 'private',
-    deadline: '2026-03-31',
-    deadlineLabel: 'Mar 2026',
-    amount: 'Até €5 000/ano',
-    eligibility: 'Média ≥ 17 em ciências; candidatura com projeto de investigação',
-    link: 'https://gulbenkian.pt/bolsas',
-  },
-  {
-    name: 'Bolsa de Mérito Santander',
-    entity: 'Santander Universidades',
-    category: 'private',
-    deadline: '2026-05-31',
-    deadlineLabel: 'Mai 2026',
-    amount: '€1 500 — €3 000',
-    eligibility: 'Média ≥ 16 no ano anterior; candidatura via universidade',
-    link: 'https://www.santander.pt/santander-universidades',
-  },
-  {
-    name: 'Programa de Bolsas ISA',
-    entity: 'Fundação José Neves',
-    category: 'private',
-    deadline: '2026-02-28',
-    deadlineLabel: 'Fev 2026',
-    amount: 'Propina + subsistência',
-    eligibility: 'Cursos de tecnologia e inovação; reembolso baseado em rendimento futuro',
-    link: 'https://fjn.pt/bolsas',
-  },
-  {
-    name: 'Bolsa EDP Energia para o Futuro',
-    entity: 'Fundação EDP',
-    category: 'private',
-    deadline: '2026-11-15',
-    deadlineLabel: 'Nov 2026',
-    amount: 'Até €4 000/ano',
-    eligibility: 'Engenharia, Física ou cursos ligados à energia; média ≥ 15',
-    link: 'https://fundacaoedp.pt/bolsas',
-  },
-  {
-    name: 'Bolsa de Mérito BCP',
-    entity: 'Fundação Millennium BCP',
-    category: 'private',
-    deadline: '2026-04-30',
-    deadlineLabel: 'Abr 2026',
-    amount: '€2 000',
-    eligibility: 'Alunos do 1º ano com média de acesso ≥ 17',
-    link: 'https://www.millenniumbcp.pt/fundacao',
-  },
-]
+const SCHOLARSHIPS = scholarshipsData.scholarships as Scholarship[]
 
 const CATEGORY_LABELS: Record<Category, string> = {
   all: 'Todas',
@@ -110,9 +42,13 @@ function urgencyColor(deadline: string) {
   const due = new Date(deadline)
   const days = Math.ceil((due.getTime() - today.getTime()) / 86400000)
   if (days < 0)   return { dot: 'bg-muted-foreground/30', label: 'Encerrada', text: 'text-muted-foreground' }
-  if (days <= 30) return { dot: 'bg-red-500',    label: `${days}d`,   text: 'text-red-600 dark:text-red-400' }
-  if (days <= 90) return { dot: 'bg-amber-500',  label: `${days}d`,   text: 'text-amber-600 dark:text-amber-400' }
-  return              { dot: 'bg-emerald-500', label: `${days}d`,   text: 'text-emerald-600 dark:text-emerald-400' }
+  if (days <= 30) return { dot: 'bg-red-500',    label: `${days}d`, text: 'text-red-600 dark:text-red-400' }
+  if (days <= 90) return { dot: 'bg-amber-500',  label: `${days}d`, text: 'text-amber-600 dark:text-amber-400' }
+  return              { dot: 'bg-emerald-500', label: `${days}d`, text: 'text-emerald-600 dark:text-emerald-400' }
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })
 }
 
 function ScholarshipRow({ s }: { s: Scholarship }) {
@@ -137,9 +73,21 @@ function ScholarshipRow({ s }: { s: Scholarship }) {
             <span className="text-[11px] text-muted-foreground">{s.entity}</span>
             <span className="h-2.5 w-px bg-border/60" />
             <span className="text-[11px] font-medium text-foreground/70">{s.amount}</span>
+            {!s.verified && (
+              <>
+                <span className="h-2.5 w-px bg-border/60" />
+                <span className="flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  Não verificada
+                </span>
+              </>
+            )}
           </div>
         </div>
-        {open ? <ChevronUp className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />}
+        {open
+          ? <ChevronUp className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          : <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+        }
       </button>
 
       {open && (
@@ -149,28 +97,42 @@ function ScholarshipRow({ s }: { s: Scholarship }) {
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-0.5">Elegibilidade</p>
               <p className="text-xs text-foreground/80">{s.eligibility}</p>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-0.5">Prazo</p>
                 <p className="text-xs text-foreground/80">{s.deadlineLabel}</p>
               </div>
-              {s.automatic && (
-                <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                  Automática
-                </span>
-              )}
-              {s.link && (
-                <a
-                  href={s.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="flex items-center gap-1 text-[11px] font-medium text-navy hover:underline"
-                >
-                  Candidatura <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
+              <div className="flex items-center gap-2">
+                {s.verified
+                  ? (
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Verificado {formatDate(s.lastVerified)}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+                      <AlertTriangle className="h-3 w-3" />
+                      Não verificado — confirma no site oficial
+                    </span>
+                  )
+                }
+                {s.automatic && (
+                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                    Automática
+                  </span>
+                )}
+              </div>
             </div>
+            {s.link && (
+              <a
+                href={s.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[11px] font-medium text-navy hover:underline"
+              >
+                Candidatura oficial <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -185,6 +147,8 @@ export function ScholarshipCalendar() {
     ? SCHOLARSHIPS
     : SCHOLARSHIPS.filter(s => s.category === filter)
 
+  const unverifiedCount = SCHOLARSHIPS.filter(s => !s.verified).length
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6">
@@ -192,6 +156,15 @@ export function ScholarshipCalendar() {
         <p className="mt-1 text-sm text-muted-foreground">
           Principais bolsas e prazos para o ano letivo 2025/26.
         </p>
+        {unverifiedCount > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 px-3 py-2.5">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="text-[11px] text-amber-700 dark:text-amber-300">
+              {unverifiedCount} bolsa{unverifiedCount !== 1 ? 's' : ''} ainda não verificada{unverifiedCount !== 1 ? 's' : ''} — os prazos e valores podem ter mudado.
+              Confirma sempre no site oficial antes de te candidatares.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Filter tabs */}
@@ -224,7 +197,16 @@ export function ScholarshipCalendar() {
       </div>
 
       <p className="mt-3 text-center text-[10px] text-muted-foreground">
-        Prazos aproximados — confirma sempre nos sites oficiais de cada entidade.
+        Informação desatualizada?{' '}
+        <a
+          href="https://github.com/codingdud/Dges/issues/new?title=Bolsa+desatualizada&body=Nome+da+bolsa%3A+%0AO+que+está+errado%3A+%0ALink+oficial%3A+"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-navy hover:underline"
+        >
+          Reporta aqui
+        </a>
+        {' '}— confirma sempre nos sites oficiais.
       </p>
     </div>
   )

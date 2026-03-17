@@ -91,47 +91,43 @@
 }
 
 .dark {
-  /* Base surfaces — clear elevation ladder */
-  --background:           oklch(0.10 0.004 240);
-  --foreground:           oklch(0.93 0.004 240);
-  --card:                 oklch(0.15 0.005 240);
-  --card-foreground:      oklch(0.93 0.004 240);
-  --popover:              oklch(0.17 0.005 240);
-  --popover-foreground:   oklch(0.93 0.004 240);
+  /* Neutral grey surfaces — no blue tint, only the accent is coloured */
+  --background:           oklch(0.11 0 0);
+  --foreground:           oklch(0.95 0 0);
+  --card:                 oklch(0.16 0 0);
+  --card-foreground:      oklch(0.95 0 0);
+  --popover:              oklch(0.19 0 0);
+  --popover-foreground:   oklch(0.95 0 0);
 
-  /* Interactive */
-  --primary:              oklch(0.62 0.19 258);
-  --primary-foreground:   oklch(0.98 0.004 240);
-  --secondary:            oklch(0.20 0.005 240);
-  --secondary-foreground: oklch(0.88 0.004 240);
-  --muted:                oklch(0.20 0.004 240);
-  --muted-foreground:     oklch(0.54 0.010 240);
-  --accent:               oklch(0.58 0.17 258);
+  --primary:              oklch(0.62 0.18 250);
+  --primary-foreground:   oklch(0.98 0 0);
+  --secondary:            oklch(0.21 0 0);
+  --secondary-foreground: oklch(0.88 0 0);
+  --muted:                oklch(0.20 0 0);
+  --muted-foreground:     oklch(0.56 0 0);
+  --accent:               oklch(0.58 0.17 250);
   --accent-foreground:    oklch(0.98 0 0);
 
-  /* Semantic */
   --destructive:          oklch(0.62 0.20 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  /* Structural */
-  --border:               oklch(0.24 0.008 240);
-  --input:                oklch(0.20 0.006 240);
-  --ring:                 oklch(0.58 0.17 258);
+  --border:               oklch(0.24 0 0);
+  --input:                oklch(0.19 0 0);
+  --ring:                 oklch(0.58 0.17 250);
 
-  /* Brand navy — bright enough to pop on dark bg */
-  --navy:                 oklch(0.60 0.19 258);
-  --navy-light:           oklch(0.70 0.17 258);
-  --navy-dark:            oklch(0.44 0.14 258);
+  /* Navy: the one intentionally blue element */
+  --navy:                 oklch(0.60 0.18 250);
+  --navy-light:           oklch(0.70 0.16 250);
+  --navy-dark:            oklch(0.44 0.13 250);
 
-  /* Sidebar */
-  --sidebar:              oklch(0.13 0.005 240);
-  --sidebar-foreground:   oklch(0.88 0.004 240);
-  --sidebar-border:       oklch(0.21 0.007 240);
-  --sidebar-primary:      oklch(0.60 0.19 258);
-  --sidebar-primary-foreground: oklch(0.98 0.004 240);
-  --sidebar-accent:       oklch(0.20 0.005 240);
-  --sidebar-accent-foreground: oklch(0.88 0.004 240);
-  --sidebar-ring:         oklch(0.58 0.17 258);
+  --sidebar:              oklch(0.13 0 0);
+  --sidebar-foreground:   oklch(0.90 0 0);
+  --sidebar-border:       oklch(0.21 0 0);
+  --sidebar-primary:      oklch(0.60 0.18 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent:       oklch(0.19 0 0);
+  --sidebar-accent-foreground: oklch(0.88 0 0);
+  --sidebar-ring:         oklch(0.58 0.17 250);
 }
 
 @layer base {
@@ -140,5 +136,47 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* ── Custom range/slider ─────────────────────────────────── */
+  input[type='range'] {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 9999px;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    background: transparent; /* set via inline style in component */
+  }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: var(--background);
+    border: 2px solid var(--navy);
+    box-shadow: 0 1px 3px oklch(0 0 0 / 0.20);
+    cursor: pointer;
+    transition: box-shadow 120ms, transform 120ms;
+  }
+  input[type='range']:hover::-webkit-slider-thumb,
+  input[type='range']:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--navy) 18%, transparent);
+    transform: scale(1.1);
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: var(--background);
+    border: 2px solid var(--navy);
+    box-shadow: 0 1px 3px oklch(0 0 0 / 0.20);
+    cursor: pointer;
+  }
+  input[type='range']::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: transparent;
   }
 }

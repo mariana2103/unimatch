@@ -48,6 +48,7 @@ const DEFAULT_FILTERS: Filters = {
   areas: [],
   districts: [],
   provasIngresso: [],
+  provasMode: 'any',
   tipo: '',
   onlyQualified: false,
   onlyGoodOptions: false,
@@ -145,12 +146,37 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
       if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
       if (f.tipo && c.tipo !== f.tipo) return false
       if (f.provasIngresso.length > 0) {
-        const codes = c.provasIngresso.map(p => p.code)
-        if (!f.provasIngresso.some(p => codes.includes(p))) return false
+        const uniqueCodes = [...new Set(c.provasIngresso.map(p => p.code))]
+        if (f.provasMode === 'any') {
+          // Course has at least one of the selected provas
+          if (!f.provasIngresso.some(p => uniqueCodes.includes(p))) return false
+        } else if (f.provasMode === 'all') {
+          // Course requires all selected provas (possibly others too)
+          if (!f.provasIngresso.every(p => uniqueCodes.includes(p))) return false
+        } else {
+          // 'exact' — course requires exactly these provas, nothing more
+          const filterSet = new Set(f.provasIngresso)
+          const codeSet   = new Set(uniqueCodes)
+          if (filterSet.size !== codeSet.size) return false
+          if (![...filterSet].every(p => codeSet.has(p))) return false
+        }
       }
       if (f.onlyQualified) {
-        const codes = c.provasIngresso.map(p => p.code)
-        if (codes.length > 0 && !codes.every(code => userExamCodes.has(code))) return false
+        // Group provas by conjunto_id — user needs all provas in at least one conjunto
+        const conjuntos = new Map<number, string[]>()
+        for (const p of c.provasIngresso) {
+          const cid = p.conjunto_id ?? 1
+          if (!conjuntos.has(cid)) conjuntos.set(cid, [])
+          conjuntos.get(cid)!.push(p.code)
+        }
+        if (conjuntos.size === 0) {
+          // No provas required — anyone qualifies
+        } else {
+          const qualifies = [...conjuntos.values()].some(
+            codes => codes.every(code => userExamCodes.has(code)),
+          )
+          if (!qualifies) return false
+        }
       }
       if (f.withinRange) {
         const userGrade = userGradeMap.get(c.id)

@@ -92,11 +92,12 @@ function GradeSlider({
         </div>
       </div>
 
-      <div className="relative py-1">
+      <div className="relative mt-1">
+        {/* Real-grade tick */}
         {pctRef !== null && (
           <div
-            className="pointer-events-none absolute top-1/2 z-10 h-3.5 w-0.5 -translate-y-1/2 rounded-full bg-muted-foreground/40"
-            style={{ left: `${pctRef}%` }}
+            className="pointer-events-none absolute top-1/2 z-10 h-4 w-0.5 -translate-y-1/2 rounded-full bg-muted-foreground/50"
+            style={{ left: `calc(${pctRef}% - 1px)` }}
           />
         )}
         <input
@@ -106,18 +107,19 @@ function GradeSlider({
           step={1}
           value={value}
           onChange={e => onChange(Number(e.target.value))}
-          className="w-full cursor-pointer appearance-none rounded-full accent-navy"
-          style={{ height: '6px' }}
+          className="w-full"
+          style={{
+            background: `linear-gradient(to right, var(--navy) ${(value / max) * 100}%, var(--border) ${(value / max) * 100}%)`,
+          }}
         />
+        {realValue !== undefined && (
+          <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground/40">
+            <span>0</span>
+            <span>real: {(realValue / displayScale).toFixed(1)}</span>
+            <span>{max / displayScale}</span>
+          </div>
+        )}
       </div>
-
-      {realValue !== undefined && (
-        <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground/40">
-          <span>0</span>
-          <span>real: {(realValue / displayScale).toFixed(1)}</span>
-          <span>{max / displayScale}</span>
-        </div>
-      )}
     </div>
   )
 }

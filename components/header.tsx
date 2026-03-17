@@ -25,9 +25,9 @@ export function Header({
 
   const tabs = [
     { id: 'explorer',   label: 'Explorar',   icon: Search },
+    { id: 'simulador',  label: 'Simulador',  icon: SlidersHorizontal },
     { id: 'timeline',   label: 'Calendário', icon: CalendarDays },
     { id: 'bolsas',     label: 'Bolsas',     icon: BookMarked },
-    { id: 'simulador',  label: 'Simulador',  icon: SlidersHorizontal },
   ]
 
   return (

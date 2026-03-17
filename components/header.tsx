@@ -1,6 +1,6 @@
 'use client'
 
-import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked, SlidersHorizontal } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'
@@ -24,9 +24,10 @@ export function Header({
   const { resolvedTheme, setTheme } = useTheme()
 
   const tabs = [
-    { id: 'explorer',  label: 'Explorar',   icon: Search },
-    { id: 'timeline',  label: 'Calendário', icon: CalendarDays },
-    { id: 'bolsas',    label: 'Bolsas',     icon: BookMarked },
+    { id: 'explorer',   label: 'Explorar',   icon: Search },
+    { id: 'timeline',   label: 'Calendário', icon: CalendarDays },
+    { id: 'bolsas',     label: 'Bolsas',     icon: BookMarked },
+    { id: 'simulador',  label: 'Simulador',  icon: SlidersHorizontal },
   ]
 
   return (

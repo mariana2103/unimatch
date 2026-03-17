@@ -8,6 +8,7 @@ import { CourseExplorer } from '@/components/course-explorer'
 import { CourseDetailDialog } from '@/components/course-detail-dialog'
 import { DGESTimeline } from '@/components/dges-timeline'
 import { ScholarshipCalendar } from '@/components/scholarship-calendar'
+import { Simulator2Fase } from '@/components/simulator-2fase'
 import { AlertCircle, X } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import type { CourseUI } from '@/lib/types'
@@ -80,6 +81,9 @@ export default function Home() {
 
         {activeTab === 'timeline' && <DGESTimeline />}
         {activeTab === 'bolsas' && <ScholarshipCalendar />}
+        {activeTab === 'simulador' && (
+          <Simulator2Fase onViewDetails={setSelectedCourse} />
+        )}
       </main>
 
       <AICounselor

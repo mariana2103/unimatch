@@ -91,31 +91,47 @@
 }
 
 .dark {
-  --background: oklch(0.13 0.01 250);
-  --foreground: oklch(0.93 0.01 250);
-  --card: oklch(0.18 0.015 250);
-  --card-foreground: oklch(0.93 0.01 250);
-  --popover: oklch(0.18 0.015 250);
-  --popover-foreground: oklch(0.93 0.01 250);
-  --primary: oklch(0.70 0.10 250);
-  --primary-foreground: oklch(0.13 0.01 250);
-  --secondary: oklch(0.22 0.02 250);
-  --secondary-foreground: oklch(0.90 0.01 250);
-  --muted: oklch(0.22 0.015 250);
-  --muted-foreground: oklch(0.60 0.02 250);
-  --accent: oklch(0.55 0.14 250);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.65 0.22 27);
+  /* Base surfaces — clear elevation ladder */
+  --background:           oklch(0.10 0.004 240);
+  --foreground:           oklch(0.93 0.004 240);
+  --card:                 oklch(0.15 0.005 240);
+  --card-foreground:      oklch(0.93 0.004 240);
+  --popover:              oklch(0.17 0.005 240);
+  --popover-foreground:   oklch(0.93 0.004 240);
+
+  /* Interactive */
+  --primary:              oklch(0.62 0.19 258);
+  --primary-foreground:   oklch(0.98 0.004 240);
+  --secondary:            oklch(0.20 0.005 240);
+  --secondary-foreground: oklch(0.88 0.004 240);
+  --muted:                oklch(0.20 0.004 240);
+  --muted-foreground:     oklch(0.54 0.010 240);
+  --accent:               oklch(0.58 0.17 258);
+  --accent-foreground:    oklch(0.98 0 0);
+
+  /* Semantic */
+  --destructive:          oklch(0.62 0.20 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.02 250);
-  --input: oklch(0.28 0.02 250);
-  --ring: oklch(0.55 0.14 250);
-  --navy: oklch(0.55 0.10 250);
-  --navy-light: oklch(0.65 0.10 250);
-  --navy-dark: oklch(0.40 0.08 250);
-  --sidebar: oklch(0.16 0.012 250);
-  --sidebar-foreground: oklch(0.90 0.01 250);
-  --sidebar-border: oklch(0.25 0.02 250);
+
+  /* Structural */
+  --border:               oklch(0.24 0.008 240);
+  --input:                oklch(0.20 0.006 240);
+  --ring:                 oklch(0.58 0.17 258);
+
+  /* Brand navy — bright enough to pop on dark bg */
+  --navy:                 oklch(0.60 0.19 258);
+  --navy-light:           oklch(0.70 0.17 258);
+  --navy-dark:            oklch(0.44 0.14 258);
+
+  /* Sidebar */
+  --sidebar:              oklch(0.13 0.005 240);
+  --sidebar-foreground:   oklch(0.88 0.004 240);
+  --sidebar-border:       oklch(0.21 0.007 240);
+  --sidebar-primary:      oklch(0.60 0.19 258);
+  --sidebar-primary-foreground: oklch(0.98 0.004 240);
+  --sidebar-accent:       oklch(0.20 0.005 240);
+  --sidebar-accent-foreground: oklch(0.88 0.004 240);
+  --sidebar-ring:         oklch(0.58 0.17 258);
 }
 
 @layer base {

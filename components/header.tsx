@@ -1,6 +1,7 @@
 'use client'
 
-import { GraduationCap, CalendarDays, Search, Sparkles } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'
 import { UserMenu } from './user-menu'
@@ -20,10 +21,12 @@ export function Header({
   setIsAISidebarOpen,
 }: HeaderProps) {
   const { isLoggedIn } = useUser()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const tabs = [
-    { id: 'explorer', label: 'Explorar', icon: Search },
-    { id: 'timeline', label: 'Calendário', icon: CalendarDays },
+    { id: 'explorer',  label: 'Explorar',   icon: Search },
+    { id: 'timeline',  label: 'Calendário', icon: CalendarDays },
+    { id: 'bolsas',    label: 'Bolsas',     icon: BookMarked },
   ]
 
   return (
@@ -82,6 +85,14 @@ export function Header({
           >
             <Sparkles className="h-3.5 w-3.5" />
             Conselheiro IA
+          </button>
+
+          <button
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            aria-label="Alternar tema"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
           <div className="h-6 w-px bg-border/60 hidden sm:block" />

@@ -7,6 +7,7 @@ import { AICounselor } from '@/components/ai-counselor'
 import { CourseExplorer } from '@/components/course-explorer'
 import { CourseDetailDialog } from '@/components/course-detail-dialog'
 import { DGESTimeline } from '@/components/dges-timeline'
+import { ScholarshipCalendar } from '@/components/scholarship-calendar'
 import { AlertCircle, X } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import type { CourseUI } from '@/lib/types'
@@ -57,7 +58,7 @@ export default function Home() {
   }, [isNewUser, clearNewUser, router])
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/50">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -78,6 +79,7 @@ export default function Home() {
         )}
 
         {activeTab === 'timeline' && <DGESTimeline />}
+        {activeTab === 'bolsas' && <ScholarshipCalendar />}
       </main>
 
       <AICounselor
@@ -95,7 +97,7 @@ export default function Home() {
         onClose={() => setSelectedCourse(null)}
       />
 
-      <footer className="border-t border-border/40 bg-white py-6">
+      <footer className="border-t border-border/40 bg-card py-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4">
           <p className="text-xs text-muted-foreground">
             © 2026 UniMatch - Dados oficiais baseados na DGES.

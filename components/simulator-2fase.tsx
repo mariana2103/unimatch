@@ -178,8 +178,9 @@ function AddExamPicker({
 // ─── Main component ─────────────────────────────────────────────────────────
 
 export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: CourseUI) => void }) {
-  const { isLoggedIn, profile, exams, favorites } = useUser()
+  const { isLoggedIn, profile, exams, favorites, toggleFavorite } = useUser()
 
+  const [view, setView]               = useState<'favorites' | 'simulator'>('favorites')
   const [phase, setPhase]             = useState<'1' | '2'>('1')
   const [includePrivadas, setIncludePrivadas] = useState(false)
   const [courses, setCourses]         = useState<CourseUI[]>([])
@@ -207,11 +208,11 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
     setExtraCodes([])
   }, [realMedia, exams])
 
-  // Load all courses with a cutoff once
+  // Load all courses (favorites may not have a cutoff)
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
-      supabase.from('courses').select('*').not('nota_ultimo_colocado', 'is', null),
+      supabase.from('courses').select('*'),
       supabase.from('course_requirements').select('*'),
     ]).then(([{ data: courseRows }, { data: reqRows }]) => {
       if (courseRows && reqRows) {
@@ -313,51 +314,159 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
     )
   }
 
+  // All favorited courses regardless of cutoff
+  const allFavoriteCourses = useMemo(
+    () => courses.filter(c => favorites.includes(c.id)),
+    [courses, favorites],
+  )
+
   // ── Main UI ───────────────────────────────────────────────────────────────
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
 
-      {/* ── Header + phase toggle ─────────────────────────────────────────── */}
+      {/* ── Header + sub-tabs ─────────────────────────────────────────────── */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Simulador de Candidatura</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ajusta a média e os exames — os cursos atualizam em tempo real.
+            Favoritos e simulação de candidatura em tempo real.
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start flex-wrap">
+          {/* Sub-tab toggle */}
           <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5">
-            {(['1', '2'] as const).map(p => (
+            <button
+              onClick={() => setView('favorites')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all',
+                view === 'favorites'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Heart className="h-3 w-3" />
+              Favoritos
+              {favorites.length > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                  {favorites.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setView('simulator')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all',
+                view === 'simulator'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <TrendingUp className="h-3 w-3" />
+              Simulador
+            </button>
+          </div>
+
+          {view === 'simulator' && (
+            <>
+              <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5">
+                {(['1', '2'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPhase(p)}
+                    className={cn(
+                      'rounded-md px-4 py-1.5 text-xs font-semibold transition-all',
+                      phase === p
+                        ? 'bg-background shadow-sm text-foreground'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {p}ª Fase
+                  </button>
+                ))}
+              </div>
               <button
-                key={p}
-                onClick={() => setPhase(p)}
+                onClick={() => setIncludePrivadas(v => !v)}
                 className={cn(
-                  'rounded-md px-4 py-1.5 text-xs font-semibold transition-all',
-                  phase === p
-                    ? 'bg-background shadow-sm text-foreground'
-                    : 'text-muted-foreground hover:text-foreground',
+                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                  includePrivadas
+                    ? 'border-border bg-muted text-foreground'
+                    : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border',
                 )}
               >
-                {p}ª Fase
+                <Lock className="h-3 w-3" />
+                {includePrivadas ? 'Incluindo privadas' : 'Só públicas'}
               </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setIncludePrivadas(v => !v)}
-            className={cn(
-              'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
-              includePrivadas
-                ? 'border-border bg-muted text-foreground'
-                : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border',
-            )}
-          >
-            <Lock className="h-3 w-3" />
-            {includePrivadas ? 'Incluindo privadas' : 'Só públicas'}
-          </button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* ── Favoritos view ────────────────────────────────────────────────── */}
+      {view === 'favorites' && (
+        <div>
+          {loadingCourses ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-navy" />
+            </div>
+          ) : allFavoriteCourses.length === 0 ? (
+            <div className="rounded-xl border border-border/40 bg-card/50 py-20 text-center">
+              <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+              <p className="text-sm font-medium text-muted-foreground">Ainda não tens favoritos.</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                Guarda cursos com o{' '}
+                <Heart className="inline h-3 w-3 text-rose-400" />{' '}
+                no explorador.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {allFavoriteCourses.map(course => (
+                <div
+                  key={course.id}
+                  onClick={() => onViewDetails?.(course)}
+                  className="group flex cursor-pointer items-center gap-4 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-all hover:border-border hover:shadow-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{course.nome}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {course.instituicao} · {course.distrito}
+                          {course.area && <span className="ml-1.5 text-muted-foreground/50">· {course.area}</span>}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        {course.notaUltimoColocado !== null ? (
+                          <>
+                            <p className="text-sm font-bold tabular-nums text-foreground">
+                              {(course.notaUltimoColocado / 10).toFixed(1)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">corte</p>
+                          </>
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground/50">sem dados</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); toggleFavorite(course.id) }}
+                    className="shrink-0 rounded-full p-1.5 text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                    title="Remover dos favoritos"
+                  >
+                    <Heart className="h-4 w-4 fill-rose-500" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Simulator view ────────────────────────────────────────────────── */}
+      {view === 'simulator' && (<>
 
       {/* 2ª fase disclaimer */}
       {phase === '2' && (
@@ -579,6 +688,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           )}
         </div>
       </div>
+      </>)}
     </div>
   )
 }

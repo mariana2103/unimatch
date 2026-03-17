@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, BookOpen, TrendingUp, CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock } from 'lucide-react'
+import { MapPin, BookOpen, TrendingUp, CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock, Heart } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade } from '@/lib/data'
@@ -23,8 +23,9 @@ const AREA_COLORS: Record<string, { dot: string; text: string; bar: string }> = 
 }
 
 export function CourseCard({ course, onViewDetails }: CourseCardProps) {
-  const { isLoggedIn, profile, exams, comparisonList, toggleComparison } = useUser()
+  const { isLoggedIn, profile, exams, favorites, comparisonList, toggleComparison, toggleFavorite } = useUser()
   const isComparing = comparisonList.includes(course.id)
+  const isFavorite  = favorites.includes(course.id)
 
   const notaCorte = course.notaUltimoColocado
   const areaStyle = AREA_COLORS[course.area]
@@ -66,7 +67,16 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             </div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.instituicao}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 pt-0.5" onClick={e => e.stopPropagation()}>
+          <div className="flex shrink-0 items-center gap-2 pt-0.5" onClick={e => e.stopPropagation()}>
+            {isLoggedIn && (
+              <button
+                onClick={() => toggleFavorite(course.id)}
+                aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                className="transition-colors"
+              >
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground/30 hover:text-rose-400'}`} />
+              </button>
+            )}
             <Checkbox
               checked={isComparing}
               onCheckedChange={() => toggleComparison(course.id)}

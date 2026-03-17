@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   TrendingUp, Sparkles, RotateCcw, ArrowUpRight,
-  Plus, X, Info, ChevronDown,
+  Plus, X, Info, ChevronDown, Heart,
 } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade } from '@/lib/data'
@@ -176,7 +176,7 @@ function AddExamPicker({
 // ─── Main component ─────────────────────────────────────────────────────────
 
 export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: CourseUI) => void }) {
-  const { isLoggedIn, profile, exams } = useUser()
+  const { isLoggedIn, profile, exams, favorites } = useUser()
 
   const [phase, setPhase]           = useState<'1' | '2'>('1')
   const [courses, setCourses]       = useState<CourseUI[]>([])
@@ -233,10 +233,15 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
   const simMediaScaled  = simMedia / 10
   const realMediaScaled = realMedia / 10
 
-  const results = useMemo(() => {
-    if (simMediaScaled <= 0 || !courses.length) return []
+  const favoriteCourses = useMemo(
+    () => courses.filter(c => favorites.includes(c.id)),
+    [courses, favorites],
+  )
 
-    return courses
+  const results = useMemo(() => {
+    if (simMediaScaled <= 0 || !favoriteCourses.length) return []
+
+    return favoriteCourses
       .map(course => {
         const sim  = calculateAdmissionGrade(simMediaScaled, simExamsList, course)
         if (!sim.hasRequiredExams) return null
@@ -351,19 +356,40 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
         {/* ── Left: inputs panel ───────────────────────────────────────────── */}
         <div className="space-y-4">
 
-          {/* Média Interna */}
+          {/* Média Interna — stat-style +/- control */}
           <div className="rounded-xl border border-border/50 bg-card p-5">
-            <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Média Interna
-            </h3>
-            <GradeSlider
-              label="Média do Secundário"
-              value={simMedia}
-              max={200}
-              realValue={realMedia > 0 ? realMedia : undefined}
-              onChange={setSimMedia}
-              displayScale={10}
-            />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] text-muted-foreground">Média Interna</p>
+                {realMedia > 0 && simMedia !== realMedia && (
+                  <p className="text-[9px] text-muted-foreground/50">
+                    real: {(realMedia / 10).toFixed(1)}
+                  </p>
+                )}
+              </div>
+              {simMedia !== realMedia && realMedia > 0 && (
+                <span className={`text-[10px] font-bold tabular-nums ${simMedia > realMedia ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {simMedia > realMedia ? '+' : ''}{((simMedia - realMedia) / 10).toFixed(1)}
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                onClick={() => setSimMedia(v => Math.max(0, v - 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:bg-muted"
+              >
+                <span className="text-base leading-none">−</span>
+              </button>
+              <span className="text-2xl font-bold tabular-nums text-foreground">
+                {(simMedia / 10).toFixed(1)}
+              </span>
+              <button
+                onClick={() => setSimMedia(v => Math.min(200, v + 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:bg-muted"
+              >
+                <span className="text-base leading-none">+</span>
+              </button>
+            </div>
           </div>
 
           {/* Provas */}
@@ -439,19 +465,20 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
             <div className="flex items-center justify-center py-24">
               <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-navy" />
             </div>
-          ) : simMedia <= 0 && allSimCodes.length === 0 ? (
+          ) : favorites.length === 0 ? (
             <div className="rounded-xl border border-border/40 bg-card/50 py-16 text-center">
-              <p className="text-sm text-muted-foreground">
-                Preenche a média e adiciona provas para ver resultados.
+              <Heart className="mx-auto mb-3 h-8 w-8 text-muted-foreground/20" />
+              <p className="text-sm text-muted-foreground">Ainda não tens favoritos.</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                Guarda cursos com o{' '}
+                <Heart className="inline h-3 w-3 text-rose-400" />{' '}
+                no explorador para os simular aqui.
               </p>
-              <a href="/profile" className="mt-2 inline-block text-xs font-medium text-navy hover:underline">
-                Preencher perfil →
-              </a>
             </div>
           ) : results.length === 0 ? (
             <div className="rounded-xl border border-border/40 bg-card/50 py-16 text-center">
               <p className="text-sm text-muted-foreground">
-                Nenhum curso corresponde às provas adicionadas.
+                Nenhum favorito tem as provas que adicionaste.
               </p>
             </div>
           ) : (

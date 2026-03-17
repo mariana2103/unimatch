@@ -12,6 +12,7 @@ interface UserContextType {
   profile: Profile | null
   grades: UserGrade[]
   exams: UserExam[]
+  favorites: string[]
   comparisonList: string[]
   logout: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
@@ -19,6 +20,7 @@ interface UserContextType {
   removeGrade: (gradeId: string) => Promise<void>
   addExam: (exam: Omit<UserExam, 'id' | 'user_id'>) => Promise<void>
   removeExam: (examId: string) => Promise<void>
+  toggleFavorite: (courseId: string) => Promise<void>
   toggleComparison: (courseId: string) => void
   clearComparison: () => void
   clearNewUser: () => void
@@ -32,6 +34,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [grades, setGrades] = useState<UserGrade[]>([])
   const [exams, setExams] = useState<UserExam[]>([])
+  const [favorites, setFavorites] = useState<string[]>([])
   const [comparisonList, setComparisonList] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -108,9 +111,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         }
 
-        const [{ data: gradesData }, { data: examsData }] = await Promise.all([
+        const [{ data: gradesData }, { data: examsData }, { data: favsData }] = await Promise.all([
           supabase.from('user_grades').select('*').eq('user_id', userId),
           supabase.from('user_exams').select('*').eq('user_id', userId),
+          supabase.from('favorites').select('course_id').eq('user_id', userId),
         ])
 
         if (!isMounted) return
@@ -118,6 +122,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setIsLoggedIn(true)
         setGrades(gradesData ?? [])
         setExams(examsData ?? [])
+        setFavorites((favsData ?? []).map((f: any) => f.course_id))
       } catch (err) {
         console.error('Error loading user:', err)
       }
@@ -149,6 +154,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setProfile(null)
         setGrades([])
         setExams([])
+        setFavorites([])
         setComparisonList([])
       } else if (event === 'SIGNED_IN' && session?.user) {
         loadUser(session.user.id, {
@@ -170,9 +176,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setProfile(null)
     setGrades([])
     setExams([])
+    setFavorites([])
     setComparisonList([])
     router.push('/')
   }, [supabase, router])
+
+  const toggleFavorite = useCallback(async (courseId: string) => {
+    if (!profile) return
+    const isFav = favorites.includes(courseId)
+    if (isFav) {
+      await supabase.from('favorites').delete().eq('user_id', profile.id).eq('course_id', courseId)
+      setFavorites(prev => prev.filter(id => id !== courseId))
+    } else {
+      await supabase.from('favorites').insert({ user_id: profile.id, course_id: courseId })
+      setFavorites(prev => [...prev, courseId])
+    }
+  }, [profile, favorites, supabase])
 
   const updateProfile = useCallback(async (updates: Partial<Profile>) => {
     if (!profile) return
@@ -232,6 +251,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     profile,
     grades,
     exams,
+    favorites,
     comparisonList,
     logout,
     updateProfile,
@@ -239,10 +259,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     removeGrade,
     addExam,
     removeExam,
+    toggleFavorite,
     toggleComparison,
     clearComparison: () => setComparisonList([]),
     clearNewUser: () => setIsNewUser(false),
-  }), [isLoggedIn, isNewUser, profile, grades, exams, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleComparison])
+  }), [isLoggedIn, isNewUser, profile, grades, exams, favorites, comparisonList, logout, updateProfile, addGrade, removeGrade, addExam, removeExam, toggleFavorite, toggleComparison])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">

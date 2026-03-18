@@ -4,229 +4,240 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─────────────────────────────────────────────────────────────────────────
-   DGES THEME
-   Based on the EightShapes "layering" principle:
-   surfaces closer to the user sit *above* the canvas and are lighter in dark
-   mode (or slightly more saturated in light mode). This creates depth without
-   needing shadows on every element.
+   DGES THEME  —  Teal-blue palette
+   ─────────────────────────────────────────────────────────────────────────
+   Source palettes (designer hex):
 
-   Layer order (bottom → top)
-     canvas      → the page background
-     surface     → cards, panels, inputs
-     elevated    → popover, dropdown, modal
-     overlay     → tooltips, toasts
+   Light mode                     Dark mode
+   ──────────────────────         ──────────────────────
+   text        #0a191f            text        #e0eff5
+   background  #f0f7fa            background  #050c0f
+   primary     #25586f            primary     #90c3da
+   secondary   #8ccae3            secondary   #1c5a73
+   accent      #83aab9            accent      #466d7c
 
-   Brand palette
-     navy         → primary CTA, links, focus rings
-     emerald      → success / above-cutoff feedback
-     warning      → near-cutoff (amber)
-     destructive  → errors, below-cutoff, delete actions
+   Surface layering (EightShapes principle):
+     canvas   → page background (lightest in light / darkest in dark)
+     surface  → cards, panels sit above canvas
+     elevated → popovers, dropdowns sit above cards
+   In dark mode each layer is slightly lighter than the one below,
+   so depth is readable without heavy shadows.
 
-   Area categorical colours (8 academic areas in DGES data).
-   Each has a light-mode value and a brighter dark-mode shift
-   so they stay visible on dark surfaces.
+   Hue family: all neutrals/surfaces stay near H ≈ 205° (teal-blue)
+   to feel cohesive with the brand palette.
 ───────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Layer 0: canvas ─────────────────────────────────────────────────
-     The page background. Slightly blue-tinted off-white instead of
-     pure white — reduces glare and ties the page to the navy brand. */
-  --background: oklch(0.98 0.002 250);
+  /* ── Canvas — page background ────────────────────────────────────────
+     #f0f7fa: pale teal-tinted white. Softer than pure white, pairs
+     naturally with the primary teal without washing it out. */
+  --background: oklch(0.97 0.010 205);
 
-  /* ── Layer 1: surface ────────────────────────────────────────────────
-     Cards and panels sit on the canvas. Pure white to give a clean
-     lift off the blue-tinted canvas. */
-  --card:               oklch(1 0 0);
-  --card-foreground:    oklch(0.16 0.04 250);
+  /* ── Surface — cards ─────────────────────────────────────────────────
+     Pure white so cards lift cleanly off the tinted canvas. */
+  --card:            oklch(1 0 0);
+  --card-foreground: oklch(0.17 0.027 205);
 
-  /* ── Layer 2: elevated ───────────────────────────────────────────────
-     Dropdowns and modals sit above cards. Same white in light mode —
-     elevation is communicated through shadow, not colour. */
+  /* ── Elevated — dropdowns, modals ────────────────────────────────────
+     Same white; elevation signalled by shadow, not colour. */
   --popover:            oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.04 250);
+  --popover-foreground: oklch(0.17 0.027 205);
 
-  /* ── Typography ──────────────────────────────────────────────────────
-     foreground: near-black with a blue tint (matches navy family)
-     muted-foreground: used for labels, secondary text, placeholders */
-  --foreground:         oklch(0.16 0.04 250);
-  --muted:              oklch(0.94 0.008 250);
-  --muted-foreground:   oklch(0.50 0.02 250);
+  /* ── Text ─────────────────────────────────────────────────────────────
+     #0a191f: near-black with a teal tint. Warmer on the eye than
+     pure black and stays in the same hue family as the brand. */
+  --foreground:       oklch(0.17 0.027 205);
+  --muted:            oklch(0.93 0.014 205);  /* very light teal fill     */
+  --muted-foreground: oklch(0.50 0.030 205);  /* secondary labels, hints  */
 
-  /* ── Brand: Navy ─────────────────────────────────────────────────────
-     Deep royal blue — CTAs, links, active states, focus rings.
-     primary mirrors navy so Shadcn components stay on-brand. */
-  --navy:               oklch(0.30 0.07 250);
-  --navy-light:         oklch(0.40 0.08 250);   /* hover states */
-  --navy-dark:          oklch(0.20 0.06 250);   /* pressed / active */
-  --primary:            oklch(0.30 0.07 250);
-  --primary-foreground: oklch(0.98 0.005 250);  /* white text on navy */
+  /* ── Primary brand — #25586f ─────────────────────────────────────────
+     Mid-depth teal. Used for CTAs, active states, focus rings.
+     navy aliases primary so existing `text-navy / bg-navy` utilities
+     keep working across the codebase. */
+  --primary:            oklch(0.39 0.072 205);
+  --primary-foreground: oklch(0.97 0.008 205);  /* near-white on teal bg  */
+  --navy:               oklch(0.39 0.072 205);
+  --navy-light:         oklch(0.50 0.072 205);  /* hover */
+  --navy-dark:          oklch(0.28 0.055 205);  /* pressed / active */
 
-  /* ── Secondary / Accent ──────────────────────────────────────────────
-     secondary: subtle fills for tags, badges, secondary buttons
-     accent: stronger tint used for highlighted rows, hover on menus */
-  --secondary:            oklch(0.95 0.01 250);
-  --secondary-foreground: oklch(0.25 0.05 250);
-  --accent:               oklch(0.45 0.12 250);
-  --accent-foreground:    oklch(1 0 0);
+  /* ── Secondary — #8ccae3 ─────────────────────────────────────────────
+     Light sky-blue. Used for pill chips, secondary buttons, info tints.
+     Its high lightness means dark text reads well on it. */
+  --secondary:            oklch(0.79 0.072 205);
+  --secondary-foreground: oklch(0.17 0.027 205);
 
-  /* ── Semantic status colours ─────────────────────────────────────────
-     emerald  → above cutoff / success feedback
-     warning  → near cutoff (within 0.5 val) — amber
-     destructive → below cutoff / errors / delete */
-  --emerald:       oklch(0.55 0.17 160);
-  --emerald-light: oklch(0.65 0.17 160);
-  --warning:       oklch(0.65 0.18 60);
-  --destructive:   oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  /* ── Accent — #83aab9 ────────────────────────────────────────────────
+     Desaturated teal-grey. Good for hover states, icon fills,
+     decorative elements that need to stay in the palette but recede. */
+  --accent:            oklch(0.70 0.050 205);
+  --accent-foreground: oklch(0.17 0.027 205);
+
+  /* ── Semantic status ─────────────────────────────────────────────────
+     emerald  → above cutoff / success
+     warning  → near cutoff (within 0.5 val)
+     destructive → below cutoff / errors / delete
+     These use independent hues (not teal) so they're instantly
+     distinguishable from the brand palette. */
+  --emerald:            oklch(0.58 0.16 160);
+  --emerald-light:      oklch(0.68 0.16 160);
+  --warning:            oklch(0.68 0.17 60);
+  --destructive:        oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.97 0.005 27);
 
   /* ── Borders & inputs ────────────────────────────────────────────────
-     Subtle blue-grey to stay consistent with the navy palette. */
-  --border: oklch(0.90 0.01 250);
-  --input:  oklch(0.90 0.01 250);
-  --ring:   oklch(0.45 0.12 250);
+     Soft teal-tinted strokes; subtle enough not to compete with content. */
+  --border: oklch(0.87 0.020 205);
+  --input:  oklch(0.87 0.020 205);
+  --ring:   oklch(0.39 0.072 205);  /* matches primary for focus rings  */
 
   /* ── Area categorical colours ────────────────────────────────────────
-     Used as accent bars on course cards. Each area gets a distinct hue.
-     Values chosen to pass WCAG AA when used as a 2px bar on white. */
-  --area-eng:    oklch(0.55 0.19 250);  /* Engineering & Tech     → blue   */
-  --area-saude:  oklch(0.57 0.20 10);   /* Life Sciences & Health → red    */
-  --area-cien:   oklch(0.57 0.14 185);  /* Exact Sciences         → teal   */
+     One distinct hue per DGES academic area, used as the 2 px colour
+     bar on course cards. Chosen to be clearly different from each other
+     AND from the teal brand hue so they never clash. */
+  --area-eng:    oklch(0.50 0.16 250);  /* Engineering & Tech     → blue   */
+  --area-saude:  oklch(0.57 0.20 15);   /* Life Sciences & Health → red    */
+  --area-cien:   oklch(0.55 0.14 175);  /* Exact Sciences         → teal   */
   --area-econ:   oklch(0.67 0.17 60);   /* Economics & Management → amber  */
-  --area-artes:  oklch(0.60 0.20 340);  /* Arts & Design          → pink   */
-  --area-dir:    oklch(0.50 0.18 290);  /* Law & Social Sciences  → indigo */
-  --area-edu:    oklch(0.63 0.19 35);   /* Education & Sport      → orange */
-  --area-info:   oklch(0.62 0.16 215);  /* CS & Data              → cyan   */
+  --area-artes:  oklch(0.58 0.20 340);  /* Arts & Design          → pink   */
+  --area-dir:    oklch(0.50 0.17 290);  /* Law & Social Sciences  → indigo */
+  --area-edu:    oklch(0.62 0.18 35);   /* Education & Sport      → orange */
+  --area-info:   oklch(0.56 0.14 215);  /* CS & Data              → cyan   */
 
-  /* ── Chart colours ───────────────────────────────────────────────────
-     Used in the historical grade trend chart on course detail panels. */
-  --chart-1: oklch(0.30 0.07 250);  /* navy  */
-  --chart-2: oklch(0.55 0.17 160);  /* emerald */
-  --chart-3: oklch(0.60 0.15 40);   /* gold */
-  --chart-4: oklch(0.50 0.10 250);  /* navy-mid */
-  --chart-5: oklch(0.65 0.12 160);  /* emerald-light */
+  /* ── Charts ──────────────────────────────────────────────────────────
+     Used in the historical grade trend sparkline on course detail. */
+  --chart-1: oklch(0.39 0.072 205);  /* primary teal   */
+  --chart-2: oklch(0.58 0.16 160);   /* emerald        */
+  --chart-3: oklch(0.68 0.17 60);    /* amber          */
+  --chart-4: oklch(0.70 0.050 205);  /* accent grey    */
+  --chart-5: oklch(0.79 0.072 205);  /* secondary blue */
 
-  /* ── Sidebar ─────────────────────────────────────────────────────── */
-  --sidebar:                    oklch(0.985 0 0);
-  --sidebar-foreground:         oklch(0.18 0.04 250);
-  --sidebar-primary:            oklch(0.30 0.07 250);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent:             oklch(0.95 0.01 250);
-  --sidebar-accent-foreground:  oklch(0.25 0.05 250);
-  --sidebar-border:             oklch(0.90 0.01 250);
-  --sidebar-ring:               oklch(0.45 0.12 250);
+  /* ── Sidebar ─────────────────────────────────────────────────────────  */
+  --sidebar:                    oklch(0.99 0.006 205);
+  --sidebar-foreground:         oklch(0.20 0.027 205);
+  --sidebar-primary:            oklch(0.39 0.072 205);
+  --sidebar-primary-foreground: oklch(0.97 0.008 205);
+  --sidebar-accent:             oklch(0.93 0.014 205);
+  --sidebar-accent-foreground:  oklch(0.28 0.030 205);
+  --sidebar-border:             oklch(0.87 0.020 205);
+  --sidebar-ring:               oklch(0.39 0.072 205);
 
   --radius: 0.625rem;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
    DARK MODE
-   Follows the EightShapes rule: "each layer is lighter than the one below".
-   We use blue-tinted dark surfaces (not neutral grey or pure black) to
-   maintain the navy brand identity in dark mode.
+   ─────────────────────────────────────────────────────────────────────────
+   Surface layers (each step is lighter = "closer to the user"):
+     background  0.07 L  — deepest, near-black teal  (#050c0f)
+     card        0.14 L  — panels rise above canvas
+     popover     0.20 L  — dropdowns rise above cards
 
-   canvas  0.16 L  — deepest, the page background
-   surface 0.20 L  — cards sit above the canvas
-   elevated 0.23 L — popovers/dropdowns sit above cards
-
-   Navy flips to electric blue (vivid, higher chroma) so it stays energetic
-   against the dark surfaces without needing brightness adjustments.
+   Primary flips to #90c3da (light sky blue) — it reads clearly against
+   the dark surfaces while staying in the same hue family.
+   Secondary flips to #1c5a73 (mid-depth teal) — useful for filled
+   secondary buttons that need to be readable but not dominant.
+   Accent flips to #466d7c (muted teal) — subtle, for decorative use.
 ───────────────────────────────────────────────────────────────────────── */
 .dark {
   /* ── Layers ──────────────────────────────────────────────────────── */
-  --background:      oklch(0.16 0.014 250);  /* canvas — deepest layer     */
-  --card:            oklch(0.20 0.012 250);  /* surface — cards            */
-  --card-foreground: oklch(0.93 0.006 250);
-  --popover:         oklch(0.23 0.010 250);  /* elevated — dropdowns       */
-  --popover-foreground: oklch(0.93 0.006 250);
+  --background:         oklch(0.07 0.014 210);   /* #050c0f — canvas     */
+  --card:               oklch(0.14 0.018 210);   /* surface              */
+  --card-foreground:    oklch(0.94 0.014 205);
+  --popover:            oklch(0.20 0.018 210);   /* elevated             */
+  --popover-foreground: oklch(0.94 0.014 205);
 
-  /* ── Typography ──────────────────────────────────────────────────── */
-  --foreground:       oklch(0.93 0.006 250);
-  --muted:            oklch(0.24 0.010 250);
-  --muted-foreground: oklch(0.62 0.008 250);
+  /* ── Text ─────────────────────────────────────────────────────────── */
+  --foreground:       oklch(0.94 0.014 205);     /* #e0eff5              */
+  --muted:            oklch(0.18 0.018 210);
+  --muted-foreground: oklch(0.60 0.022 210);
 
-  /* ── Brand: Navy → Electric Blue ────────────────────────────────────
-     In dark mode navy becomes a vivid electric blue — higher chroma so
-     it stands out against the dark blue-slate surface without being garish. */
-  --navy:       oklch(0.70 0.22 250);
-  --navy-light: oklch(0.78 0.18 250);
-  --navy-dark:  oklch(0.52 0.17 250);
-  --primary:    oklch(0.70 0.20 250);
-  --primary-foreground: oklch(0.98 0 0);
+  /* ── Primary — #90c3da ───────────────────────────────────────────────
+     Light sky-blue; high lightness so it pops against dark surfaces.
+     navy mirrors primary so `text-navy` stays the interactive colour. */
+  --primary:            oklch(0.77 0.068 205);
+  --primary-foreground: oklch(0.09 0.016 210);   /* dark text on light primary */
+  --navy:               oklch(0.77 0.068 205);
+  --navy-light:         oklch(0.84 0.058 205);
+  --navy-dark:          oklch(0.62 0.072 205);
 
-  /* ── Secondary / Accent ──────────────────────────────────────────── */
-  --secondary:            oklch(0.25 0.010 250);
-  --secondary-foreground: oklch(0.85 0.005 250);
-  --accent:               oklch(0.67 0.18 250);
-  --accent-foreground:    oklch(0.98 0 0);
+  /* ── Secondary — #1c5a73 ─────────────────────────────────────────────
+     Mid-depth teal; used for filled secondary elements. */
+  --secondary:            oklch(0.37 0.070 210);
+  --secondary-foreground: oklch(0.90 0.014 205);
 
-  /* ── Semantic status colours — shifted lighter for dark surfaces ──── */
-  --emerald:       oklch(0.65 0.17 160);
-  --emerald-light: oklch(0.72 0.17 160);
-  --warning:       oklch(0.78 0.16 60);
-  --destructive:   oklch(0.62 0.19 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  /* ── Accent — #466d7c ────────────────────────────────────────────────
+     Muted teal-grey; decorative, hover tints, icon colours. */
+  --accent:            oklch(0.47 0.050 210);
+  --accent-foreground: oklch(0.94 0.014 205);
+
+  /* ── Semantic status — brighter for dark surfaces ────────────────── */
+  --emerald:            oklch(0.68 0.16 160);
+  --emerald-light:      oklch(0.75 0.15 160);
+  --warning:            oklch(0.78 0.16 60);
+  --destructive:        oklch(0.62 0.20 25);
+  --destructive-foreground: oklch(0.97 0 0);
 
   /* ── Borders & inputs ────────────────────────────────────────────── */
-  --border: oklch(0.29 0.010 250);
-  --input:  oklch(0.23 0.010 250);
-  --ring:   oklch(0.67 0.18 250);
+  --border: oklch(0.27 0.022 210);
+  --input:  oklch(0.18 0.018 210);
+  --ring:   oklch(0.77 0.068 205);
 
-  /* ── Area categorical colours — slightly lighter for dark surfaces ── */
-  --area-eng:    oklch(0.65 0.19 250);
-  --area-saude:  oklch(0.65 0.18 10);
-  --area-cien:   oklch(0.65 0.14 185);
-  --area-econ:   oklch(0.74 0.17 60);
-  --area-artes:  oklch(0.68 0.20 340);
-  --area-dir:    oklch(0.62 0.18 290);
-  --area-edu:    oklch(0.70 0.18 35);
-  --area-info:   oklch(0.68 0.16 215);
+  /* ── Area colours — brighter shift for dark surfaces ─────────────── */
+  --area-eng:    oklch(0.62 0.18 250);
+  --area-saude:  oklch(0.65 0.19 15);
+  --area-cien:   oklch(0.65 0.13 175);
+  --area-econ:   oklch(0.74 0.16 60);
+  --area-artes:  oklch(0.68 0.19 340);
+  --area-dir:    oklch(0.63 0.17 290);
+  --area-edu:    oklch(0.70 0.17 35);
+  --area-info:   oklch(0.67 0.14 215);
 
-  /* ── Chart colours ───────────────────────────────────────────────── */
-  --chart-1: oklch(0.70 0.22 250);
-  --chart-2: oklch(0.65 0.17 160);
+  /* ── Charts ──────────────────────────────────────────────────────── */
+  --chart-1: oklch(0.77 0.068 205);
+  --chart-2: oklch(0.68 0.16 160);
   --chart-3: oklch(0.78 0.16 60);
-  --chart-4: oklch(0.62 0.18 290);
-  --chart-5: oklch(0.65 0.19 25);
+  --chart-4: oklch(0.47 0.050 210);
+  --chart-5: oklch(0.37 0.070 210);
 
   /* ── Sidebar ──────────────────────────────────────────────────────── */
-  --sidebar:                    oklch(0.18 0.013 250);
-  --sidebar-foreground:         oklch(0.91 0.006 250);
-  --sidebar-primary:            oklch(0.70 0.22 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent:             oklch(0.23 0.010 250);
-  --sidebar-accent-foreground:  oklch(0.85 0.005 250);
-  --sidebar-border:             oklch(0.26 0.010 250);
-  --sidebar-ring:               oklch(0.67 0.18 250);
+  --sidebar:                    oklch(0.11 0.016 210);
+  --sidebar-foreground:         oklch(0.92 0.013 205);
+  --sidebar-primary:            oklch(0.77 0.068 205);
+  --sidebar-primary-foreground: oklch(0.09 0.016 210);
+  --sidebar-accent:             oklch(0.18 0.018 210);
+  --sidebar-accent-foreground:  oklch(0.85 0.012 205);
+  --sidebar-border:             oklch(0.24 0.020 210);
+  --sidebar-ring:               oklch(0.77 0.068 205);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
    TAILWIND TOKEN WIRING
-   Exposes every CSS variable as a Tailwind utility (e.g. bg-navy, text-emerald).
+   Every CSS variable becomes a Tailwind utility (bg-*, text-*, border-*).
 ───────────────────────────────────────────────────────────────────────── */
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
 
   /* Semantic UI */
-  --color-background:         var(--background);
-  --color-foreground:         var(--foreground);
-  --color-card:               var(--card);
-  --color-card-foreground:    var(--card-foreground);
-  --color-popover:            var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary:            var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary:            var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted:            var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent:            var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive:            var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input:  var(--input);
-  --color-ring:   var(--ring);
+  --color-background:            var(--background);
+  --color-foreground:            var(--foreground);
+  --color-card:                  var(--card);
+  --color-card-foreground:       var(--card-foreground);
+  --color-popover:               var(--popover);
+  --color-popover-foreground:    var(--popover-foreground);
+  --color-primary:               var(--primary);
+  --color-primary-foreground:    var(--primary-foreground);
+  --color-secondary:             var(--secondary);
+  --color-secondary-foreground:  var(--secondary-foreground);
+  --color-muted:                 var(--muted);
+  --color-muted-foreground:      var(--muted-foreground);
+  --color-accent:                var(--accent);
+  --color-accent-foreground:     var(--accent-foreground);
+  --color-destructive:           var(--destructive);
+  --color-destructive-foreground:var(--destructive-foreground);
+  --color-border:                var(--border);
+  --color-input:                 var(--input);
+  --color-ring:                  var(--ring);
 
   /* Brand */
   --color-navy:       var(--navy);
@@ -292,7 +303,7 @@
     cursor: pointer;
     outline: none;
     border: none;
-    background: transparent; /* set via inline style in component */
+    background: transparent;
   }
   input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;

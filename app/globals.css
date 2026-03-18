@@ -29,25 +29,27 @@
 
 :root {
   /* ── Canvas — page background ────────────────────────────────────────
-     #f0f7fa: pale teal-tinted white. Softer than pure white, pairs
-     naturally with the primary teal without washing it out. */
-  --background: oklch(0.97 0.010 205);
+     A deeper teal tint so the background has clear palette presence.
+     Cards are lighter, keeping the standard lift hierarchy but with
+     no pure white anywhere — the whole surface family stays tinted. */
+  --background: oklch(0.945 0.020 205);
 
   /* ── Surface — cards ─────────────────────────────────────────────────
-     Pure white so cards lift cleanly off the tinted canvas. */
-  --card:            oklch(1 0 0);
+     Lighter teal tint — noticeably above the canvas but still tinted,
+     so there's no jarring pure-white shock against the background. */
+  --card:            oklch(0.975 0.010 205);
   --card-foreground: oklch(0.17 0.027 205);
 
   /* ── Elevated — dropdowns, modals ────────────────────────────────────
-     Same white; elevation signalled by shadow, not colour. */
-  --popover:            oklch(1 0 0);
+     One more step lighter for overlays; barely perceptible tint. */
+  --popover:            oklch(0.990 0.005 205);
   --popover-foreground: oklch(0.17 0.027 205);
 
   /* ── Text ─────────────────────────────────────────────────────────────
      #0a191f: near-black with a teal tint. Warmer on the eye than
      pure black and stays in the same hue family as the brand. */
   --foreground:       oklch(0.17 0.027 205);
-  --muted:            oklch(0.93 0.014 205);  /* very light teal fill     */
+  --muted:            oklch(0.920 0.018 205);  /* slightly saturated fill  */
   --muted-foreground: oklch(0.50 0.030 205);  /* secondary labels, hints  */
 
   /* ── Primary brand — #25586f ─────────────────────────────────────────
@@ -112,7 +114,7 @@
   --chart-5: oklch(0.79 0.072 205);  /* secondary blue */
 
   /* ── Sidebar ─────────────────────────────────────────────────────────  */
-  --sidebar:                    oklch(0.99 0.006 205);
+  --sidebar:                    oklch(0.960 0.016 205);
   --sidebar-foreground:         oklch(0.20 0.027 205);
   --sidebar-primary:            oklch(0.39 0.072 205);
   --sidebar-primary-foreground: oklch(0.97 0.008 205);

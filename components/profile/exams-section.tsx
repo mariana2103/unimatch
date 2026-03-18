@@ -22,9 +22,10 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
 
   const handleAdd = () => {
     const grade = parseFloat(newExamGrade)
-    if (!newExamCode || isNaN(grade) || grade < 0 || grade > 200) return
+    if (!newExamCode || isNaN(grade) || grade < 0 || grade > 20) return
     startTransition(async () => {
-      await addExam({ exam_code: newExamCode, grade, exam_year: new Date().getFullYear() })
+      // Store on 0–200 scale to match calculateAdmissionGrade expectations
+      await addExam({ exam_code: newExamCode, grade: Math.round(grade * 10), exam_year: new Date().getFullYear() })
       setNewExamCode('')
       setNewExamGrade('')
     })
@@ -55,7 +56,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-lg font-bold text-navy">{e.grade}</span>
+              <span className="text-lg font-bold text-navy">{(e.grade / 10).toFixed(1)}</span>
               <button
                 onClick={() => handleRemove(e.id)}
                 disabled={isPending}
@@ -83,7 +84,10 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
         </Select>
         <Input
           type="number"
-          placeholder="Nota (0-200)"
+          placeholder="Nota (0–20)"
+          min={0}
+          max={20}
+          step={0.1}
           className="h-10 w-full sm:w-32"
           value={newExamGrade}
           onChange={(e) => setNewExamGrade(e.target.value)}

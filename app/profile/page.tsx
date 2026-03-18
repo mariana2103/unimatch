@@ -11,10 +11,13 @@ export default function ProfilePage() {
   const router = useRouter()
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/50">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header
         activeTab="profile"
-        onTabChange={(tab) => router.push(tab === 'explorer' ? '/' : `/${tab}`)}
+        onTabChange={(tab) => {
+          const paths: Record<string, string> = { explorer: '/', simulador: '/simulador', timeline: '/calendario', bolsas: '/bolsas' }
+          router.push(paths[tab] ?? '/')
+        }}
         isAISidebarOpen={aiOpen}
         setIsAISidebarOpen={setAiOpen}
       />
@@ -25,7 +28,7 @@ export default function ProfilePage() {
 
       <AICounselor isOpen={aiOpen} onClose={() => setAiOpen(false)} />
 
-      <footer className="border-t border-border/40 bg-white py-6">
+      <footer className="border-t border-border/40 bg-card py-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4">
           <p className="text-xs text-muted-foreground">
             © 2026 UniMatch - Dados oficiais baseados na DGES.

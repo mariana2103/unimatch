@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, BookOpen, GitCompareArrows, Lock, Heart, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock, Heart } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade } from '@/lib/data'
@@ -11,15 +11,29 @@ interface CourseCardProps {
   onViewDetails: (course: CourseUI) => void
 }
 
-const AREA_COLORS: Record<string, { dot: string; text: string; bar: string }> = {
-  'Engenharia e Tecnologia':             { dot: 'bg-blue-500',   text: 'text-blue-600 dark:text-blue-400',   bar: 'bg-blue-500' },
-  'Ciências da Vida e Saúde':            { dot: 'bg-rose-500',   text: 'text-rose-600 dark:text-rose-400',   bar: 'bg-rose-500' },
-  'Ciências Exatas e da Natureza':       { dot: 'bg-teal-500',   text: 'text-teal-600 dark:text-teal-400',   bar: 'bg-teal-500' },
-  'Economia, Gestão e Contabilidade':    { dot: 'bg-amber-500',  text: 'text-amber-600 dark:text-amber-400', bar: 'bg-amber-500' },
-  'Artes e Design':                      { dot: 'bg-pink-500',   text: 'text-pink-600 dark:text-pink-400',   bar: 'bg-pink-500' },
-  'Direito, Ciências Sociais e Humanas': { dot: 'bg-indigo-500', text: 'text-indigo-600 dark:text-indigo-400', bar: 'bg-indigo-500' },
-  'Educação e Desporto':                 { dot: 'bg-orange-500', text: 'text-orange-600 dark:text-orange-400', bar: 'bg-orange-500' },
-  'Informática e Dados':                 { dot: 'bg-cyan-500',   text: 'text-cyan-600 dark:text-cyan-400',   bar: 'bg-cyan-500' },
+const AREA_BAR: Record<string, string> = {
+  'Engenharia e Tecnologia':             'bg-blue-500',
+  'Ciências da Vida e Saúde':            'bg-rose-500',
+  'Ciências Exatas e da Natureza':       'bg-teal-500',
+  'Economia, Gestão e Contabilidade':    'bg-amber-500',
+  'Artes e Design':                      'bg-pink-500',
+  'Direito, Ciências Sociais e Humanas': 'bg-indigo-500',
+  'Educação e Desporto':                 'bg-orange-500',
+  'Informática e Dados':                 'bg-cyan-500',
+}
+
+// Abbreviated exam names for compact display
+const EXAM_ABBREV: Record<string, string> = {
+  '02': 'Bio. e Geologia',
+  '07': 'Física e Química',
+  '10': 'Geom. Descritiva',
+  '12': 'Hist. Cult. e Artes',
+  '15': 'Lit. Portuguesa',
+  '19': 'Matemática A',
+}
+
+function abbrevExam(code: string, name: string): string {
+  return EXAM_ABBREV[code] ?? name
 }
 
 export function CourseCard({ course, onViewDetails }: CourseCardProps) {
@@ -28,7 +42,6 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
   const isFavorite  = favorites.includes(course.id)
 
   const notaCorte = course.notaUltimoColocado
-  const areaStyle = AREA_COLORS[course.area]
 
   let userGrade = 0
   let meetsMinimum = false
@@ -48,23 +61,24 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
   }
 
   const nearCutoff = hasRequiredExams && meetsMinimum && notaCorte !== null && Math.abs(userGrade - notaCorte) <= 5
-  const showUserGrade = isLoggedIn && profile && profile.media_final_calculada > 0 && hasRequiredExams && notaCorte !== null
+  const showUserGrade = isLoggedIn && profile && profile.media_final_calculada > 0 && hasRequiredExams
 
-  // Deduplicate exam codes for display
-  const uniqueExamCodes = Array.from(new Set(course.provasIngresso.map(p => p.code)))
+  const uniqueExams = Array.from(
+    new Map(course.provasIngresso.map(p => [p.code, p])).values()
+  )
 
   return (
     <div
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-border"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-border"
       onClick={() => onViewDetails(course)}
     >
-      {/* Top accent bar */}
-      <div className={`h-0.5 w-full shrink-0 ${areaStyle?.bar ?? 'bg-navy'}`} />
+      {/* Area colour bar */}
+      <div className={`h-0.5 w-full shrink-0 ${AREA_BAR[course.area] ?? 'bg-navy'}`} />
 
       <div className="flex flex-col gap-3 p-4">
 
-        {/* Header: name + actions */}
-        <div className="flex items-start justify-between gap-3">
+        {/* Name + actions */}
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <h3 className="text-sm font-semibold leading-snug text-foreground line-clamp-2">{course.nome}</h3>
@@ -72,14 +86,14 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             </div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.instituicao}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2 pt-0.5" onClick={e => e.stopPropagation()}>
+          <div className="flex shrink-0 items-center gap-1.5 pt-0.5" onClick={e => e.stopPropagation()}>
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(course.id)}
                 aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                 className="transition-colors"
               >
-                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground/30 hover:text-rose-400'}`} />
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground/25 hover:text-rose-400'}`} />
               </button>
             )}
             <Checkbox
@@ -91,20 +105,21 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           </div>
         </div>
 
-        {/* Area + location */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`flex items-center gap-1.5 text-[11px] font-medium ${areaStyle?.text ?? 'text-navy'}`}>
-            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${areaStyle?.dot ?? 'bg-navy'}`} />
-            {course.area}
-          </span>
-          <span className="h-3 w-px bg-border/60" />
-          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <MapPin className="h-2.5 w-2.5" />
-            {course.distrito}
-          </span>
-        </div>
+        {/* Provas chips — abbreviated */}
+        {uniqueExams.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {uniqueExams.map(p => (
+              <span
+                key={p.code}
+                className="rounded-md bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+              >
+                {abbrevExam(p.code, p.name)}
+              </span>
+            ))}
+          </div>
+        )}
 
-        {/* Cutoff + user grade inline */}
+        {/* Bottom: cutoff + user grade */}
         <div className="flex items-end justify-between border-t border-border/40 pt-3">
           <div>
             <p className="text-[10px] text-muted-foreground mb-0.5">Último Colocado</p>
@@ -126,47 +141,22 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                 <p className="text-[10px] text-muted-foreground">A tua nota</p>
               </div>
               <p className={`text-xl font-bold tabular-nums leading-none ${
-                nearCutoff        ? 'text-amber-600 dark:text-amber-400' :
-                aboveCutoff && meetsMinimum ? 'text-emerald-600 dark:text-emerald-400' :
-                                  'text-foreground'
+                nearCutoff                    ? 'text-amber-600 dark:text-amber-400' :
+                aboveCutoff && meetsMinimum   ? 'text-emerald-600 dark:text-emerald-400' :
+                                                'text-foreground'
               }`}>
                 {(userGrade / 10).toFixed(1)}
               </p>
-              <p className={`text-[10px] tabular-nums mt-0.5 ${
-                (userGrade - (notaCorte ?? 0)) >= 0 ? 'text-emerald-500' : 'text-rose-500'
-              }`}>
-                {(userGrade - (notaCorte ?? 0)) >= 0 ? '+' : ''}{((userGrade - (notaCorte ?? 0)) / 10).toFixed(1)} val.
-              </p>
-            </div>
-          ) : uniqueExamCodes.length > 0 ? (
-            <div className="flex items-center gap-1 flex-wrap justify-end">
-              <BookOpen className="h-3 w-3 text-muted-foreground/40 shrink-0" />
-              {uniqueExamCodes.map(code => (
-                <span
-                  key={code}
-                  className="rounded bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
-                >
-                  {code}
-                </span>
-              ))}
+              {notaCorte !== null && (
+                <p className={`text-[10px] tabular-nums mt-0.5 ${
+                  (userGrade - notaCorte) >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                }`}>
+                  {(userGrade - notaCorte) >= 0 ? '+' : ''}{((userGrade - notaCorte) / 10).toFixed(1)} val.
+                </p>
+              )}
             </div>
           ) : null}
         </div>
-
-        {/* Provas — only shown when user grade IS displayed (so codes stay visible) */}
-        {showUserGrade && uniqueExamCodes.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap">
-            <BookOpen className="h-3 w-3 text-muted-foreground/40 shrink-0" />
-            {uniqueExamCodes.map(code => (
-              <span
-                key={code}
-                className="rounded bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums"
-              >
-                {code}
-              </span>
-            ))}
-          </div>
-        )}
 
       </div>
     </div>

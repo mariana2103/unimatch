@@ -1,7 +1,6 @@
 'use client'
 
 import { CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock, Heart } from 'lucide-react'
-import { Checkbox } from '@/components/ui/checkbox'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
@@ -96,12 +95,18 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground/25 hover:text-rose-400'}`} />
               </button>
             )}
-            <Checkbox
-              checked={isComparing}
-              onCheckedChange={() => toggleComparison(course.id)}
+            <button
+              onClick={() => toggleComparison(course.id)}
               aria-label={`Comparar ${course.nome}`}
-              className="h-4 w-4 border-border data-[state=checked]:bg-navy data-[state=checked]:text-primary-foreground"
-            />
+              className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                isComparing
+                  ? 'border-navy/40 bg-navy/10 text-navy'
+                  : 'border-border/50 text-muted-foreground/50 hover:border-navy/30 hover:text-navy/70'
+              }`}
+            >
+              <GitCompareArrows className="h-3 w-3" />
+              Comparar
+            </button>
           </div>
         </div>
 
@@ -120,7 +125,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         )}
 
         {/* Bottom: cutoff + user grade */}
-        <div className="flex items-end justify-between border-t border-border/40 pt-3">
+        <div className="flex items-start justify-between border-t border-border/40 pt-3">
           <div>
             <p className="text-[10px] text-muted-foreground mb-0.5">Último Colocado</p>
             <p className="text-xl font-bold tabular-nums text-foreground leading-none">

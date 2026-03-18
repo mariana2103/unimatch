@@ -29,26 +29,15 @@ function PrivadaSection({
       >
         <div className="flex items-center gap-2.5">
           <Lock className="h-4 w-4 text-muted-foreground/50" />
-          <span className="text-sm font-semibold text-foreground">
-            Ensino Privado
-          </span>
+          <span className="text-sm font-semibold text-foreground">Ensino Privado</span>
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
             {courses.length}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="hidden text-xs text-muted-foreground sm:block">
-            Sem dados de acesso DGES — propinas aplicam-se
-          </span>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground/60 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </div>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground/60 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="border-t border-border/30 px-5 pb-5 pt-4">
-          <p className="mb-4 text-xs text-muted-foreground">
-            As instituições privadas definem os seus próprios critérios de admissão.
-            Os valores de corte abaixo, quando existem, são indicativos e podem não reflectir os critérios actuais.
-          </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map(course => (
               <CourseCard key={course.id} course={course} onViewDetails={onViewDetails} />

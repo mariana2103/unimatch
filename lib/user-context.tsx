@@ -201,40 +201,46 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const addGrade = useCallback(async (subject_name: string, grade: number, year_level: 10 | 11 | 12) => {
     if (!profile) return
-    await supabase.from('user_grades').upsert(
+    const { data } = await supabase.from('user_grades').upsert(
       { user_id: profile.id, subject_name, grade, year_level },
       { onConflict: 'user_id,subject_name,year_level' }
-    )
-    const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
-    const updated = data ?? []
-    setGrades(updated)
-    await recalculateCFA(profile.id, updated, profile.course_group || 'CIENCIAS')
-  }, [profile, supabase, recalculateCFA])
+    ).select().single()
+    if (data) {
+      const updated = [
+        ...grades.filter(g => !(g.subject_name === subject_name && g.year_level === year_level)),
+        data,
+      ]
+      setGrades(updated)
+      await recalculateCFA(profile.id, updated, profile.course_group || 'CIENCIAS')
+    }
+  }, [profile, grades, supabase, recalculateCFA])
 
   const removeGrade = useCallback(async (gradeId: string) => {
     if (!profile) return
     await supabase.from('user_grades').delete().eq('id', gradeId)
-    const { data } = await supabase.from('user_grades').select('*').eq('user_id', profile.id)
-    const updated = data ?? []
+    const updated = grades.filter(g => g.id !== gradeId)
     setGrades(updated)
     await recalculateCFA(profile.id, updated, profile.course_group || 'CIENCIAS')
-  }, [profile, supabase, recalculateCFA])
+  }, [profile, grades, supabase, recalculateCFA])
 
   const addExam = useCallback(async (exam: Omit<UserExam, 'id' | 'user_id'>) => {
     if (!profile) return
-    await supabase.from('user_exams').upsert(
+    const { data } = await supabase.from('user_exams').upsert(
       { ...exam, user_id: profile.id },
       { onConflict: 'user_id,exam_code,exam_year' }
-    )
-    const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
-    setExams(data ?? [])
+    ).select().single()
+    if (data) {
+      setExams(prev => [
+        ...prev.filter(e => !(e.exam_code === exam.exam_code && e.exam_year === exam.exam_year)),
+        data,
+      ])
+    }
   }, [profile, supabase])
 
   const removeExam = useCallback(async (examId: string) => {
     if (!profile) return
     await supabase.from('user_exams').delete().eq('id', examId)
-    const { data } = await supabase.from('user_exams').select('*').eq('user_id', profile.id)
-    setExams(data ?? [])
+    setExams(prev => prev.filter(e => e.id !== examId))
   }, [profile, supabase])
 
   const toggleComparison = useCallback((courseId: string) => {

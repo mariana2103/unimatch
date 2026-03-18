@@ -64,7 +64,7 @@ function transformCourse(row: any, courseReqs: any[]): CourseUI {
     notaUltimoColocado: row.nota_ultimo_colocado !== null ? Math.round(row.nota_ultimo_colocado * 10) : null,
     pesoSecundario: row.peso_secundario,
     pesoExame: row.peso_exames,
-    notaMinima: row.nota_minima_p_ingresso != null ? Math.round(row.nota_minima_p_ingresso * 10) : null,
+    notaMinima: row.nota_minima_p_ingresso ?? null,
     provasIngresso: courseReqs.map(r => ({
       code: r.exam_code,
       name: EXAM_SUBJECTS.find(e => e.code === r.exam_code)?.name ?? r.exam_code,

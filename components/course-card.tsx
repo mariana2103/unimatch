@@ -11,14 +11,14 @@ interface CourseCardProps {
 }
 
 const AREA_BAR: Record<string, string> = {
-  'Engenharia e Tecnologia':             'bg-blue-500',
-  'Ciências da Vida e Saúde':            'bg-rose-500',
-  'Ciências Exatas e da Natureza':       'bg-teal-500',
-  'Economia, Gestão e Contabilidade':    'bg-amber-500',
-  'Artes e Design':                      'bg-pink-500',
-  'Direito, Ciências Sociais e Humanas': 'bg-indigo-500',
-  'Educação e Desporto':                 'bg-orange-500',
-  'Informática e Dados':                 'bg-cyan-500',
+  'Engenharia e Tecnologia':             'bg-area-eng',
+  'Ciências da Vida e Saúde':            'bg-area-saude',
+  'Ciências Exatas e da Natureza':       'bg-area-cien',
+  'Economia, Gestão e Contabilidade':    'bg-area-econ',
+  'Artes e Design':                      'bg-area-artes',
+  'Direito, Ciências Sociais e Humanas': 'bg-area-dir',
+  'Educação e Desporto':                 'bg-area-edu',
+  'Informática e Dados':                 'bg-area-info',
 }
 
 // Abbreviated exam names for compact display
@@ -92,7 +92,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                 aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                 className="transition-colors"
               >
-                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground/25 hover:text-rose-400'}`} />
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-destructive text-destructive' : 'text-muted-foreground/25 hover:text-destructive/60'}`} />
               </button>
             )}
             <button
@@ -137,24 +137,24 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             <div className="text-right">
               <div className="flex items-center justify-end gap-1 mb-0.5">
                 {nearCutoff ? (
-                  <AlertCircle className="h-3 w-3 text-amber-500" />
+                  <AlertCircle className="h-3 w-3 text-warning" />
                 ) : aboveCutoff && meetsMinimum ? (
-                  <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                  <CheckCircle2 className="h-3 w-3 text-emerald" />
                 ) : (
-                  <XCircle className="h-3 w-3 text-red-400" />
+                  <XCircle className="h-3 w-3 text-destructive" />
                 )}
                 <p className="text-[10px] text-muted-foreground">A tua nota</p>
               </div>
               <p className={`text-xl font-bold tabular-nums leading-none ${
-                nearCutoff                    ? 'text-amber-600 dark:text-amber-400' :
-                aboveCutoff && meetsMinimum   ? 'text-emerald-600 dark:text-emerald-400' :
+                nearCutoff                    ? 'text-warning' :
+                aboveCutoff && meetsMinimum   ? 'text-emerald' :
                                                 'text-foreground'
               }`}>
                 {(userGrade / 10).toFixed(1)}
               </p>
               {notaCorte !== null && (
                 <p className={`text-[10px] tabular-nums mt-0.5 ${
-                  (userGrade - notaCorte) >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                  (userGrade - notaCorte) >= 0 ? 'text-emerald' : 'text-destructive'
                 }`}>
                   {(userGrade - notaCorte) >= 0 ? '+' : ''}{((userGrade - notaCorte) / 10).toFixed(1)} val.
                 </p>

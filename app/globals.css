@@ -3,133 +3,278 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─────────────────────────────────────────────────────────────────────────
+   DGES THEME
+   Based on the EightShapes "layering" principle:
+   surfaces closer to the user sit *above* the canvas and are lighter in dark
+   mode (or slightly more saturated in light mode). This creates depth without
+   needing shadows on every element.
+
+   Layer order (bottom → top)
+     canvas      → the page background
+     surface     → cards, panels, inputs
+     elevated    → popover, dropdown, modal
+     overlay     → tooltips, toasts
+
+   Brand palette
+     navy         → primary CTA, links, focus rings
+     emerald      → success / above-cutoff feedback
+     warning      → near-cutoff (amber)
+     destructive  → errors, below-cutoff, delete actions
+
+   Area categorical colours (8 academic areas in DGES data).
+   Each has a light-mode value and a brighter dark-mode shift
+   so they stay visible on dark surfaces.
+───────────────────────────────────────────────────────────────────────── */
+
 :root {
+  /* ── Layer 0: canvas ─────────────────────────────────────────────────
+     The page background. Slightly blue-tinted off-white instead of
+     pure white — reduces glare and ties the page to the navy brand. */
   --background: oklch(0.98 0.002 250);
-  --foreground: oklch(0.16 0.04 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.04 250);
-  --popover: oklch(1 0 0);
+
+  /* ── Layer 1: surface ────────────────────────────────────────────────
+     Cards and panels sit on the canvas. Pure white to give a clean
+     lift off the blue-tinted canvas. */
+  --card:               oklch(1 0 0);
+  --card-foreground:    oklch(0.16 0.04 250);
+
+  /* ── Layer 2: elevated ───────────────────────────────────────────────
+     Dropdowns and modals sit above cards. Same white in light mode —
+     elevation is communicated through shadow, not colour. */
+  --popover:            oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.04 250);
-  --primary: oklch(0.28 0.06 250);
-  --primary-foreground: oklch(0.98 0.005 250);
-  --secondary: oklch(0.95 0.01 250);
+
+  /* ── Typography ──────────────────────────────────────────────────────
+     foreground: near-black with a blue tint (matches navy family)
+     muted-foreground: used for labels, secondary text, placeholders */
+  --foreground:         oklch(0.16 0.04 250);
+  --muted:              oklch(0.94 0.008 250);
+  --muted-foreground:   oklch(0.50 0.02 250);
+
+  /* ── Brand: Navy ─────────────────────────────────────────────────────
+     Deep royal blue — CTAs, links, active states, focus rings.
+     primary mirrors navy so Shadcn components stay on-brand. */
+  --navy:               oklch(0.30 0.07 250);
+  --navy-light:         oklch(0.40 0.08 250);   /* hover states */
+  --navy-dark:          oklch(0.20 0.06 250);   /* pressed / active */
+  --primary:            oklch(0.30 0.07 250);
+  --primary-foreground: oklch(0.98 0.005 250);  /* white text on navy */
+
+  /* ── Secondary / Accent ──────────────────────────────────────────────
+     secondary: subtle fills for tags, badges, secondary buttons
+     accent: stronger tint used for highlighted rows, hover on menus */
+  --secondary:            oklch(0.95 0.01 250);
   --secondary-foreground: oklch(0.25 0.05 250);
-  --muted: oklch(0.94 0.008 250);
-  --muted-foreground: oklch(0.50 0.02 250);
-  --accent: oklch(0.45 0.12 250);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.90 0.01 250);
-  --input: oklch(0.90 0.01 250);
-  --ring: oklch(0.45 0.12 250);
-  --chart-1: oklch(0.30 0.07 250);
-  --chart-2: oklch(0.55 0.17 160);
-  --chart-3: oklch(0.60 0.15 40);
-  --chart-4: oklch(0.50 0.10 250);
-  --chart-5: oklch(0.65 0.12 160);
-  --radius: 0.625rem;
-  --navy: oklch(0.30 0.07 250);
-  --navy-light: oklch(0.40 0.08 250);
-  --navy-dark: oklch(0.20 0.06 250);
-  --emerald: oklch(0.55 0.17 160);
+  --accent:               oklch(0.45 0.12 250);
+  --accent-foreground:    oklch(1 0 0);
+
+  /* ── Semantic status colours ─────────────────────────────────────────
+     emerald  → above cutoff / success feedback
+     warning  → near cutoff (within 0.5 val) — amber
+     destructive → below cutoff / errors / delete */
+  --emerald:       oklch(0.55 0.17 160);
   --emerald-light: oklch(0.65 0.17 160);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.18 0.04 250);
-  --sidebar-primary: oklch(0.30 0.07 250);
+  --warning:       oklch(0.65 0.18 60);
+  --destructive:   oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+
+  /* ── Borders & inputs ────────────────────────────────────────────────
+     Subtle blue-grey to stay consistent with the navy palette. */
+  --border: oklch(0.90 0.01 250);
+  --input:  oklch(0.90 0.01 250);
+  --ring:   oklch(0.45 0.12 250);
+
+  /* ── Area categorical colours ────────────────────────────────────────
+     Used as accent bars on course cards. Each area gets a distinct hue.
+     Values chosen to pass WCAG AA when used as a 2px bar on white. */
+  --area-eng:    oklch(0.55 0.19 250);  /* Engineering & Tech     → blue   */
+  --area-saude:  oklch(0.57 0.20 10);   /* Life Sciences & Health → red    */
+  --area-cien:   oklch(0.57 0.14 185);  /* Exact Sciences         → teal   */
+  --area-econ:   oklch(0.67 0.17 60);   /* Economics & Management → amber  */
+  --area-artes:  oklch(0.60 0.20 340);  /* Arts & Design          → pink   */
+  --area-dir:    oklch(0.50 0.18 290);  /* Law & Social Sciences  → indigo */
+  --area-edu:    oklch(0.63 0.19 35);   /* Education & Sport      → orange */
+  --area-info:   oklch(0.62 0.16 215);  /* CS & Data              → cyan   */
+
+  /* ── Chart colours ───────────────────────────────────────────────────
+     Used in the historical grade trend chart on course detail panels. */
+  --chart-1: oklch(0.30 0.07 250);  /* navy  */
+  --chart-2: oklch(0.55 0.17 160);  /* emerald */
+  --chart-3: oklch(0.60 0.15 40);   /* gold */
+  --chart-4: oklch(0.50 0.10 250);  /* navy-mid */
+  --chart-5: oklch(0.65 0.12 160);  /* emerald-light */
+
+  /* ── Sidebar ─────────────────────────────────────────────────────── */
+  --sidebar:                    oklch(0.985 0 0);
+  --sidebar-foreground:         oklch(0.18 0.04 250);
+  --sidebar-primary:            oklch(0.30 0.07 250);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.95 0.01 250);
-  --sidebar-accent-foreground: oklch(0.25 0.05 250);
-  --sidebar-border: oklch(0.90 0.01 250);
-  --sidebar-ring: oklch(0.45 0.12 250);
+  --sidebar-accent:             oklch(0.95 0.01 250);
+  --sidebar-accent-foreground:  oklch(0.25 0.05 250);
+  --sidebar-border:             oklch(0.90 0.01 250);
+  --sidebar-ring:               oklch(0.45 0.12 250);
+
+  --radius: 0.625rem;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   DARK MODE
+   Follows the EightShapes rule: "each layer is lighter than the one below".
+   We use blue-tinted dark surfaces (not neutral grey or pure black) to
+   maintain the navy brand identity in dark mode.
+
+   canvas  0.16 L  — deepest, the page background
+   surface 0.20 L  — cards sit above the canvas
+   elevated 0.23 L — popovers/dropdowns sit above cards
+
+   Navy flips to electric blue (vivid, higher chroma) so it stays energetic
+   against the dark surfaces without needing brightness adjustments.
+───────────────────────────────────────────────────────────────────────── */
+.dark {
+  /* ── Layers ──────────────────────────────────────────────────────── */
+  --background:      oklch(0.16 0.014 250);  /* canvas — deepest layer     */
+  --card:            oklch(0.20 0.012 250);  /* surface — cards            */
+  --card-foreground: oklch(0.93 0.006 250);
+  --popover:         oklch(0.23 0.010 250);  /* elevated — dropdowns       */
+  --popover-foreground: oklch(0.93 0.006 250);
+
+  /* ── Typography ──────────────────────────────────────────────────── */
+  --foreground:       oklch(0.93 0.006 250);
+  --muted:            oklch(0.24 0.010 250);
+  --muted-foreground: oklch(0.62 0.008 250);
+
+  /* ── Brand: Navy → Electric Blue ────────────────────────────────────
+     In dark mode navy becomes a vivid electric blue — higher chroma so
+     it stands out against the dark blue-slate surface without being garish. */
+  --navy:       oklch(0.70 0.22 250);
+  --navy-light: oklch(0.78 0.18 250);
+  --navy-dark:  oklch(0.52 0.17 250);
+  --primary:    oklch(0.70 0.20 250);
+  --primary-foreground: oklch(0.98 0 0);
+
+  /* ── Secondary / Accent ──────────────────────────────────────────── */
+  --secondary:            oklch(0.25 0.010 250);
+  --secondary-foreground: oklch(0.85 0.005 250);
+  --accent:               oklch(0.67 0.18 250);
+  --accent-foreground:    oklch(0.98 0 0);
+
+  /* ── Semantic status colours — shifted lighter for dark surfaces ──── */
+  --emerald:       oklch(0.65 0.17 160);
+  --emerald-light: oklch(0.72 0.17 160);
+  --warning:       oklch(0.78 0.16 60);
+  --destructive:   oklch(0.62 0.19 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  /* ── Borders & inputs ────────────────────────────────────────────── */
+  --border: oklch(0.29 0.010 250);
+  --input:  oklch(0.23 0.010 250);
+  --ring:   oklch(0.67 0.18 250);
+
+  /* ── Area categorical colours — slightly lighter for dark surfaces ── */
+  --area-eng:    oklch(0.65 0.19 250);
+  --area-saude:  oklch(0.65 0.18 10);
+  --area-cien:   oklch(0.65 0.14 185);
+  --area-econ:   oklch(0.74 0.17 60);
+  --area-artes:  oklch(0.68 0.20 340);
+  --area-dir:    oklch(0.62 0.18 290);
+  --area-edu:    oklch(0.70 0.18 35);
+  --area-info:   oklch(0.68 0.16 215);
+
+  /* ── Chart colours ───────────────────────────────────────────────── */
+  --chart-1: oklch(0.70 0.22 250);
+  --chart-2: oklch(0.65 0.17 160);
+  --chart-3: oklch(0.78 0.16 60);
+  --chart-4: oklch(0.62 0.18 290);
+  --chart-5: oklch(0.65 0.19 25);
+
+  /* ── Sidebar ──────────────────────────────────────────────────────── */
+  --sidebar:                    oklch(0.18 0.013 250);
+  --sidebar-foreground:         oklch(0.91 0.006 250);
+  --sidebar-primary:            oklch(0.70 0.22 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent:             oklch(0.23 0.010 250);
+  --sidebar-accent-foreground:  oklch(0.85 0.005 250);
+  --sidebar-border:             oklch(0.26 0.010 250);
+  --sidebar-ring:               oklch(0.67 0.18 250);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TAILWIND TOKEN WIRING
+   Exposes every CSS variable as a Tailwind utility (e.g. bg-navy, text-emerald).
+───────────────────────────────────────────────────────────────────────── */
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
-  --color-navy: var(--navy);
-  --color-navy-light: var(--navy-light);
-  --color-navy-dark: var(--navy-dark);
-  --color-emerald: var(--emerald);
-  --color-emerald-light: var(--emerald-light);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
+
+  /* Semantic UI */
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-card:               var(--card);
+  --color-card-foreground:    var(--card-foreground);
+  --color-popover:            var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
+  --color-primary:            var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
+  --color-secondary:            var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
+  --color-muted:            var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
+  --color-accent:            var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
+  --color-destructive:            var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-input:  var(--input);
+  --color-ring:   var(--ring);
+
+  /* Brand */
+  --color-navy:       var(--navy);
+  --color-navy-light: var(--navy-light);
+  --color-navy-dark:  var(--navy-dark);
+
+  /* Status */
+  --color-emerald:       var(--emerald);
+  --color-emerald-light: var(--emerald-light);
+  --color-warning:       var(--warning);
+
+  /* Area categorical */
+  --color-area-eng:   var(--area-eng);
+  --color-area-saude: var(--area-saude);
+  --color-area-cien:  var(--area-cien);
+  --color-area-econ:  var(--area-econ);
+  --color-area-artes: var(--area-artes);
+  --color-area-dir:   var(--area-dir);
+  --color-area-edu:   var(--area-edu);
+  --color-area-info:  var(--area-info);
+
+  /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Radius scale */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
+
+  /* Sidebar */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
 }
 
-.dark {
-  /* Blue-tinted dark surfaces — premium dark blue-grey feel */
-  --background:           oklch(0.16 0.014 250);
-  --foreground:           oklch(0.93 0.006 250);
-  --card:                 oklch(0.20 0.012 250);
-  --card-foreground:      oklch(0.93 0.006 250);
-  --popover:              oklch(0.23 0.010 250);
-  --popover-foreground:   oklch(0.93 0.006 250);
-
-  --primary:              oklch(0.70 0.20 250);
-  --primary-foreground:   oklch(0.98 0 0);
-  --secondary:            oklch(0.25 0.010 250);
-  --secondary-foreground: oklch(0.85 0.005 250);
-  --muted:                oklch(0.24 0.010 250);
-  --muted-foreground:     oklch(0.62 0.008 250);
-  --accent:               oklch(0.67 0.18 250);
-  --accent-foreground:    oklch(0.98 0 0);
-
-  --destructive:          oklch(0.62 0.19 25);
-  --destructive-foreground: oklch(0.98 0 0);
-
-  --border:               oklch(0.29 0.010 250);
-  --input:                oklch(0.23 0.010 250);
-  --ring:                 oklch(0.67 0.18 250);
-
-  /* Navy: vivid electric blue — the main accent */
-  --navy:                 oklch(0.70 0.22 250);
-  --navy-light:           oklch(0.78 0.18 250);
-  --navy-dark:            oklch(0.52 0.17 250);
-
-  --sidebar:              oklch(0.18 0.013 250);
-  --sidebar-foreground:   oklch(0.91 0.006 250);
-  --sidebar-border:       oklch(0.26 0.010 250);
-  --sidebar-primary:      oklch(0.70 0.22 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent:       oklch(0.23 0.010 250);
-  --sidebar-accent-foreground: oklch(0.85 0.005 250);
-  --sidebar-ring:         oklch(0.67 0.18 250);
-}
-
+/* ─────────────────────────────────────────────────────────────────────────
+   BASE STYLES
+───────────────────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -138,7 +283,7 @@
     @apply bg-background text-foreground;
   }
 
-  /* ── Custom range/slider ─────────────────────────────────── */
+  /* ── Custom range/slider ───────────────────────────────────────────── */
   input[type='range'] {
     appearance: none;
     -webkit-appearance: none;

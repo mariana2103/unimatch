@@ -202,3 +202,7 @@ npm run dev
 <img src="[https://img.shields.io/badge/LinkedIn-e0def4?style=for-the-badge&logo=linkedin&logoColor=191724](https://img.shields.io/badge/LinkedIn-e0def4?style=for-the-badge&logo=linkedin&logoColor=191724)" height="28" alt="LinkedIn" />
 </a>
 </p>
+
+
+
+Check nas bolsas, ai e night mode.

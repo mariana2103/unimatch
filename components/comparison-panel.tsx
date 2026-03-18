@@ -33,7 +33,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-sm text-navy">
             <GitCompareArrows className="h-4 w-4" />
-            Comparacao
+            Comparação
             <Badge variant="secondary" className="text-[10px]">{selectedCourses.length}/2</Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={clearComparison} className="h-7 gap-1 text-xs text-muted-foreground">
@@ -61,7 +61,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                   </div>
                   <div className="flex flex-col gap-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Ultimo colocado</span>
+                      <span className="text-muted-foreground">Último Colocado</span>
                       <span className="font-bold tabular-nums text-navy text-base">
                         {course.notaUltimoColocado !== null ? (course.notaUltimoColocado / 10).toFixed(1) : '—'}
                       </span>

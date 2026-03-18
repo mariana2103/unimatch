@@ -153,7 +153,7 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
       ? [{ label: 'Com provas', onRemove: () => update('onlyQualified', false) }]
       : []),
     ...(filters.withinRange
-      ? [{ label: '≤ 20 pts', onRemove: () => update('withinRange', false) }]
+      ? [{ label: 'No meu alcance', onRemove: () => update('withinRange', false) }]
       : []),
   ]
 
@@ -253,13 +253,13 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
               active={filters.onlyQualified}
               onClick={() => update('onlyQualified', !filters.onlyQualified)}
               icon={Eye}
-              label="Tenho as provas"
+              label="Tenho as Provas de Ingresso"
             />
             <SmartFilterButton
               active={filters.withinRange}
               onClick={() => update('withinRange', !filters.withinRange)}
               icon={Target}
-              label="≤ 20 pts de mim"
+              label="Dentro do meu alcance"
             />
           </>
         )}

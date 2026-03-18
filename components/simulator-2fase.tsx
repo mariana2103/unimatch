@@ -443,7 +443,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                             <p className="text-sm font-bold tabular-nums text-foreground">
                               {(course.notaUltimoColocado / 10).toFixed(1)}
                             </p>
-                            <p className="text-[10px] text-muted-foreground">corte</p>
+                            <p className="text-[10px] text-muted-foreground">último colocado</p>
                           </>
                         ) : (
                           <p className="text-[10px] text-muted-foreground/50">sem dados</p>
@@ -489,7 +489,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           <div className="rounded-xl border border-border/50 bg-card p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Média Interna</p>
+                <p className="text-[10px] text-muted-foreground">Média do Secundário</p>
                 {realMedia > 0 && simMedia !== realMedia && (
                   <p className="text-[9px] text-muted-foreground/50">
                     real: {(realMedia / 10).toFixed(1)}
@@ -525,7 +525,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           <div className="rounded-xl border border-border/50 bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Provas de Ingresso
+                Provas de Ingresso (simuladas)
               </h3>
               <button
                 onClick={reset}
@@ -665,7 +665,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
 
                           {cutoff !== null && (
                             <p className="text-[10px] tabular-nums text-muted-foreground">
-                              corte {(cutoff / 10).toFixed(1)}{' '}
+                              ú.c. {(cutoff / 10).toFixed(1)}{' '}
                               <span className={cn(
                                 'font-semibold',
                                 sim.grade >= cutoff

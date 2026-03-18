@@ -1,22 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, GraduationCap, Heart, Award, ChevronDown, ChevronUp, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { ExternalLink, GraduationCap, Heart, Award, ChevronDown, ChevronUp, Calendar, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import scholarshipsData from '@/lib/scholarships.json'
 
-type Category = 'all' | 'social' | 'merit' | 'private'
+type Category = 'all' | 'social' | 'merit' | 'private' | 'niche'
 
 interface Scholarship {
   name: string
   entity: string
-  category: 'social' | 'merit' | 'private'
+  category: 'social' | 'merit' | 'private' | 'niche'
   deadline: string
   deadlineLabel: string
   amount: string
   eligibility: string
+  tip?: string
   link?: string
-  automatic?: boolean
   verified: boolean
   lastVerified: string
 }
@@ -28,6 +28,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   social: 'Ação Social',
   merit: 'Mérito',
   private: 'Privadas',
+  niche: 'Nicho',
 }
 
 const CATEGORY_ICONS: Record<Category, typeof Heart> = {
@@ -35,6 +36,7 @@ const CATEGORY_ICONS: Record<Category, typeof Heart> = {
   social: Heart,
   merit: Award,
   private: GraduationCap,
+  niche: Sparkles,
 }
 
 function urgencyColor(deadline: string) {
@@ -73,15 +75,6 @@ function ScholarshipRow({ s }: { s: Scholarship }) {
             <span className="text-[11px] text-muted-foreground">{s.entity}</span>
             <span className="h-2.5 w-px bg-border/60" />
             <span className="text-[11px] font-medium text-foreground/70">{s.amount}</span>
-            {!s.verified && (
-              <>
-                <span className="h-2.5 w-px bg-border/60" />
-                <span className="flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                  Não verificada
-                </span>
-              </>
-            )}
           </div>
         </div>
         {open
@@ -97,31 +90,15 @@ function ScholarshipRow({ s }: { s: Scholarship }) {
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-0.5">Elegibilidade</p>
               <p className="text-xs text-foreground/80">{s.eligibility}</p>
             </div>
-            <div className="flex items-center justify-between flex-wrap gap-2">
+            {s.tip && (
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-0.5">Prazo</p>
-                <p className="text-xs text-foreground/80">{s.deadlineLabel}</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-0.5">Dica</p>
+                <p className="text-xs text-foreground/80">{s.tip}</p>
               </div>
-              <div className="flex items-center gap-2">
-                {s.verified
-                  ? (
-                    <span className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Verificado {formatDate(s.lastVerified)}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
-                      <AlertTriangle className="h-3 w-3" />
-                      Não verificado — confirma no site oficial
-                    </span>
-                  )
-                }
-                {s.automatic && (
-                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                    Automática
-                  </span>
-                )}
-              </div>
+            )}
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium mb-0.5">Prazo</p>
+              <p className="text-xs text-foreground/80">{s.deadlineLabel}</p>
             </div>
             {s.link && (
               <a
@@ -147,24 +124,13 @@ export function ScholarshipCalendar() {
     ? SCHOLARSHIPS
     : SCHOLARSHIPS.filter(s => s.category === filter)
 
-  const unverifiedCount = SCHOLARSHIPS.filter(s => !s.verified).length
-
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6">
-        <h2 className="text-lg font-bold text-foreground">Bolsas de Estudo</h2>
+        <h2 className="text-lg font-bold text-foreground">Bolsas de Estudo 2025/26</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Principais bolsas e prazos para o ano letivo 2025/26.
+          Guia para quem vai entrar no Ensino Superior este ano. Muitos alunos perdem bolsas por candidatarem-se tarde — marca os prazos com antecedência.
         </p>
-        {unverifiedCount > 0 && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 px-3 py-2.5">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-[11px] text-amber-700 dark:text-amber-300">
-              {unverifiedCount} bolsa{unverifiedCount !== 1 ? 's' : ''} ainda não verificada{unverifiedCount !== 1 ? 's' : ''} — os prazos e valores podem ter mudado.
-              Confirma sempre no site oficial antes de te candidatares.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Filter tabs */}
@@ -197,16 +163,15 @@ export function ScholarshipCalendar() {
       </div>
 
       <p className="mt-3 text-center text-[10px] text-muted-foreground">
-        Informação desatualizada?{' '}
+        Confirma sempre os prazos nos sites oficiais antes de te candidatares.{' '}
         <a
           href="https://github.com/codingdud/Dges/issues/new?title=Bolsa+desatualizada&body=Nome+da+bolsa%3A+%0AO+que+está+errado%3A+%0ALink+oficial%3A+"
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium text-navy hover:underline"
         >
-          Reporta aqui
+          Reportar erro
         </a>
-        {' '}— confirma sempre nos sites oficiais.
       </p>
     </div>
   )

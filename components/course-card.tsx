@@ -109,7 +109,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         {/* Stats */}
         <div className="flex items-center gap-0 divide-x divide-border/40 border-t border-border/40 pt-3">
           <div className="flex-1 pr-3">
-            <p className="text-[10px] text-muted-foreground">Último corte</p>
+            <p className="text-[10px] text-muted-foreground">Último Colocado</p>
             <p className="mt-0.5 text-base font-bold tabular-nums text-foreground leading-none">
               {notaCorte !== null ? (notaCorte / 10).toFixed(1) : '—'}
             </p>
@@ -164,13 +164,13 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             {hasRequiredExams ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-muted-foreground">A tua nota</span>
+                  <span className="text-[10px] text-muted-foreground">Nota de Candidatura</span>
                   <div className="text-xl font-bold tabular-nums leading-tight">{(userGrade / 10).toFixed(1)}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   {nearCutoff ? (
                     <span className="flex items-center gap-1 text-[11px] font-semibold text-yellow-600 dark:text-yellow-500">
-                      <AlertCircle className="h-3.5 w-3.5" /> Próximo ao corte
+                      <AlertCircle className="h-3.5 w-3.5" /> Próximo do corte
                     </span>
                   ) : aboveCutoff && meetsMinimum ? (
                     <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-500">
@@ -179,7 +179,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                   ) : (
                     <span className="flex items-center gap-1 text-[11px] font-semibold text-red-600 dark:text-red-400">
                       <XCircle className="h-3.5 w-3.5" />
-                      {!meetsMinimum ? 'Nota mínima' : 'Abaixo do corte'}
+                      {!meetsMinimum ? 'Não cumpre nota mínima' : 'Abaixo do corte'}
                     </span>
                   )}
                   {notaCorte !== null && (
@@ -192,7 +192,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
               </div>
             ) : (
               <p className="text-center text-[10px] text-muted-foreground">
-                Faltam provas de ingresso no perfil.
+                Adiciona as provas de ingresso no teu perfil.
               </p>
             )}
           </div>

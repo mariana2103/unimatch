@@ -54,14 +54,14 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             {course.vagas !== null && (
               <Badge variant="outline" className="gap-1 text-[10px]"><Users className="h-2.5 w-2.5" />{course.vagas} vagas</Badge>
             )}
-            <Badge variant="outline" className="text-[10px]">{course.tipo === 'publica' ? 'Publica' : 'Privada'}</Badge>
+            <Badge variant="outline" className="text-[10px]">{course.tipo === 'publica' ? 'Pública' : 'Privada'}</Badge>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Ultimo Colocado', value: notaCorte !== null ? (notaCorte / 10).toFixed(1) : '—', highlight: true },
-              { label: 'Nota Minima', value: course.notaMinima !== null ? (course.notaMinima / 10).toFixed(1) : '—', highlight: false },
-              { label: 'Pesos Sec/Exam', value: course.pesoSecundario !== null && course.pesoExame !== null
+              { label: 'Último Colocado', value: notaCorte !== null ? (notaCorte / 10).toFixed(1) : '—', highlight: true },
+              { label: 'Nota Mínima', value: course.notaMinima !== null ? (course.notaMinima / 10).toFixed(1) : '—', highlight: false },
+              { label: 'Pesos Sec./Exam.', value: course.pesoSecundario !== null && course.pesoExame !== null
                   ? `${(course.pesoSecundario * 100).toFixed(0)}/${(course.pesoExame * 100).toFixed(0)}`
                   : '—', highlight: false },
             ].map(s => (
@@ -116,7 +116,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                     ? 'border-emerald/20 bg-emerald/[0.04]'
                     : 'border-destructive/20 bg-destructive/[0.04]'
             }`}>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">A tua candidatura</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nota de Candidatura</span>
               {hasRequiredExams ? (
                 <div className="mt-1 flex items-center justify-between">
                   <div>

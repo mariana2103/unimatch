@@ -622,8 +622,10 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           ) : (
             <div className="space-y-2">
               {results.map(({ course, real, sim, simAbove, newlyReachable, distanceToCutoff }) => {
-                const cutoff  = course.notaUltimoColocado
-                const nearMiss = !simAbove && cutoff !== null && cutoff - sim.grade <= 15
+                const cutoff       = course.notaUltimoColocado
+                const failsMinimum = !sim.meetsMinimum
+                // nearMiss only makes sense when minimums are met — otherwise it's red, not orange
+                const nearMiss     = !simAbove && !failsMinimum && cutoff !== null && cutoff - sim.grade <= 15
 
                 return (
                   <div
@@ -635,9 +637,11 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                         ? 'border-emerald/25 bg-emerald/8 shadow-sm'
                         : simAbove
                           ? 'border-border/50 bg-card hover:border-border hover:shadow-sm'
-                          : nearMiss
-                            ? 'border-warning/25 bg-warning/8'
-                            : 'border-border/30 bg-card/50 opacity-75',
+                          : failsMinimum
+                            ? 'border-destructive/25 bg-destructive/8'
+                            : nearMiss
+                              ? 'border-warning/25 bg-warning/8'
+                              : 'border-border/30 bg-card/50 opacity-75',
                     )}
                   >
                     {newlyReachable && (
@@ -653,6 +657,11 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                           <p className="truncate text-[11px] text-muted-foreground">
                             {course.instituicao} · {course.distrito}
                           </p>
+                          {failsMinimum && (
+                            <p className="mt-0.5 text-[10px] font-semibold text-destructive">
+                              Nota mínima não atingida
+                            </p>
+                          )}
                         </div>
 
                         <div className="shrink-0 text-right">
@@ -664,9 +673,10 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                             )}
                             <span className={cn(
                               'text-base font-bold tabular-nums',
-                              simAbove  ? 'text-emerald' :
-                              nearMiss  ? 'text-warning' :
-                                          'text-foreground',
+                              simAbove      ? 'text-emerald' :
+                              failsMinimum  ? 'text-destructive' :
+                              nearMiss      ? 'text-warning' :
+                                             'text-foreground',
                             )}>
                               {(sim.grade / 10).toFixed(1)}
                             </span>

@@ -349,7 +349,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               <Heart className="h-3 w-3" />
               Favoritos
               {!loadingCourses && allFavoriteCourses.length > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
                   {allFavoriteCourses.length}
                 </span>
               )}
@@ -632,7 +632,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                     )}
                   >
                     {newlyReachable && (
-                      <span className="absolute -top-2.5 left-3 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
+                      <span className="absolute -top-2.5 left-3 rounded-full bg-emerald px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm">
                         Novo
                       </span>
                     )}

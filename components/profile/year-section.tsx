@@ -44,7 +44,7 @@ interface YearSectionProps {
 
 function GradePill({ grade }: { grade: number }) {
   const color = grade < 10
-    ? 'bg-red-50 text-red-700 border-red-200'
+    ? 'bg-destructive/10 text-destructive border-destructive/30'
     : 'bg-muted text-foreground border-border/60'
 
   return (
@@ -65,7 +65,7 @@ interface GradeRowProps {
 
 function GradeRow({ grade, onRemove, isPending, readOnly }: GradeRowProps) {
   return (
-    <div className="flex items-center justify-between p-3 bg-white border border-border/40 rounded-lg shadow-sm">
+    <div className="flex items-center justify-between p-3 bg-card border border-border/40 rounded-lg shadow-sm">
       <span className="text-sm font-medium text-foreground truncate pr-2">
         {grade.subject_name}
       </span>
@@ -155,7 +155,7 @@ function AddGradeForm({ availableSubjects, isPending, onAdd }: AddGradeFormProps
   return (
     <div className="flex flex-wrap gap-2 p-3 bg-muted/20 rounded-lg border border-dashed">
       <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={isPending}>
-        <SelectTrigger className="h-9 w-full sm:flex-1 bg-white text-xs">
+        <SelectTrigger className="h-9 w-full sm:flex-1 bg-background text-xs">
           <SelectValue placeholder="Disciplina..." />
         </SelectTrigger>
         <SelectContent>
@@ -178,7 +178,7 @@ function AddGradeForm({ availableSubjects, isPending, onAdd }: AddGradeFormProps
           min={0}
           max={20}
           step={0.1}
-          className="h-9 w-24 bg-white text-xs pr-1"
+          className="h-9 w-24 bg-background text-xs pr-1"
           value={gradeInput}
           onChange={(e) => setGradeInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -269,8 +269,8 @@ export function YearSection({
             <Badge
               className={`border-none text-[10px] font-bold ${
                 yearAvg < 10
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-navy text-white'
+                  ? 'bg-destructive/15 text-destructive'
+                  : 'bg-navy text-primary-foreground'
               }`}
             >
               Média {yearAvg}

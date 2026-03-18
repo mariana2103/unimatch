@@ -46,7 +46,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
         {exams.map((e) => (
           <div
             key={e.id}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-border/40 shadow-sm"
+            className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/40 shadow-sm"
           >
             <div className="flex flex-col">
               <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
@@ -68,7 +68,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
         ))}
       </div>
 
-      <div className="mt-4 p-4 bg-white rounded-xl border-2 border-dashed flex flex-col sm:flex-row gap-3">
+      <div className="mt-4 p-4 bg-card rounded-xl border-2 border-dashed flex flex-col sm:flex-row gap-3">
         <Select value={newExamCode} onValueChange={setNewExamCode}>
           <SelectTrigger className="h-10 flex-1">
             <SelectValue placeholder="Escolher Exame..." />

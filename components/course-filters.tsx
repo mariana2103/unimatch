@@ -65,7 +65,7 @@ function MultiSelectPopover({
                 key={opt.value}
                 onClick={() => onToggle(opt.value)}
                 className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
-                  active ? 'bg-navy text-white' : 'text-foreground hover:bg-slate-50'
+                  active ? 'bg-navy text-primary-foreground' : 'text-foreground hover:bg-muted/50'
                 }`}
               >
                 <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${

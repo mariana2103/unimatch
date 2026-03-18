@@ -61,10 +61,10 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
   return (
     <div className={`relative rounded-2xl border p-4 transition-all ${
       status === 'past'
-        ? 'border-border/50 bg-slate-50 opacity-90'
+        ? 'border-border/50 bg-muted/30 opacity-90'
         : status === 'active'
           ? 'border-emerald-200 bg-emerald-50 shadow-sm'
-          : 'border-border/60 bg-white shadow-sm hover:border-navy/20 hover:shadow'
+          : 'border-border/60 bg-card shadow-sm hover:border-navy/20 hover:shadow'
     }`}>
       {/* Star button */}
       <button
@@ -85,7 +85,7 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
             className={`text-[10px] py-0.5 px-2 font-semibold ${
               isIave
                 ? 'border-violet-200 bg-violet-50 text-violet-700'
-                : 'border-blue-200 bg-blue-50 text-blue-700'
+                : 'border-primary/30 bg-primary/10 text-primary'
             }`}
           >
             {isIave ? 'IAVE' : 'DGES'}
@@ -192,7 +192,7 @@ export function DGESTimeline() {
       {/* Controls */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
         {/* Type filter */}
-        <div className="flex overflow-hidden rounded-xl border border-border/60 bg-slate-50">
+        <div className="flex overflow-hidden rounded-xl border border-border/60 bg-muted/30">
           {(['all', 'iave', 'dges'] as const).map(t => (
             <button
               key={t}
@@ -200,7 +200,7 @@ export function DGESTimeline() {
               className={`px-3.5 py-2 text-xs font-medium transition-colors ${
                 filter === t
                   ? 'bg-navy text-white shadow-sm'
-                  : 'text-muted-foreground hover:bg-white hover:text-foreground'
+                  : 'text-muted-foreground hover:bg-card hover:text-foreground'
               }`}
             >
               {t === 'all' ? 'Tudo' : t === 'iave' ? 'Exames IAVE' : 'Fases DGES'}
@@ -214,13 +214,13 @@ export function DGESTimeline() {
           className={`inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition-all ${
             onlyStarred
               ? 'border-amber-300 bg-amber-50 text-amber-700 shadow-sm'
-              : 'border-border/60 bg-white text-muted-foreground hover:border-amber-300 hover:text-amber-600'
+              : 'border-border/60 bg-card text-muted-foreground hover:border-warning/50 hover:text-warning'
           }`}
         >
           <Star className={`h-3.5 w-3.5 ${onlyStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
           Só as minhas
           {starredCount > 0 && (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-white">
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-warning px-1.5 text-[10px] font-bold text-foreground">
               {starredCount}
             </span>
           )}

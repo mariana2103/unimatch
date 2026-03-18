@@ -111,7 +111,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
               !hasRequiredExams
                 ? 'border-border/40 bg-muted/20'
                 : nearCutoff
-                  ? 'border-yellow-200 bg-yellow-50'
+                  ? 'border-warning/30 bg-warning/10'
                   : userGrade >= (notaCorte ?? 0) && meetsMinimum
                     ? 'border-emerald/20 bg-emerald/[0.04]'
                     : 'border-destructive/20 bg-destructive/[0.04]'
@@ -126,7 +126,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                     </div>
                   </div>
                   {nearCutoff ? (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-yellow-600">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-warning">
                       <AlertCircle className="h-4 w-4" /> Próximo ao corte
                     </span>
                   ) : userGrade >= (notaCorte ?? 0) && meetsMinimum ? (

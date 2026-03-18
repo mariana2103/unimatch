@@ -51,7 +51,8 @@ function PrivadaSection({
 
 const COURSES_PER_PAGE = 48
 
-function transformCourse(row: any, reqs: any[]): CourseUI {
+// courseReqs = already-filtered requirements for this course (from joined query)
+function transformCourse(row: any, courseReqs: any[]): CourseUI {
   return {
     id: row.id,
     nome: row.nome,
@@ -63,15 +64,13 @@ function transformCourse(row: any, reqs: any[]): CourseUI {
     notaUltimoColocado: row.nota_ultimo_colocado !== null ? Math.round(row.nota_ultimo_colocado * 10) : null,
     pesoSecundario: row.peso_secundario,
     pesoExame: row.peso_exames,
-    notaMinima: row.nota_minima_p_ingresso ?? null,
-    provasIngresso: reqs
-      .filter(r => r.course_id === row.id)
-      .map(r => ({
-        code: r.exam_code,
-        name: EXAM_SUBJECTS.find(e => e.code === r.exam_code)?.name ?? r.exam_code,
-        weight: r.weight,
-        conjunto_id: r.conjunto_id ?? 1,
-      })),
+    notaMinima: row.nota_minima_p_ingresso != null ? Math.round(row.nota_minima_p_ingresso * 10) : null,
+    provasIngresso: courseReqs.map(r => ({
+      code: r.exam_code,
+      name: EXAM_SUBJECTS.find(e => e.code === r.exam_code)?.name ?? r.exam_code,
+      weight: r.weight,
+      conjunto_id: r.conjunto_id ?? 1,
+    })),
     historico: row.history
       ? row.history.map((h: { year: number; nota: number }) => ({ year: h.year, nota: Math.round(h.nota * 10) }))
       : null,
@@ -121,29 +120,23 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   }, [deferredFilters, sortOrder])
 
   useEffect(() => {
-    const fetchAll = async (table: string, supabase: ReturnType<typeof createClient>) => {
+    const fetchCourses = async () => {
+      const supabase = createClient()
       const PAGE = 1000
       const all: any[] = []
       let from = 0
       while (true) {
-        const { data, error } = await supabase.from(table).select('*').range(from, from + PAGE - 1)
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*, course_requirements(*)')
+          .order('nome', { ascending: true })
+          .range(from, from + PAGE - 1)
         if (error || !data || data.length === 0) break
         all.push(...data)
         if (data.length < PAGE) break
         from += PAGE
       }
-      return all
-    }
-
-    const fetchCourses = async () => {
-      const supabase = createClient()
-      const [courseRows, reqs] = await Promise.all([
-        fetchAll('courses', supabase),
-        fetchAll('course_requirements', supabase),
-      ])
-      const transformed = courseRows
-        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt'))
-        .map(row => transformCourse(row, reqs))
+      const transformed = all.map(row => transformCourse(row, row.course_requirements ?? []))
       setCourses(transformed)
       onCoursesLoaded?.(transformed)
       setLoading(false)

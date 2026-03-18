@@ -63,18 +63,18 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
       status === 'past'
         ? 'border-border/50 bg-muted/30 opacity-90'
         : status === 'active'
-          ? 'border-emerald-200 bg-emerald-50 shadow-sm'
+          ? 'border-emerald/25 bg-emerald/8 shadow-sm'
           : 'border-border/60 bg-card shadow-sm hover:border-navy/20 hover:shadow'
     }`}>
       {/* Star button */}
       <button
         onClick={e => { e.stopPropagation(); onToggle() }}
         className={`absolute right-3.5 top-3.5 transition-colors ${
-          starred ? 'text-amber-400 hover:text-amber-500' : 'text-muted-foreground/30 hover:text-amber-400'
+          starred ? 'text-warning hover:text-warning/80' : 'text-muted-foreground/30 hover:text-warning'
         }`}
         aria-label={starred ? 'Remover estrela' : 'Adicionar estrela'}
       >
-        <Star className={`h-4 w-4 ${starred ? 'fill-amber-400' : ''}`} />
+        <Star className={`h-4 w-4 ${starred ? 'fill-warning text-warning' : ''}`} />
       </button>
 
       <div className="flex flex-col gap-2 pr-7">
@@ -84,14 +84,14 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
             variant="outline"
             className={`text-[10px] py-0.5 px-2 font-semibold ${
               isIave
-                ? 'border-violet-200 bg-violet-50 text-violet-700'
+                ? 'border-secondary/40 bg-secondary/15 text-foreground'
                 : 'border-primary/30 bg-primary/10 text-primary'
             }`}
           >
             {isIave ? 'IAVE' : 'DGES'}
           </Badge>
           {status === 'active' && (
-            <Badge variant="outline" className="text-[10px] py-0.5 px-2 border-emerald-200 bg-emerald-50 text-emerald-700 font-semibold">
+            <Badge variant="outline" className="text-[10px] py-0.5 px-2 border-emerald/25 bg-emerald/10 text-emerald font-semibold">
               Em curso
             </Badge>
           )}
@@ -123,7 +123,7 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
             {examNames.map(name => (
               <span
                 key={name}
-                className="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700"
+                className="inline-flex items-center gap-1 rounded-lg bg-secondary/15 px-2 py-0.5 text-[10px] font-medium text-foreground/70"
               >
                 <BookOpen className="h-2.5 w-2.5 shrink-0" />
                 {name}
@@ -140,7 +140,7 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
           </span>
         )}
         {status === 'active' && (
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald">
             <Clock className="h-3 w-3" />
             {event.endDate ? `Faltam ${daysUntil(event.endDate)} dias para fechar` : 'A decorrer hoje'}
           </span>
@@ -213,11 +213,11 @@ export function DGESTimeline() {
           onClick={() => setOnlyStarred(v => !v)}
           className={`inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition-all ${
             onlyStarred
-              ? 'border-amber-300 bg-amber-50 text-amber-700 shadow-sm'
+              ? 'border-warning/40 bg-warning/10 text-warning shadow-sm'
               : 'border-border/60 bg-card text-muted-foreground hover:border-warning/50 hover:text-warning'
           }`}
         >
-          <Star className={`h-3.5 w-3.5 ${onlyStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
+          <Star className={`h-3.5 w-3.5 ${onlyStarred ? 'fill-warning text-warning' : ''}`} />
           Só as minhas
           {starredCount > 0 && (
             <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-warning px-1.5 text-[10px] font-bold text-foreground">

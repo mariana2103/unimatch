@@ -29,27 +29,26 @@
 
 :root {
   /* ── Canvas — page background ────────────────────────────────────────
-     A deeper teal tint so the background has clear palette presence.
-     Cards are lighter, keeping the standard lift hierarchy but with
-     no pure white anywhere — the whole surface family stays tinted. */
-  --background: oklch(0.945 0.020 205);
+     Pale teal tint — enough to feel branded without being heavy.
+     Cards are lighter, so they lift cleanly but both surfaces stay
+     in the same teal family (no pure-white shock). */
+  --background: oklch(0.962 0.014 205);
 
   /* ── Surface — cards ─────────────────────────────────────────────────
-     Lighter teal tint — noticeably above the canvas but still tinted,
-     so there's no jarring pure-white shock against the background. */
-  --card:            oklch(0.975 0.010 205);
+     Noticeably lighter than canvas; the tint keeps them in the palette. */
+  --card:            oklch(0.983 0.007 205);
   --card-foreground: oklch(0.17 0.027 205);
 
   /* ── Elevated — dropdowns, modals ────────────────────────────────────
-     One more step lighter for overlays; barely perceptible tint. */
-  --popover:            oklch(0.990 0.005 205);
+     One more step lighter; barely-there tint for overlays. */
+  --popover:            oklch(0.993 0.004 205);
   --popover-foreground: oklch(0.17 0.027 205);
 
   /* ── Text ─────────────────────────────────────────────────────────────
      #0a191f: near-black with a teal tint. Warmer on the eye than
      pure black and stays in the same hue family as the brand. */
   --foreground:       oklch(0.17 0.027 205);
-  --muted:            oklch(0.920 0.018 205);  /* slightly saturated fill  */
+  --muted:            oklch(0.935 0.016 205);  /* slightly saturated fill  */
   --muted-foreground: oklch(0.50 0.030 205);  /* secondary labels, hints  */
 
   /* ── Primary brand — #25586f ─────────────────────────────────────────
@@ -114,7 +113,7 @@
   --chart-5: oklch(0.79 0.072 205);  /* secondary blue */
 
   /* ── Sidebar ─────────────────────────────────────────────────────────  */
-  --sidebar:                    oklch(0.960 0.016 205);
+  --sidebar:                    oklch(0.970 0.012 205);
   --sidebar-foreground:         oklch(0.20 0.027 205);
   --sidebar-primary:            oklch(0.39 0.072 205);
   --sidebar-primary-foreground: oklch(0.97 0.008 205);
@@ -142,16 +141,16 @@
 ───────────────────────────────────────────────────────────────────────── */
 .dark {
   /* ── Layers ──────────────────────────────────────────────────────── */
-  --background:         oklch(0.07 0.014 210);   /* #050c0f — canvas     */
-  --card:               oklch(0.14 0.018 210);   /* surface              */
-  --card-foreground:    oklch(0.94 0.014 205);
-  --popover:            oklch(0.20 0.018 210);   /* elevated             */
-  --popover-foreground: oklch(0.94 0.014 205);
+  --background:         oklch(0.09 0.016 210);   /* deep canvas          */
+  --card:               oklch(0.17 0.020 210);   /* surface — clear lift */
+  --card-foreground:    oklch(0.95 0.012 205);
+  --popover:            oklch(0.24 0.020 210);   /* elevated             */
+  --popover-foreground: oklch(0.95 0.012 205);
 
   /* ── Text ─────────────────────────────────────────────────────────── */
-  --foreground:       oklch(0.94 0.014 205);     /* #e0eff5              */
-  --muted:            oklch(0.18 0.018 210);
-  --muted-foreground: oklch(0.60 0.022 210);
+  --foreground:       oklch(0.95 0.012 205);     /* #e0eff5 — bright     */
+  --muted:            oklch(0.22 0.020 210);
+  --muted-foreground: oklch(0.65 0.022 210);
 
   /* ── Primary — #90c3da ───────────────────────────────────────────────
      Light sky-blue; high lightness so it pops against dark surfaces.
@@ -180,8 +179,8 @@
   --destructive-foreground: oklch(0.97 0 0);
 
   /* ── Borders & inputs ────────────────────────────────────────────── */
-  --border: oklch(0.27 0.022 210);
-  --input:  oklch(0.18 0.018 210);
+  --border: oklch(0.32 0.022 210);
+  --input:  oklch(0.22 0.020 210);
   --ring:   oklch(0.77 0.068 205);
 
   /* ── Area colours — brighter shift for dark surfaces ─────────────── */
@@ -202,13 +201,13 @@
   --chart-5: oklch(0.37 0.070 210);
 
   /* ── Sidebar ──────────────────────────────────────────────────────── */
-  --sidebar:                    oklch(0.11 0.016 210);
-  --sidebar-foreground:         oklch(0.92 0.013 205);
+  --sidebar:                    oklch(0.14 0.018 210);
+  --sidebar-foreground:         oklch(0.93 0.012 205);
   --sidebar-primary:            oklch(0.77 0.068 205);
   --sidebar-primary-foreground: oklch(0.09 0.016 210);
-  --sidebar-accent:             oklch(0.18 0.018 210);
-  --sidebar-accent-foreground:  oklch(0.85 0.012 205);
-  --sidebar-border:             oklch(0.24 0.020 210);
+  --sidebar-accent:             oklch(0.22 0.020 210);
+  --sidebar-accent-foreground:  oklch(0.87 0.012 205);
+  --sidebar-border:             oklch(0.30 0.020 210);
   --sidebar-ring:               oklch(0.77 0.068 205);
 }
 

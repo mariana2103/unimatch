@@ -71,10 +71,11 @@ export function calculateAdmissionGrade(
 
     hasRequiredExams = true
 
-    // Exam grades are stored on 0-200 scale; weights sum to 1 within a conjunto
+    // Normalize weights within this conjunto (guards against absolute vs relative storage)
+    const totalWeight = exams.reduce((s, e) => s + e.weight, 0) || 1
     const examComponent = exams.reduce((sum, e) => {
       const u = safeUserExams.find(u => u.subjectCode === e.code)!
-      return sum + u.grade * e.weight
+      return sum + u.grade * (e.weight / totalWeight)
     }, 0)
 
     const finalGrade = Math.round((ms200 * pesoSec + examComponent * pesoExam) * 10) / 10

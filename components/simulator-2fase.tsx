@@ -14,7 +14,7 @@ import type { CourseUI } from '@/lib/types'
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-function transformCourse(row: any, reqs: any[]): CourseUI {
+function transformCourse(row: any, courseReqs: any[]): CourseUI {
   return {
     id: row.id,
     nome: row.nome,
@@ -29,15 +29,13 @@ function transformCourse(row: any, reqs: any[]): CourseUI {
         : null,
     pesoSecundario: row.peso_secundario,
     pesoExame: row.peso_exames,
-    notaMinima: row.nota_minima_p_ingresso ?? null,
-    provasIngresso: reqs
-      .filter((r: any) => r.course_id === row.id)
-      .map((r: any) => ({
-        code: r.exam_code,
-        name: EXAM_SUBJECTS.find(e => e.code === r.exam_code)?.name ?? r.exam_code,
-        weight: r.weight,
-        conjunto_id: r.conjunto_id ?? 1,
-      })),
+    notaMinima: row.nota_minima_p_ingresso != null ? Math.round(row.nota_minima_p_ingresso * 10) : null,
+    provasIngresso: courseReqs.map((r: any) => ({
+      code: r.exam_code,
+      name: EXAM_SUBJECTS.find(e => e.code === r.exam_code)?.name ?? r.exam_code,
+      weight: r.weight,
+      conjunto_id: r.conjunto_id ?? 1,
+    })),
     historico: row.history
       ? row.history.map((h: any) => ({ year: h.year, nota: Math.round(h.nota * 10) }))
       : null,
@@ -81,7 +79,7 @@ function GradeSlider({
           {delta !== 0 && (
             <span className={cn(
               'text-[10px] font-bold tabular-nums',
-              delta > 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400',
+              delta > 0 ? 'text-emerald' : 'text-destructive',
             )}>
               {delta > 0 ? '+' : ''}{(delta / displayScale).toFixed(1)}
             </span>
@@ -208,16 +206,27 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
     setExtraCodes([])
   }, [realMedia, exams])
 
-  // Load all courses (favorites may not have a cutoff)
+  // Load all courses with requirements in a single joined query
   useEffect(() => {
     const supabase = createClient()
-    Promise.all([
-      supabase.from('courses').select('*'),
-      supabase.from('course_requirements').select('*'),
-    ]).then(([{ data: courseRows }, { data: reqRows }]) => {
-      if (courseRows && reqRows) {
-        setCourses(courseRows.map((r: any) => transformCourse(r, reqRows)))
+    const PAGE = 1000
+    const fetchAll = async () => {
+      const all: any[] = []
+      let from = 0
+      while (true) {
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*, course_requirements(*)')
+          .range(from, from + PAGE - 1)
+        if (error || !data || data.length === 0) break
+        all.push(...data)
+        if (data.length < PAGE) break
+        from += PAGE
       }
+      return all
+    }
+    fetchAll().then(rows => {
+      setCourses(rows.map(r => transformCourse(r, r.course_requirements ?? [])))
       setLoading(false)
     })
   }, [])
@@ -277,7 +286,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
         newlyReachable: boolean
         distanceToCutoff: number
       }>
-  }, [courses, simMediaScaled, realMediaScaled, realExams, simExamsList])
+  }, [favoriteCourses, simMediaScaled, realMediaScaled, realExams, simExamsList])
 
   const newCount   = results.filter(r => r.newlyReachable).length
   const aboveCount = results.filter(r => r.simAbove && !r.newlyReachable).length
@@ -416,7 +425,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               <p className="text-sm font-medium text-muted-foreground">Ainda não tens favoritos.</p>
               <p className="mt-1 text-xs text-muted-foreground/60">
                 Guarda cursos com o{' '}
-                <Heart className="inline h-3 w-3 text-rose-400" />{' '}
+                <Heart className="inline h-3 w-3 text-destructive/60" />{' '}
                 no explorador.
               </p>
             </div>
@@ -453,10 +462,10 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                   </div>
                   <button
                     onClick={e => { e.stopPropagation(); toggleFavorite(course.id) }}
-                    className="shrink-0 rounded-full p-1.5 text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                    className="shrink-0 rounded-full p-1.5 text-destructive transition-colors hover:bg-destructive/10"
                     title="Remover dos favoritos"
                   >
-                    <Heart className="h-4 w-4 fill-rose-500" />
+                    <Heart className="h-4 w-4 fill-destructive" />
                   </button>
                 </div>
               ))}
@@ -470,9 +479,9 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
 
       {/* 2ª fase disclaimer */}
       {phase === '2' && (
-        <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-amber-200/60 bg-amber-50/60 px-4 py-3 dark:border-amber-800/30 dark:bg-amber-950/20">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-xs text-amber-700 dark:text-amber-300">
+        <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-warning/25 bg-warning/8 px-4 py-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <p className="text-xs text-warning">
             <span className="font-semibold">Nota:</span> as médias de corte mostradas são da 1ª Fase —
             não temos dados históricos da 2ª Fase. Os cortes da 2ª Fase são tipicamente
             0,5–2 valores mais baixos. Usa esta simulação como referência, não como garantia.
@@ -497,7 +506,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                 )}
               </div>
               {simMedia !== realMedia && realMedia > 0 && (
-                <span className={`text-[10px] font-bold tabular-nums ${simMedia > realMedia ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <span className={`text-[10px] font-bold tabular-nums ${simMedia > realMedia ? 'text-emerald' : 'text-destructive'}`}>
                   {simMedia > realMedia ? '+' : ''}{((simMedia - realMedia) / 10).toFixed(1)}
                 </span>
               )}
@@ -578,9 +587,9 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               <span className="font-semibold tabular-nums">{aboveCount}</span>
             </div>
             {newCount > 0 && (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/60 px-3 py-2 dark:border-emerald-800/30 dark:bg-emerald-950/25">
-                <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+              <div className="flex items-center gap-2 rounded-lg border border-emerald/25 bg-emerald/8 px-3 py-2">
+                <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald" />
+                <p className="text-[11px] font-semibold text-emerald">
                   +{newCount} novo{newCount !== 1 ? 's' : ''} com esta simulação
                 </p>
               </div>
@@ -600,7 +609,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               <p className="text-sm text-muted-foreground">Ainda não tens favoritos.</p>
               <p className="mt-1 text-xs text-muted-foreground/60">
                 Guarda cursos com o{' '}
-                <Heart className="inline h-3 w-3 text-rose-400" />{' '}
+                <Heart className="inline h-3 w-3 text-destructive/60" />{' '}
                 no explorador para os simular aqui.
               </p>
             </div>
@@ -623,11 +632,11 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                     className={cn(
                       'group relative flex cursor-pointer items-center gap-4 rounded-xl border px-4 py-3.5 transition-all',
                       newlyReachable
-                        ? 'border-emerald-300/60 bg-emerald-50/60 shadow-sm dark:border-emerald-700/40 dark:bg-emerald-950/20'
+                        ? 'border-emerald/25 bg-emerald/8 shadow-sm'
                         : simAbove
                           ? 'border-border/50 bg-card hover:border-border hover:shadow-sm'
                           : nearMiss
-                            ? 'border-amber-200/50 bg-amber-50/40 dark:border-amber-800/30 dark:bg-amber-950/15'
+                            ? 'border-warning/25 bg-warning/8'
                             : 'border-border/30 bg-card/50 opacity-75',
                     )}
                   >
@@ -655,8 +664,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                             )}
                             <span className={cn(
                               'text-base font-bold tabular-nums',
-                              simAbove  ? 'text-emerald-600 dark:text-emerald-400' :
-                              nearMiss  ? 'text-amber-600 dark:text-amber-400' :
+                              simAbove  ? 'text-emerald' :
+                              nearMiss  ? 'text-warning' :
                                           'text-foreground',
                             )}>
                               {(sim.grade / 10).toFixed(1)}
@@ -669,8 +678,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                               <span className={cn(
                                 'font-semibold',
                                 sim.grade >= cutoff
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : 'text-rose-500 dark:text-rose-400',
+                                  ? 'text-emerald'
+                                  : 'text-destructive',
                               )}>
                                 ({sim.grade >= cutoff ? '+' : ''}{((sim.grade - cutoff) / 10).toFixed(1)})
                               </span>

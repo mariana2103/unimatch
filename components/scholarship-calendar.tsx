@@ -44,9 +44,9 @@ function urgencyColor(deadline: string) {
   const due = new Date(deadline)
   const days = Math.ceil((due.getTime() - today.getTime()) / 86400000)
   if (days < 0)   return { dot: 'bg-muted-foreground/30', label: 'Encerrada', text: 'text-muted-foreground' }
-  if (days <= 30) return { dot: 'bg-red-500',    label: `${days}d`, text: 'text-red-600 dark:text-red-400' }
-  if (days <= 90) return { dot: 'bg-amber-500',  label: `${days}d`, text: 'text-amber-600 dark:text-amber-400' }
-  return              { dot: 'bg-emerald-500', label: `${days}d`, text: 'text-emerald-600 dark:text-emerald-400' }
+  if (days <= 30) return { dot: 'bg-destructive', label: `${days}d`, text: 'text-destructive' }
+  if (days <= 90) return { dot: 'bg-warning',     label: `${days}d`, text: 'text-warning' }
+  return              { dot: 'bg-emerald',     label: `${days}d`, text: 'text-emerald' }
 }
 
 

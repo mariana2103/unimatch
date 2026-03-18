@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, GraduationCap, Heart, Award, ChevronDown, ChevronUp, Calendar, Sparkles } from 'lucide-react'
+import { ExternalLink, GraduationCap, Heart, Award, ChevronDown, ChevronUp, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import scholarshipsData from '@/lib/scholarships.json'
 
-type Category = 'all' | 'social' | 'merit' | 'private' | 'niche'
+type Category = 'all' | 'social' | 'merit' | 'private' | 'general'
 
 interface Scholarship {
   name: string
   entity: string
-  category: 'social' | 'merit' | 'private' | 'niche'
+  category: 'social' | 'merit' | 'private' | 'general'
   deadline: string
   deadlineLabel: string
   amount: string
@@ -28,7 +28,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   social: 'Ação Social',
   merit: 'Mérito',
   private: 'Privadas',
-  niche: 'Nicho',
+  general: 'Outras',
 }
 
 const CATEGORY_ICONS: Record<Category, typeof Heart> = {
@@ -36,7 +36,7 @@ const CATEGORY_ICONS: Record<Category, typeof Heart> = {
   social: Heart,
   merit: Award,
   private: GraduationCap,
-  niche: Sparkles,
+  general: GraduationCap,
 }
 
 function urgencyColor(deadline: string) {
@@ -49,9 +49,6 @@ function urgencyColor(deadline: string) {
   return              { dot: 'bg-emerald-500', label: `${days}d`, text: 'text-emerald-600 dark:text-emerald-400' }
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })
-}
 
 function ScholarshipRow({ s }: { s: Scholarship }) {
   const [open, setOpen] = useState(false)

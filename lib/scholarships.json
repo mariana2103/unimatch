@@ -76,7 +76,7 @@
     {
       "name": "Bolsa para Alunos com Incapacidade",
       "entity": "DGES",
-      "category": "niche",
+      "category": "general",
       "deadline": "2026-09-30",
       "deadlineLabel": "25 Jun – 30 Set 2026 (mesmos prazos da bolsa DGES)",
       "amount": "697€/ano (valor da propina anual)",
@@ -89,7 +89,7 @@
     {
       "name": "Programa IMPULSO — Bolsas de Educação (Jogos Santa Casa)",
       "entity": "Jogos Santa Casa / COP / CPP / FADU",
-      "category": "niche",
+      "category": "general",
       "deadline": "2026-09-30",
       "deadlineLabel": "1 – 30 Set 2026 (prazo confirmado para 2026/27)",
       "amount": "Até 3.000€ (licenciatura/mestrado)",
@@ -101,7 +101,7 @@
     {
       "name": "Bolsas Sociais EPIS",
       "entity": "Rede EPIS (Galp, Pestana, Zurich e mais 60 empresas)",
-      "category": "niche",
+      "category": "general",
       "deadline": "2026-09-28",
       "deadlineLabel": "Ago – Set 2026 (15.ª edição fechou a 28 Set 2025)",
       "amount": "450€ – 1.000€/ano (renováveis até ao fim da licenciatura)",
@@ -113,7 +113,7 @@
     {
       "name": "Programa ROMA Educa",
       "entity": "AIMA – Agência para a Integração, Migrações e Asilo",
-      "category": "niche",
+      "category": "general",
       "deadline": "2027-01-31",
       "deadlineLabel": "Dez 2026 – Jan 2027 (candidaturas retroativas ao ano letivo)",
       "amount": "Apoio financeiro mensal para despesas de frequência",
@@ -125,7 +125,7 @@
     {
       "name": "Bolsas Fundação Benfica",
       "entity": "Fundação Sport Lisboa e Benfica",
-      "category": "niche",
+      "category": "general",
       "deadline": "2026-10-15",
       "deadlineLabel": "Out 2026 (anúncio em 10 Out 2025 para 2025/26)",
       "amount": "~50 bolsas/ano",

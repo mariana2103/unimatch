@@ -348,9 +348,9 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
             >
               <Heart className="h-3 w-3" />
               Favoritos
-              {favorites.length > 0 && (
+              {!loadingCourses && allFavoriteCourses.length > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                  {favorites.length}
+                  {allFavoriteCourses.length}
                 </span>
               )}
             </button>

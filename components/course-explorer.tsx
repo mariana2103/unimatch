@@ -271,7 +271,20 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   }
 
   return (
-    <div className="mx-[6%] max-w-7xl px-6 py-8 flex flex-col gap-6">
+    <div className="mx-[6%] max-w-7xl px-6 pt-10 pb-8 flex flex-col gap-6">
+
+      {/* Hero */}
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Encontra o teu <span className="text-navy">curso ideal</span>
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {courses.length > 0
+            ? `${courses.filter(c => c.tipo === 'publica').length} cursos públicos · dados oficiais DGES`
+            : 'Todos os cursos do Ensino Superior português · dados oficiais DGES'}
+        </p>
+      </div>
+
       <CourseFilters
         filters={filters}
         onFiltersChange={setFilters}

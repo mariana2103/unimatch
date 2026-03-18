@@ -31,80 +31,72 @@ export function Header({
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        
-        <div className="flex items-center gap-8">
-          {/* Logo / Home */}
-          <button 
-            onClick={() => onTabChange('explorer')} 
-            className="group flex items-center gap-2.5 transition-all outline-none"
+    <header className="sticky top-0 z-50 w-full border-b border-border/30 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+
+        <div className="flex items-center gap-6">
+          {/* Logo */}
+          <button
+            onClick={() => onTabChange('explorer')}
+            className="group flex items-center gap-2.5 outline-none"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy text-white shadow-lg shadow-navy/20 transition-transform group-hover:scale-105">
-              <GraduationCap className="h-5 w-5" />
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-navy to-navy-dark text-white shadow-md shadow-navy/30 transition-all group-hover:shadow-navy/50 group-hover:scale-105">
+              <GraduationCap className="h-4.5 w-4.5" />
             </div>
-            <div className="hidden flex-col items-start leading-none sm:flex text-left">
-              <span className="text-lg font-bold tracking-tight text-foreground">UniMatch</span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/80">Simulador Universitário</span>
-            </div>
+            <span className="hidden text-base font-bold tracking-tight text-foreground sm:block">
+              Uni<span className="text-navy">Match</span>
+            </span>
           </button>
 
-          {/* Navegação Principal */}
+          {/* Nav */}
           <nav className="hidden md:block">
-            <ul className="flex items-center gap-1">
+            <ul className="flex items-center gap-0.5">
               {tabs.map((tab) => (
-                <li key={tab.id} className="relative">
+                <li key={tab.id}>
                   <button
                     onClick={() => onTabChange(tab.id)}
                     className={cn(
-                      "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors relative z-10",
-                      activeTab === tab.id ? "text-navy" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      'flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
+                      activeTab === tab.id
+                        ? 'bg-navy/10 text-navy dark:bg-navy/20'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                     )}
                   >
-                    <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-navy" : "")} />
+                    <tab.icon className="h-3.5 w-3.5" />
                     {tab.label}
                   </button>
-                  {activeTab === tab.id && (
-                    <div className="absolute inset-0 bg-navy/5 rounded-full -z-0 border border-navy/10" />
-                  )}
                 </li>
               ))}
             </ul>
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* AI Counselor toggle */}
+        <div className="flex items-center gap-2">
+          {/* AI Counselor */}
           <button
             onClick={() => setIsAISidebarOpen(!isAISidebarOpen)}
             className={cn(
-              'hidden sm:inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-all border',
+              'hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all',
               isAISidebarOpen
-                ? 'bg-navy text-white border-navy shadow-sm shadow-navy/20'
-                : 'border-border/60 text-muted-foreground hover:text-foreground hover:border-navy/30 hover:bg-navy/5',
+                ? 'bg-navy text-white shadow-sm shadow-navy/30'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
             )}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Conselheiro IA
+            <span className="hidden lg:block">Conselheiro IA</span>
           </button>
 
           <button
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             aria-label="Alternar tema"
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
-          <div className="h-6 w-px bg-border/60 hidden sm:block" />
+          <div className="h-5 w-px bg-border/60 hidden sm:block" />
 
-          <div className="flex items-center">
-            {isLoggedIn ? (
-              <UserMenu />
-            ) : (
-              <AuthDialog />
-            )}
-          </div>
+          {isLoggedIn ? <UserMenu /> : <AuthDialog />}
         </div>
       </div>
     </header>

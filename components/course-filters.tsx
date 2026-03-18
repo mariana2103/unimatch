@@ -153,7 +153,7 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
       ? [{ label: 'Com provas', onRemove: () => update('onlyQualified', false) }]
       : []),
     ...(filters.withinRange
-      ? [{ label: 'No meu alcance', onRemove: () => update('withinRange', false) }]
+      ? [{ label: '≤ 2 val. de entrar', onRemove: () => update('withinRange', false) }]
       : []),
   ]
 
@@ -259,7 +259,7 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
               active={filters.withinRange}
               onClick={() => update('withinRange', !filters.withinRange)}
               icon={Target}
-              label="Dentro do meu alcance"
+              label="≤ 2 val. de entrar"
             />
           </>
         )}

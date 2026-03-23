@@ -34,3 +34,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scraper
+/scripts/cache/
+/scripts/.venv/
+/scripts/dges_cursos_completo.xlsx
+
+
+/dados_dges/

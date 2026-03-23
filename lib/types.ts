@@ -54,12 +54,14 @@ export interface CourseUI {
   area: string
   tipo: 'publica' | 'privada'
   vagas: number | null
-  notaUltimoColocado: number | null   // nota_ultimo_colocado
-  pesoSecundario: number | null       // peso_secundario
-  pesoExame: number | null            // peso_exames
-  notaMinima: number | null           // nota_minima_p_ingresso
+  notaUltimoColocado: number | null    // nota_ultimo_colocado (0-200, 1ª fase)
+  notaUltimoColocadoF2: number | null // nota_ultimo_colocado_f2 (0-200, 2ª fase)
+  pesoSecundario: number | null        // peso_secundario
+  pesoExame: number | null             // peso_exames
+  notaMinima: number | null            // nota_minima_p_ingresso
+  notaMinimProva: number | null        // nota_minima_prova
   provasIngresso: { code: string; name: string; weight: number; conjunto_id: number }[]
-  historico: { year: number; nota: number }[] | null
+  historico: { year: number; nota_f1: number | null; nota_f2: number | null; vagas_f1: number | null; vagas_f2: number | null }[] | null
   link_oficial: string | null
 }
 

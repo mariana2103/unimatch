@@ -127,10 +127,45 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         {/* Bottom: cutoff + user grade */}
         <div className="flex items-start justify-between border-t border-border/40 pt-3">
           <div>
-            <p className="text-[10px] text-muted-foreground mb-0.5">Último Colocado</p>
-            <p className="text-xl font-bold tabular-nums text-foreground leading-none">
-              {notaCorte !== null ? (notaCorte / 10).toFixed(1) : '—'}
-            </p>
+            {/* Nota último colocado with trend vs previous year */}
+            {(() => {
+              const hist = course.historico
+              const prev = hist?.find(h => h.year === 2024)?.nota_f1 ?? null
+              const trend = notaCorte !== null && prev !== null ? notaCorte - prev : null
+              const curr2026 = hist?.find(h => h.year === 2026)?.vagas_f1 ?? null
+              const prev2025 = hist?.find(h => h.year === 2025)?.vagas_f1 ?? null
+              const vagasDelta = curr2026 !== null && prev2025 !== null ? curr2026 - prev2025 : null
+              return (
+                <>
+                  <div className="flex items-baseline gap-1.5 mb-0">
+                    <p className="text-[10px] text-muted-foreground">Último Colocado 2025</p>
+                    {trend !== null && (
+                      <span className={`text-[10px] font-medium tabular-nums ${trend > 0 ? 'text-destructive' : trend < 0 ? 'text-emerald' : 'text-muted-foreground/50'}`}>
+                        {trend > 0 ? '↑' : trend < 0 ? '↓' : '='}{Math.abs(trend / 10).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xl font-bold tabular-nums text-foreground leading-none">
+                    {notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—'}
+                  </p>
+                  {course.notaUltimoColocadoF2 !== null && (
+                    <p className="text-[10px] tabular-nums text-muted-foreground/60 mt-0.5">
+                      2ª fase {(course.notaUltimoColocadoF2 / 10).toFixed(2)}
+                    </p>
+                  )}
+                  {curr2026 !== null && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-1 tabular-nums">
+                      {curr2026} vagas 2026
+                      {vagasDelta !== null && vagasDelta !== 0 && (
+                        <span className={vagasDelta > 0 ? 'text-emerald' : 'text-destructive'}>
+                          {' '}{vagasDelta > 0 ? '+' : ''}{vagasDelta}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </>
+              )
+            })()}
           </div>
 
           {showUserGrade ? (
@@ -150,13 +185,13 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                 aboveCutoff && meetsMinimum   ? 'text-emerald' :
                                                 'text-foreground'
               }`}>
-                {(userGrade / 10).toFixed(1)}
+                {(userGrade / 10).toFixed(2)}
               </p>
               {notaCorte !== null && (
                 <p className={`text-[10px] tabular-nums mt-0.5 ${
                   (userGrade - notaCorte) >= 0 ? 'text-emerald' : 'text-destructive'
                 }`}>
-                  {(userGrade - notaCorte) >= 0 ? '+' : ''}{((userGrade - notaCorte) / 10).toFixed(1)} val.
+                  {(userGrade - notaCorte) >= 0 ? '+' : ''}{((userGrade - notaCorte) / 10).toFixed(2)} val.
                 </p>
               )}
             </div>

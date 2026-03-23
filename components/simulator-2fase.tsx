@@ -23,8 +23,8 @@ function transformCourse(row: any, courseReqs: any[]): CourseUI {
     area: row.area,
     tipo: row.tipo,
     vagas: row.vagas,
-    notaUltimoColocado:   row.nota_ultimo_colocado    != null ? Math.round(row.nota_ultimo_colocado    * 10) : null,
-    notaUltimoColocadoF2: row.nota_ultimo_colocado_f2 != null ? Math.round(row.nota_ultimo_colocado_f2 * 10) : null,
+    notaUltimoColocado:   row.nota_ultimo_colocado    != null ? row.nota_ultimo_colocado    * 10 : null,
+    notaUltimoColocadoF2: row.nota_ultimo_colocado_f2 != null ? row.nota_ultimo_colocado_f2 * 10 : null,
     pesoSecundario: row.peso_secundario,
     pesoExame: row.peso_exames,
     notaMinima:     row.nota_minima_p_ingresso ?? null,
@@ -38,8 +38,10 @@ function transformCourse(row: any, courseReqs: any[]): CourseUI {
     historico: row.history
       ? row.history.map((h: any) => ({
           year:    h.year,
-          nota_f1: h.nota_f1 != null ? Math.round(h.nota_f1 * 10) : (h.nota != null ? Math.round(h.nota * 10) : null),
-          nota_f2: h.nota_f2 != null ? Math.round(h.nota_f2 * 10) : null,
+          nota_f1:  h.nota_f1 != null ? h.nota_f1 * 10 : (h.nota != null ? h.nota * 10 : null),
+          nota_f2:  h.nota_f2 != null ? h.nota_f2 * 10 : null,
+          vagas_f1: h.vagas_f1 ?? null,
+          vagas_f2: h.vagas_f2 ?? null,
         }))
       : null,
     link_oficial: row.link_oficial,

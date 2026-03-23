@@ -111,7 +111,7 @@ function buildCourseContext(message: string, courses: CourseUI[]): string {
 
   const lines = top.map(({ c }) => {
     const corte = c.notaUltimoColocado !== null
-      ? (c.notaUltimoColocado / 10).toFixed(1)
+      ? (c.notaUltimoColocado / 10).toFixed(2)
       : 'sem dados'
     return `• ${c.nome} — ${c.instituicao} (${c.distrito}) | Último colocado: ${corte} | Vagas: ${c.vagas ?? '?'}`
   }).join('\n')
@@ -190,7 +190,7 @@ function SidebarCourseCard({
             </span>
             {course.notaUltimoColocado && (
               <span className="text-[10px] font-bold text-navy ml-auto">
-                {(course.notaUltimoColocado / 10).toFixed(1)}
+                {(course.notaUltimoColocado / 10).toFixed(2)}
               </span>
             )}
           </div>

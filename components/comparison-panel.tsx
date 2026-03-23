@@ -63,7 +63,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Último Colocado</span>
                       <span className="font-bold tabular-nums text-navy text-base">
-                        {course.notaUltimoColocado !== null ? (course.notaUltimoColocado / 10).toFixed(1) : '—'}
+                        {course.notaUltimoColocado !== null ? (course.notaUltimoColocado / 10).toFixed(2) : '—'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -83,7 +83,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
                     {delta !== null && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <TrendingUp className="h-3 w-3" />
-                        {delta >= 0 ? '+' : ''}{(delta / 10).toFixed(1)} pts (histórico)
+                        {delta >= 0 ? '+' : ''}{(delta / 10).toFixed(2)} pts (histórico)
                       </div>
                     )}
                   </div>

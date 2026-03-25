@@ -1,0 +1,10 @@
+@@ -131,7 +131,8 @@
+   useEffect(() => {
+     let cancelled = false
+     const fetchCourses = async () => {
+       const supabase = createClient()
+-      const PAGE = 1000
++      const PAGE = 200  // Reduced to avoid rate limits
++      const DELAY_MS = 100  // Small delay between batches
+       const SELECT = `
+         id, nome, instituicao_nome, distrito, area, tipo, vagas,

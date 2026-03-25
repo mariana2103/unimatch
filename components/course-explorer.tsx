@@ -115,6 +115,8 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   const { isLoggedIn, profile, exams, comparisonList } = useUser()
   const [courses, setCourses] = useState<CourseUI[]>([])
   const [loading, setLoading] = useState(true)
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false)
+  const [totalCount, setTotalCount] = useState<number | null>(null)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [sortOrder, setSortOrder] = useState<SortOrder>('none')
   const [currentPage, setCurrentPage] = useState(0)
@@ -131,7 +133,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
     let cancelled = false
     const fetchCourses = async () => {
       const supabase = createClient()
-      const PAGE = 1000
+      const PAGE = 200  // Reduced to avoid rate limits
       const SELECT = `
         id, nome, instituicao_nome, distrito, area, tipo, vagas,
         nota_ultimo_colocado, nota_ultimo_colocado_f2,
@@ -288,7 +290,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   }
 
   return (
-    <div className="mx-[6%] max-w-7xl px-6 pt-10 pb-8 flex flex-col gap-6">
+    <div className="mx-auto max-w-7xl px-6 pt-10 pb-8 flex flex-col gap-6">
 
       {/* Hero */}
       <div className="flex flex-col gap-1.5">

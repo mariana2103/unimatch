@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked, SlidersHorizontal, Menu } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked, SlidersHorizontal, Menu, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'

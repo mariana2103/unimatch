@@ -1,0 +1,11 @@
+@@ -170,6 +171,10 @@
+         }
+ 
+         if (data.length < PAGE) break
++        
++        // Add small delay to avoid rate limiting
++        await new Promise(r => setTimeout(r, DELAY_MS))
++        
+         from += PAGE
+       }
+ 

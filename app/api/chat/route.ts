@@ -1,10 +1,12 @@
 export const maxDuration = 30
 
-const ENDPOINT = process.env.IAEDU_ENDPOINT!
-const API_KEY = process.env.IAEDU_API_KEY!
+import { vectorSearchCourses } from '@/lib/pgvector-search'
+
+const ENDPOINT   = process.env.IAEDU_ENDPOINT!
+const API_KEY    = process.env.IAEDU_API_KEY!
 const CHANNEL_ID = process.env.IAEDU_CHANNEL_ID!
-const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPA_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const SUPA_URL   = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPA_KEY   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // ─── Stop words — common Portuguese question words that are not course names ──
 const STOP = new Set([
@@ -46,10 +48,23 @@ function extractPrimaryTerm(message: string): string | null {
   return words[words.length - 1] ?? null
 }
 
-// ─── Query Supabase and return a formatted context block ──────────────────────
-async function fetchCourseContext(message: string): Promise<string> {
-  if (!SUPA_URL || !SUPA_KEY) return ''
+// ─── Format course rows into a context block ──────────────────────────────────
+function formatContext(
+  data: { nome: string; instituicao_nome: string | null; nota_ultimo_colocado: number | null; vagas: number | null; distrito: string | null }[],
+): string {
+  if (!data.length) return ''
+  const lines = data.map(c => {
+    const corte = c.nota_ultimo_colocado != null
+      ? (Number(c.nota_ultimo_colocado) * 10).toFixed(2)
+      : 'sem dados'
+    const inst = c.instituicao_nome ?? c.distrito ?? '?'
+    return `• ${c.nome} — ${inst} | Corte 2025 (1ª fase): ${corte} | Vagas: ${c.vagas ?? '?'}`
+  }).join('\n')
+  return `\n\n[DADOS REAIS da base de dados UniMatch (2025) — usa APENAS estes dados, não uses conhecimento do teu treino:\n${lines}\n]`
+}
 
+// ─── ilike fallback search ─────────────────────────────────────────────────────
+async function ilikeFallback(message: string): Promise<string> {
   const term = extractPrimaryTerm(message)
   if (!term) return ''
 
@@ -60,13 +75,10 @@ async function fetchCourseContext(message: string): Promise<string> {
     : 'nota_ultimo_colocado.desc.nullslast'
 
   const encoded = encodeURIComponent(term)
-
-  // Search across nome, distrito AND instituicao_nome so that location-based
-  // queries like "Açores" or "Porto" actually return results from the DB.
   const url =
     `${SUPA_URL}/rest/v1/courses` +
     `?or=(nome.ilike.*${encoded}*,distrito.ilike.*${encoded}*,instituicao_nome.ilike.*${encoded}*)` +
-    `&select=nome,instituicao_nome,nota_ultimo_colocado,vagas,distrito,history` +
+    `&select=nome,instituicao_nome,nota_ultimo_colocado,vagas,distrito` +
     `&order=${order}` +
     `&limit=20`
 
@@ -76,36 +88,28 @@ async function fetchCourseContext(message: string): Promise<string> {
       signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) return ''
-
-    const data: {
-      nome: string
-      instituicao_nome: string | null
-      nota_ultimo_colocado: number | null
-      vagas: number | null
-      distrito: string | null
-      history: Record<string, { nota_ultimo_colocado?: number }> | null
-    }[] = await res.json()
-    if (!data?.length) return ''
-
-    // Determine the most recent year stored in history (or label as "mais recente")
-    const allYears = data.flatMap(c =>
-      c.history ? Object.keys(c.history).map(Number).filter(Boolean) : []
-    )
-    const latestYear = allYears.length ? Math.max(...allYears) : null
-    const yearLabel = latestYear ? `${latestYear}` : 'mais recente'
-
-    const lines = data.map(c => {
-      const corte = c.nota_ultimo_colocado != null
-        ? Number(c.nota_ultimo_colocado).toFixed(1)
-        : 'sem dados'
-      const inst = c.instituicao_nome ?? c.distrito ?? '?'
-      return `• ${c.nome} — ${inst} | Último colocado (${yearLabel}): ${corte} | Vagas: ${c.vagas ?? '?'}`
-    }).join('\n')
-
-    return `\n\n[DADOS REAIS da base de dados UniMatch (edição ${yearLabel}) — usa APENAS estes dados, não uses dados de anos anteriores nem conhecimento do teu treino:\n${lines}\n]`
+    const data = await res.json()
+    return data?.length ? formatContext(data) : ''
   } catch {
     return ''
   }
+}
+
+// ─── Query Supabase and return a formatted context block ──────────────────────
+async function fetchCourseContext(message: string): Promise<string> {
+  if (!SUPA_URL || !SUPA_KEY) return ''
+
+  const q = message.toLowerCase()
+  const wantsLowest = /baixa|menor|mínima|mínimo|fácil|acessível/.test(q)
+
+  // 1. Try semantic vector search first
+  const vectorResults = await vectorSearchCourses(message, 20, wantsLowest)
+  if (vectorResults && vectorResults.length > 0) {
+    return formatContext(vectorResults)
+  }
+
+  // 2. Fall back to keyword ilike search
+  return ilikeFallback(message)
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────

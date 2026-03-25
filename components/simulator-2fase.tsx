@@ -213,29 +213,44 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
     setExtraCodes([])
   }, [realMedia, exams])
 
-  // Load all courses with requirements in a single joined query
+  // Load all courses — show first batch immediately, stream the rest
   useEffect(() => {
+    let cancelled = false
     const supabase = createClient()
     const PAGE = 1000
-    const fetchAll = async () => {
-      const all: any[] = []
+    const SELECT = `
+      id, nome, instituicao_nome, distrito, area, tipo, vagas,
+      nota_ultimo_colocado, nota_ultimo_colocado_f2,
+      peso_secundario, peso_exames,
+      nota_minima_p_ingresso, nota_minima_prova,
+      link_oficial, history,
+      course_requirements(exam_code, weight, conjunto_id)
+    `
+    const run = async () => {
       let from = 0
-      while (true) {
+      let isFirst = true
+      while (!cancelled) {
         const { data, error } = await supabase
           .from('courses')
-          .select('*, course_requirements(*)')
+          .select(SELECT)
           .range(from, from + PAGE - 1)
+        if (cancelled) break
         if (error || !data || data.length === 0) break
-        all.push(...data)
+        const batch = data.map((r: any) => transformCourse(r, r.course_requirements ?? []))
+        if (isFirst) {
+          setCourses(batch)
+          setLoading(false)
+          isFirst = false
+        } else {
+          setCourses(prev => [...prev, ...batch])
+        }
         if (data.length < PAGE) break
         from += PAGE
       }
-      return all
+      if (isFirst && !cancelled) setLoading(false)
     }
-    fetchAll().then(rows => {
-      setCourses(rows.map(r => transformCourse(r, r.course_requirements ?? [])))
-      setLoading(false)
-    })
+    run()
+    return () => { cancelled = true }
   }, [])
 
   // All exam codes currently in the simulation (profile + extra)
@@ -275,7 +290,9 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
         if (!sim.hasRequiredExams) return null
 
         const real = calculateAdmissionGrade(realMediaScaled, realExams, course)
-        const cutoff = course.notaUltimoColocado
+        const cutoff = phase === '2'
+          ? (course.notaUltimoColocadoF2 ?? course.notaUltimoColocado)
+          : course.notaUltimoColocado
 
         const realAbove = real.hasRequiredExams && cutoff !== null && real.grade >= cutoff && real.meetsMinimum
         const simAbove  = cutoff !== null && sim.grade >= cutoff && sim.meetsMinimum
@@ -298,7 +315,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
         newlyReachable: boolean
         distanceToCutoff: number
       }>
-  }, [favoriteCourses, simMediaScaled, realMediaScaled, realExams, simExamsList])
+  }, [favoriteCourses, simMediaScaled, realMediaScaled, realExams, simExamsList, phase])
 
   const newCount   = results.filter(r => r.newlyReachable).length
   const aboveCount = results.filter(r => r.simAbove && !r.newlyReachable).length
@@ -494,9 +511,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
         <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-warning/25 bg-warning/8 px-4 py-3">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <p className="text-xs text-warning">
-            <span className="font-semibold">Nota:</span> as médias de corte mostradas são da 1ª Fase —
-            não temos dados históricos da 2ª Fase. Os cortes da 2ª Fase são tipicamente
-            0,5–2 valores mais baixos. Usa esta simulação como referência, não como garantia.
+            <span className="font-semibold">Nota:</span> para cursos sem dados de corte da 2ª Fase,
+            é usado o corte da 1ª Fase como referência. Os cortes reais da 2ª Fase são tipicamente mais baixos.
           </p>
         </div>
       )}
@@ -634,8 +650,10 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
             </div>
           ) : (
             <div className="space-y-2">
-              {results.map(({ course, real, sim, simAbove, newlyReachable, distanceToCutoff }) => {
-                const cutoff       = course.notaUltimoColocado
+              {results.map(({ course, real, sim, simAbove, newlyReachable }) => {
+                const cutoff       = phase === '2'
+                  ? (course.notaUltimoColocadoF2 ?? course.notaUltimoColocado)
+                  : course.notaUltimoColocado
                 const failsMinimum = !sim.meetsMinimum
                 // nearMiss only makes sense when minimums are met — otherwise it's red, not orange
                 const nearMiss     = !simAbove && !failsMinimum && cutoff !== null && cutoff - sim.grade <= 15

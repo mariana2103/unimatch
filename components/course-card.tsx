@@ -62,9 +62,13 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
   const nearCutoff = hasRequiredExams && meetsMinimum && notaCorte !== null && Math.abs(userGrade - notaCorte) <= 5
   const showUserGrade = isLoggedIn && profile && profile.media_final_calculada > 0 && hasRequiredExams
 
-  const uniqueExams = Array.from(
-    new Map(course.provasIngresso.map(p => [p.code, p])).values()
-  )
+  // Group exams by conjunto_id to show alternatives properly
+  const conjuntos = course.provasIngresso.reduce((acc, p) => {
+    const cid = p.conjunto_id ?? 1
+    if (!acc.has(cid)) acc.set(cid, [])
+    acc.get(cid)!.push(p)
+    return acc
+  }, new Map<number, typeof course.provasIngresso>())
 
   return (
     <div
@@ -121,62 +125,44 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           </div>
         </div>
 
-        {/* Provas chips — abbreviated */}
-        {uniqueExams.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {uniqueExams.map(p => (
-              <span
-                key={p.code}
-                className="rounded-md bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-              >
-                {abbrevExam(p.code, p.name)}
-              </span>
+        {/* Provas — group by conjunto to show alternatives */}
+        {course.provasIngresso.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            {Array.from(conjuntos.entries()).map(([cid, provas], idx) => (
+              <div key={cid} className="flex flex-wrap items-center gap-1">
+                {idx > 0 && (
+                  <span className="text-[10px] text-muted-foreground/50 font-medium">ou</span>
+                )}
+                {provas.map(p => (
+                  <span
+                    key={p.code}
+                    className="rounded-md bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                  >
+                    {abbrevExam(p.code, p.name)}
+                  </span>
+                ))}
+              </div>
             ))}
+            {conjuntos.size > 1 && (
+              <p className="text-[10px] text-muted-foreground/40">
+                Precisas de todas as provas de uma das opções acima
+              </p>
+            )}
           </div>
         )}
 
-        {/* Bottom: cutoff + user grade */}
+        {/* Bottom: cutoff + user grade — simplified */}
         <div className="flex items-start justify-between border-t border-border/40 pt-3">
           <div>
-            {/* Nota último colocado with trend vs previous year */}
-            {(() => {
-              const hist = course.historico
-              const prev = hist?.find(h => h.year === 2024)?.nota_f1 ?? null
-              const trend = notaCorte !== null && prev !== null ? notaCorte - prev : null
-              const curr2026 = hist?.find(h => h.year === 2026)?.vagas_f1 ?? null
-              const prev2025 = hist?.find(h => h.year === 2025)?.vagas_f1 ?? null
-              const vagasDelta = curr2026 !== null && prev2025 !== null ? curr2026 - prev2025 : null
-              return (
-                <>
-                  <div className="flex items-baseline gap-1.5 mb-0">
-                    <p className="text-[10px] text-muted-foreground">Último Colocado 2025</p>
-                    {trend !== null && (
-                      <span className={`text-[10px] font-medium tabular-nums ${trend > 0 ? 'text-destructive' : trend < 0 ? 'text-emerald' : 'text-muted-foreground/50'}`}>
-                        {trend > 0 ? '↑' : trend < 0 ? '↓' : '='}{Math.abs(trend / 10).toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xl font-bold tabular-nums text-foreground leading-none">
-                    {notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—'}
-                  </p>
-                  {course.notaUltimoColocadoF2 !== null && (
-                    <p className="text-[10px] tabular-nums text-muted-foreground/60 mt-0.5">
-                      2ª fase {(course.notaUltimoColocadoF2 / 10).toFixed(2)}
-                    </p>
-                  )}
-                  {curr2026 !== null && (
-                    <p className="text-[10px] text-muted-foreground/60 mt-1 tabular-nums">
-                      {curr2026} vagas 2026
-                      {vagasDelta !== null && vagasDelta !== 0 && (
-                        <span className={vagasDelta > 0 ? 'text-emerald' : 'text-destructive'}>
-                          {' '}{vagasDelta > 0 ? '+' : ''}{vagasDelta}
-                        </span>
-                      )}
-                    </p>
-                  )}
-                </>
-              )
-            })()}
+            <p className="text-[10px] text-muted-foreground mb-0.5">Último Colocado 2025</p>
+            <p className="text-xl font-bold tabular-nums text-foreground leading-none">
+              {notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—'}
+            </p>
+            {course.notaUltimoColocadoF2 !== null && (
+              <p className="text-[10px] tabular-nums text-muted-foreground/60 mt-0.5">
+                2ª fase {(course.notaUltimoColocadoF2 / 10).toFixed(2)}
+              </p>
+            )}
           </div>
 
           {showUserGrade ? (
@@ -192,21 +178,19 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                 <p className="text-[10px] text-muted-foreground">A tua nota</p>
               </div>
               <p className={`text-xl font-bold tabular-nums leading-none ${
-                nearCutoff                    ? 'text-warning' :
-                aboveCutoff && meetsMinimum   ? 'text-emerald' :
-                                                'text-foreground'
+                nearCutoff ? 'text-warning' :
+                aboveCutoff && meetsMinimum ? 'text-emerald' : 'text-foreground'
               }`}>
                 {(userGrade / 10).toFixed(2)}
               </p>
-              {notaCorte !== null && (
-                <p className={`text-[10px] tabular-nums mt-0.5 ${
-                  (userGrade - notaCorte) >= 0 ? 'text-emerald' : 'text-destructive'
-                }`}>
-                  {(userGrade - notaCorte) >= 0 ? '+' : ''}{((userGrade - notaCorte) / 10).toFixed(2)} val.
-                </p>
-              )}
             </div>
-          ) : null}
+          ) : (
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground/60 mb-0.5">
+                {course.vagas !== null ? `${course.vagas} vagas` : 'Vagas N/D'}
+              </p>
+            </div>
+          )}
         </div>
 
       </div>

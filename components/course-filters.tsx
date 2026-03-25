@@ -160,22 +160,24 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
   return (
     <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm flex flex-col gap-4">
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-        <Input
-          placeholder="Pesquisar curso ou universidade..."
-          value={filters.search}
-          onChange={e => update('search', e.target.value)}
-          className="h-11 pl-10 rounded-xl border-border/60 bg-muted/40 text-sm focus:bg-card transition-colors"
-        />
-        {filters.search && (
-          <button
-            onClick={() => update('search', '')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+      <div className="flex justify-center">
+        <div className="relative w-full max-w-2xl">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+          <Input
+            placeholder="Pesquisar curso ou universidade..."
+            value={filters.search}
+            onChange={e => update('search', e.target.value)}
+            className="h-11 pl-10 rounded-xl border-border/60 bg-muted/40 text-sm focus:bg-card transition-colors w-full"
+          />
+          {filters.search && (
+            <button
+              onClick={() => update('search', '')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter row */}

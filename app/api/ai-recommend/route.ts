@@ -1,5 +1,7 @@
 export const maxDuration = 30
 
+import { isAllowed, getIP, rateLimitedResponse } from '@/lib/rate-limit'
+
 const ENDPOINT = process.env.IAEDU_ENDPOINT!
 const API_KEY = process.env.IAEDU_API_KEY!
 const CHANNEL_ID = process.env.IAEDU_CHANNEL_ID!
@@ -44,6 +46,10 @@ async function readStream(body: ReadableStream<Uint8Array>): Promise<string> {
 }
 
 export async function POST(req: Request) {
+  // Rate limit: 5 recommendations per 10 minutes per IP
+  const ip = getIP(req)
+  if (!isAllowed(`recommend:${ip}`, 5, 10 * 60 * 1000)) return rateLimitedResponse()
+
   try {
     const { answers } = await req.json() as {
       answers: {

@@ -1,6 +1,7 @@
 export const maxDuration = 30
 
 import { vectorSearchCourses, type VectorCourseResult } from '@/lib/pgvector-search'
+import { isAllowed, getIP, rateLimitedResponse } from '@/lib/rate-limit'
 
 const ENDPOINT   = process.env.IAEDU_ENDPOINT!
 const API_KEY    = process.env.IAEDU_API_KEY!
@@ -182,6 +183,10 @@ async function fetchCourseContext(
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  // Rate limit: 15 messages per 10 minutes per IP
+  const ip = getIP(req)
+  if (!isAllowed(`chat:${ip}`, 15, 10 * 60 * 1000)) return rateLimitedResponse()
+
   const body = await req.json().catch(() => ({}))
   const { message, thread_id, userProfile } = body
 
@@ -189,7 +194,31 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Message is required' }, { status: 400 })
   }
 
-  const profile: UserProfile | null = userProfile ?? null
+  // Sanitize user input: limit length and strip context-block markers to prevent prompt injection
+  const sanitizedMessage = message
+    .slice(0, 500)
+    .replace(/\[SISTEMA|\[PERFIL|\[DADOS/gi, '')
+
+  // Validate and clamp userProfile fields to prevent injecting unexpected data into prompts
+  let profile: UserProfile | null = null
+  if (userProfile && typeof userProfile === 'object') {
+    profile = {
+      media: Math.min(20, Math.max(0, Number(userProfile.media) || 0)),
+      exams: Array.isArray(userProfile.exams)
+        ? userProfile.exams
+            .slice(0, 10)
+            .filter((e: unknown) => e && typeof e === 'object')
+            .map((e: Record<string, unknown>) => ({
+              code: String(e.code ?? '').slice(0, 10),
+              name: String(e.name ?? '').slice(0, 50),
+              grade: Math.min(200, Math.max(0, Number(e.grade) || 0)),
+            }))
+        : [],
+      distrito: userProfile.distrito
+        ? String(userProfile.distrito).replace(/[^a-záéíóúâêôãõàèìòùüïçñ\s-]/gi, '').slice(0, 50)
+        : null,
+    }
+  }
 
   // Build system directive — injected before the user's message
   const systemDirective = [
@@ -204,14 +233,14 @@ export async function POST(req: Request) {
   // Fetch real DB context (with profile re-ranking)
   const [profileContext, courseContext] = await Promise.all([
     Promise.resolve(profile ? buildProfileContext(profile) : ''),
-    fetchCourseContext(message, profile),
+    fetchCourseContext(sanitizedMessage, profile),
   ])
 
   // Assemble enriched message: directive → profile → user message → course data
   const enrichedMessage = [
     systemDirective,
     profileContext,
-    message,
+    sanitizedMessage,
     courseContext,
   ].filter(Boolean).join('\n\n')
 

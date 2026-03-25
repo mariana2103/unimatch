@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { isAllowed, getIP, rateLimitedResponse } from '@/lib/rate-limit'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPA_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -9,6 +10,10 @@ function randomSlug(len = 8): string {
 }
 
 export async function POST(req: Request) {
+  // Rate limit: 10 shares per hour per IP
+  const ip = getIP(req)
+  if (!isAllowed(`share:${ip}`, 10, 60 * 60 * 1000)) return rateLimitedResponse()
+
   const body = await req.json().catch(() => ({}))
   const { courseIds, userMedia } = body
 

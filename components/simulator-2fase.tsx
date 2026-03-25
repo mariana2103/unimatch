@@ -453,12 +453,18 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           ) : allFavoriteCourses.length === 0 ? (
             <div className="rounded-xl border border-border/40 bg-card/50 py-20 text-center">
               <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
-              <p className="text-sm font-medium text-muted-foreground">Ainda não tens favoritos.</p>
+              <p className="text-sm font-medium text-foreground">Ainda não tens favoritos.</p>
               <p className="mt-1 text-xs text-muted-foreground/60">
-                Guarda cursos com o{' '}
+                Vai ao Explorador e marca{' '}
                 <Heart className="inline h-3 w-3 text-destructive/60" />{' '}
-                no explorador.
+                nos cursos que gostas.
               </p>
+              <a
+                href="/"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-navy/90"
+              >
+                Ir ao Explorador
+              </a>
             </div>
           ) : (
             <div className="space-y-2">
@@ -639,12 +645,18 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           ) : favorites.length === 0 ? (
             <div className="rounded-xl border border-border/40 bg-card/50 py-16 text-center">
               <Heart className="mx-auto mb-3 h-8 w-8 text-muted-foreground/20" />
-              <p className="text-sm text-muted-foreground">Ainda não tens favoritos.</p>
+              <p className="text-sm font-medium text-foreground">Ainda não tens favoritos.</p>
               <p className="mt-1 text-xs text-muted-foreground/60">
-                Guarda cursos com o{' '}
+                Vai ao Explorador e marca{' '}
                 <Heart className="inline h-3 w-3 text-destructive/60" />{' '}
-                no explorador para os simular aqui.
+                nos cursos que gostas — aparecem aqui para simular.
               </p>
+              <a
+                href="/"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-navy/90"
+              >
+                Ir ao Explorador
+              </a>
             </div>
           ) : results.length === 0 ? (
             <div className="rounded-xl border border-border/40 bg-card/50 py-16 text-center">

@@ -1,68 +1,118 @@
-# UniMatch — Feature Backlog
+# UniMatch — Release Checklist & Backlog
 
-## 1. Taxa de Empregabilidade
-Show employment rate and average salary data per course on course cards and the detail dialog.
-- Data source: DGEEC/GGP graduate employment surveys (columns already in DB schema: `taxa_empregabilidade_1ano`, `salario_medio_1ano`)
-- Populate the DB columns via a CSV import script
-- Display as a badge on `CourseCard` (e.g. "92% empregado 1 ano") and a dedicated section in `CourseDetailDialog`
+---
 
-## 2. SEO / Open Graph
-Improve discoverability and social sharing.
-- Add `<meta>` Open Graph tags to `app/layout.tsx` (title, description, og:image)
-- Generate a static og:image (1200×630) with the UniMatch logo and tagline
-- Add `sitemap.xml` and `robots.txt` via Next.js App Router conventions
-- Add structured data (JSON-LD) for the course list page
+## 🔴 RELEASE BLOCKERS (must do before launch)
 
-## 3. Comparison Panel
-Let users compare 2–3 courses side by side.
-- "Compare" button on each `CourseCard` adds the course to a sticky comparison tray
-- Tray slides up from the bottom showing columns: cutoff, vagas, empregabilidade, área
-- Clear individual or all courses from the tray
+### Infrastructure / Data
+- [ ] Run SQL migration in Supabase SQL Editor → `supabase/migrations/20240326_shared_candidaturas.sql`
+- [ ] Run `python scripts/import_supabase.py` to populate `link_oficial` (DGES links)
+- [ ] Run `npx tsx --env-file=.env scripts/embed-courses.ts` for remaining course embeddings
+- [ ] Confirm `SUPABASE_SERVICE_ROLE_KEY` is in `.env` (already there — account deletion works)
+- [ ] Do a full production build locally (`npm run build`) to catch any SSG errors
 
-## 4. Cursos Semelhantes (Related Courses)
-Show related courses on the `CourseDetailDialog`.
-- Use the existing `embedding` vectors: query Supabase for the top 5 courses with lowest cosine distance from the selected course
-- Add a `match_similar_courses(course_id uuid, match_count int)` SQL function
-- Render as a horizontal scroll list at the bottom of the dialog
+### Legal (GDPR)
+- [ ] Add cookie consent banner — required before deploying any analytics
+- [ ] Verify delete-account route works end-to-end (requires service role key + test user)
+- [ ] Add "Política de Privacidade" and "Termos" links to the profile page footer too
 
-## 5. Distrito Proximity
-Weight course search and recommendations by the user's district.
-- Add a "distância" score to `rankCourses` in `lib/semantic-search.ts` — same-district courses get a small boost
-- Show a "Perto de ti" badge on cards when the institution is in the user's district
-- In the AI chat context, include nearby institutions in the top results
+### Security
+- [ ] Add rate limiting to `/api/chat`, `/api/ai-recommend`, `/api/share` (see REPORT.md)
+- [ ] Review Supabase RLS policies — ensure no table is publicly readable beyond what's intended
 
-## 6. Anonymous Candidatura Sharing
-Let users share their 6-option candidatura list via a public link, no login required.
-- Store snapshot in a `shared_candidaturas` table (id, course_ids[], created_at, expires_at)
-- Generate a short slug (e.g. `/partilha/abc123`)
-- Page shows read-only ordered list with cutoff and diff vs. the sharer's grade (stored in snapshot)
-- Auto-expires after 30 days
+### Quality
+- [ ] Create `app/not-found.tsx` (custom 404 page)
+- [ ] Create `app/error.tsx` (custom 500 / error boundary page)
+- [ ] Test the full sharing flow (Partilhar button → /partilha/[slug]) after running migration
+- [ ] Test account deletion flow end-to-end
+- [ ] Test on real mobile devices (iPhone Safari + Android Chrome) — especially AI bottom sheet and simulator
 
+---
 
-Mobile simulator overflow - The slider (GradeSlider) likely has a fixed width or the overall page has overflow-x: hidden missing. The slider uses input[type='range'] which can be wider than its container. The grid on mobile is fine (single column), but the sliders might need w-full + overflow-hidden on the card.
+## 🟡 HIGH PRIORITY (week 1 after launch)
 
-Partilhar still not working - The API route looks correct. The issue is almost certainly that the SQL migration wasn't run yet in Supabase.
+### SEO & Discoverability
+- [ ] Submit sitemap to Google Search Console (`https://www.unimatch.pt/sitemap.xml`)
+- [ ] Add Vercel Analytics or GA4 — add cookie consent first
+- [ ] Generate a real OG image (1200×630) with logo + tagline instead of default
+- [ ] Add `<meta name="google-site-verification">` tag from Search Console
 
-I should verify whether the table actually exists and potentially guide them through running the migration if needed.
+### UI / UX
+- [ ] AI chat suggested questions: make chips context-aware based on user's profile (current area, grade level)
+- [ ] Add empty-state guidance on the simulator when user has no grades set
+- [ ] Improve onboarding: after sign-up, show a welcome modal explaining the 3 main features
+- [ ] Add a "Beta" or "versão inicial" indicator somewhere visible — manages expectations
+- [ ] Profile page: update footer to match main layout (Privacidade / Termos links)
+- [ ] Simplify `/apoio` page — too much text, users won't read it (see notes below)
 
-Apoiar/MBway - No public MBway API for sending payment links. The best options are Ko-fi (free, built for creators, accepts card payments including MBway), Stripe Payment Links (one-time setup, no code), or Revolut Payment Links (very common in Portugal, supports MBway). Since they're a student in Portugal, Revolut.me or their existing PayPal link would be the most practical approach.
+### Payments
+- [ ] Create Ko-fi account at ko-fi.com, add link to `/apoio` page
+- [ ] Simplify `/apoio` to: MBway (big copy button) + Ko-fi link only — remove PayPal/Revolut if page feels cluttered
 
-Dark mode too dark - The background at oklch(0.18) and card at oklch(0.24) could be lightened slightly to oklch(0.20) and oklch(0.26) for better contrast.
+### Monitoring
+- [ ] Set up Vercel error alerts (free tier)
+- [ ] Add basic uptime monitoring (UptimeRobot free tier — monitors unimatch.pt every 5 min)
 
-AI chatbot mobile - The current sidebar layout probably doesn't work well on mobile. I'm considering either a bottom drawer that slides up or a full-screen modal with a floating bubble to trigger it.
+---
 
-Terminology - Still working through this section.
+## 🟢 BACKLOG (after stable v1)
 
-Padding - The max-w-7xl container at 1280px feels cramped on smaller desktops with only px-4 padding, so I should increase padding on larger screens.
+### Features
+- [ ] **Taxa de Empregabilidade** — show employment rate + salary on course cards
+  - Data source: DGEEC/GGP CSVs, columns already in DB schema (`taxa_empregabilidade_1ano`, `salario_medio_1ano`)
+  - Display as badge: "92% empregado" on CourseCard + dedicated section in CourseDetailDialog
 
-Footer positioning - The flex layout with min-h-screen and flex-1 on main should handle this correctly, and the mb-16 spacing accounts for the mobile nav bar, so this looks fine.
+- [ ] **Cursos Semelhantes** — "Cursos parecidos" section at bottom of CourseDetailDialog
+  - Use existing vector embeddings: `match_similar_courses(course_id, 5)` SQL function
+  - Show as horizontal scroll of 5 course cards
 
-Apoiar button - Moving it from the footer to a floating button in the bottom-right corner would be less intrusive, or I could integrate it into the mobile navigation instead.
+- [ ] **Distrito Proximity** — "Perto de ti" badge + boost in AI recommendations
+  - Same-district courses get a small relevance boost in `rankCourses`
+  - Visible badge on CourseCard when institution is in user's district
 
-Legal considerations - DGES data is public government information covered under Portugal's PSI Directive implementation, so scraping is permitted. For user data storage, I need privacy policies and GDPR compliance through Supabase's EU infrastructure. Course and institution names are factual data without copyright protection.
+- [ ] **Dynamic OG images** — per-course social share images for /cursos/[slug]
+  - Use Next.js `ImageResponse` from `next/og`
+  - Shows course name, institution, and cutoff grade
 
-Course page 404 issue - The static route generation might be mismatching the slug format between build time and runtime, or the database migration for shared_candidaturas hasn't been applied yet.
+- [ ] **Grade change alerts** — email users when DGES updates data for favorited courses
+  - Requires a Supabase cron job + Resend/SendGrid for email
 
-Looking at the specific URL structure, the slug generation from toCourseSlug() should combine the course name and institution, but there might be a discrepancy in how dashes are being handled in the institution name that's causing the lookup to fail. the slug generation logic looks right, so the 404 is almost certainly because these pages haven't been built yet—either the build process hasn't run with the new code, or generateStaticParams() is failing silently during the build. The user could also set dynamicParams = fal
+- [ ] **Comparison panel polish** — currently basic, could show radar chart or side-by-side table
 
-AI chat suggested questions — the current chips are in Portuguese but generic ("Cursos de engenharia?"). Could be improved with more contextual chips based on the user's profile
+- [ ] **Calculator widget** — reverse calculator: "what average do I need?" given a target course
+
+### Data
+- [ ] Update DGES data pipeline for 2025/26 cycle when released
+- [ ] Add 2ª fase historical data (currently sparse)
+- [ ] Validate that all ~1700 course slugs resolve correctly in production
+
+### Technical
+- [ ] Migrate from anon key to service role for server-only Supabase queries (security improvement)
+- [ ] Add `next/bundle-analyzer` and optimise bundle size
+- [ ] Add Lighthouse CI to Vercel deployment checks
+
+---
+
+## ✅ DONE
+
+- [x] Course explorer with search, filters, sort, semantic search
+- [x] Course detail dialog with grade chart + history
+- [x] Grade simulator (1ª and 2ª fase) — mobile collapsible
+- [x] Saved courses / Candidatura builder
+- [x] Anonymous sharing (API + view page + share button)
+- [x] AI counselor (questionnaire + chat) — mobile bottom sheet
+- [x] Course comparison panel
+- [x] SEO static pages `/cursos/[slug]` with JSON-LD, OG, dynamicParams
+- [x] Sitemap + robots.txt
+- [x] Dark mode (lightened)
+- [x] Terminology: "nota de entrada" / "último colocado"
+- [x] Privacy Policy page `/privacidade`
+- [x] Terms of Service page `/termos`
+- [x] Account deletion UI + API route
+- [x] `/apoio` support page (MBway + Revolut + PayPal)
+- [x] Support link in mobile nav
+- [x] Desktop padding improvements
+- [x] DGES link import in Python script
+- [x] Mobile simulator overflow fix
+- [x] AI disclaimer in chat
+- [x] Legal footer links

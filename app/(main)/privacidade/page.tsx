@@ -33,12 +33,14 @@ export default function PrivacidadePage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold mb-2">3. Como usamos os dados</h2>
+          <h2 className="text-base font-semibold mb-2">3. Base legal e finalidade do tratamento</h2>
+          <p className="text-sm text-muted-foreground mb-2">
+            O tratamento dos teus dados pessoais assenta nas seguintes bases legais (art. 6.º do RGPD):
+          </p>
           <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-            <li>Autenticação e gestão da tua conta</li>
-            <li>Personalização do simulador de candidatura e sugestões do conselheiro IA</li>
-            <li>Melhoria do serviço (análise agregada e anónima de utilização)</li>
-            <li>Resposta a pedidos de suporte</li>
+            <li><strong className="text-foreground">Execução de contrato</strong> — autenticação e gestão da conta, sem os quais o serviço não pode ser prestado.</li>
+            <li><strong className="text-foreground">Consentimento</strong> — introdução voluntária de dados académicos (média, notas de exame) para personalizar o simulador e o conselheiro IA. Podes retirar o consentimento apagando esses dados a qualquer momento.</li>
+            <li><strong className="text-foreground">Interesse legítimo</strong> — análise agregada e anónima de utilização para melhoria do serviço (não inclui rastreamento individual); segurança e prevenção de abuso.</li>
           </ul>
           <p className="text-sm text-muted-foreground mt-2">
             Não vendemos, alugamos nem partilhamos os teus dados pessoais com terceiros para fins comerciais.
@@ -73,10 +75,13 @@ export default function PrivacidadePage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold mb-2">6. Cookies</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <h2 className="text-base font-semibold mb-2">6. Cookies e análise de utilização</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-2">
             Usamos cookies estritamente necessários para autenticação (sessão de utilizador). Não usamos cookies de rastreamento nem de publicidade.
             O tema claro/escuro é guardado apenas no teu dispositivo (localStorage).
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Para análise de tráfego, usamos a <strong className="text-foreground">Vercel Analytics</strong>, uma solução de métricas que não usa cookies, não rastreia utilizadores individualmente e não requer consentimento ao abrigo do RGPD. Os dados são agregados e anónimos.
           </p>
         </section>
 
@@ -90,7 +95,17 @@ export default function PrivacidadePage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold mb-2">8. Alterações a esta política</h2>
+          <h2 className="text-base font-semibold mb-2">8. Violações de dados</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Em caso de violação de dados pessoais que constitua risco para os teus direitos e liberdades,
+            notificaremos a <strong className="text-foreground">CNPD</strong> (Comissão Nacional de Proteção de Dados) no prazo de <strong className="text-foreground">72 horas</strong> após tomar conhecimento do incidente,
+            conforme exigido pelo art. 33.º do RGPD.
+            Se a violação for suscetível de provocar um risco elevado, serás também notificado/a diretamente por e-mail.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold mb-2">9. Alterações a esta política</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Podemos atualizar esta política ocasionalmente. Em caso de alterações significativas, notificaremos por e-mail ou aviso no site.
           </p>

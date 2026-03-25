@@ -7,7 +7,7 @@ import { AICounselor } from '@/components/ai-counselor'
 import { CourseDetailDialog } from '@/components/course-detail-dialog'
 import { CourseContext } from '@/lib/course-context'
 import { useUser } from '@/lib/user-context'
-import { AlertCircle, X } from 'lucide-react'
+import { AlertCircle, X, Sparkles } from 'lucide-react'
 import { BetaBanner, FeedbackButton } from '@/components/beta-banner'
 import { SupportButtonMinimal } from '@/components/support-button'
 import type { CourseUI } from '@/lib/types'
@@ -69,7 +69,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (isNewUser) {
       clearNewUser()
-      router.push('/profile')
+      router.push('/profile?welcome=1')
     }
   }, [isNewUser, clearNewUser, router])
 
@@ -108,6 +108,17 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             setAiOpen(false)
           }}
         />
+
+        {/* Floating AI button — mobile only, hidden when AI panel is open */}
+        {!aiOpen && (
+          <button
+            onClick={() => setAiOpen(true)}
+            className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-navy text-white shadow-lg shadow-navy/40 transition-all hover:scale-105 active:scale-95 sm:hidden"
+            aria-label="Abrir Conselheiro IA"
+          >
+            <Sparkles className="h-5 w-5" />
+          </button>
+        )}
 
         <CourseDetailDialog
           course={selectedCourse}

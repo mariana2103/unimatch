@@ -393,6 +393,16 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     setTab('questionnaire')
   }
 
+  // ── Re-rank when courses are loaded ──
+  // If questionnaire was completed before courses loaded, re-run ranking now
+  const hasAllAnswers = Object.keys(answers).length === QUESTIONS.length && Object.values(answers).every(v => v && v.length > 0)
+  useEffect(() => {
+    if (courses.length > 0 && ranked.length === 0 && hasAllAnswers && !isAnalyzing) {
+      analyzeAndRank(answers as Answers)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courses.length])
+
   // ── Derived values ──
 
   const currentQuestion = QUESTIONS[questionStep]

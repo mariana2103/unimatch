@@ -508,16 +508,6 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
       {/* ── Simulator view ────────────────────────────────────────────────── */}
       {view === 'simulator' && (<>
 
-      {/* 2ª fase disclaimer */}
-      {phase === '2' && (
-        <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-warning/25 bg-warning/8 px-4 py-3">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <p className="text-xs text-warning">
-            <span className="font-semibold">Nota:</span> para cursos sem dados de corte da 2ª Fase,
-            é usado o corte da 1ª Fase como referência. Os cortes reais da 2ª Fase são tipicamente mais baixos.
-          </p>
-        </div>
-      )}
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
 

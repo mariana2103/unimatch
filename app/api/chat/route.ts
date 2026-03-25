@@ -1,6 +1,6 @@
 export const maxDuration = 30
 
-import { vectorSearchCourses } from '@/lib/pgvector-search'
+import { vectorSearchCourses, type VectorCourseResult } from '@/lib/pgvector-search'
 
 const ENDPOINT   = process.env.IAEDU_ENDPOINT!
 const API_KEY    = process.env.IAEDU_API_KEY!
@@ -8,7 +8,16 @@ const CHANNEL_ID = process.env.IAEDU_CHANNEL_ID!
 const SUPA_URL   = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPA_KEY   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// ─── Stop words — common Portuguese question words that are not course names ──
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface UserProfile {
+  media: number                                   // 0-20 scale (CFC)
+  exams: { code: string; name: string; grade: number }[]  // grade 0-200
+  distrito?: string | null
+}
+
+// ─── Stop words ───────────────────────────────────────────────────────────────
+
 const STOP = new Set([
   'com', 'sem', 'para', 'que', 'como', 'qual', 'quais', 'onde', 'quando',
   'nota', 'notas', 'média', 'médias', 'menor', 'maior', 'melhor', 'pior',
@@ -18,7 +27,6 @@ const STOP = new Set([
   'nível', 'área', 'áreas', 'tipo', 'tipos', 'vagas', 'pesos',
 ])
 
-// ─── Known course/field keywords — checked before generic extraction ──────────
 const COURSE_KEYWORDS = [
   'medicina', 'direito', 'engenharia', 'economia', 'gestão', 'informática',
   'psicologia', 'farmácia', 'enfermagem', 'arquitetura', 'biologia',
@@ -29,106 +37,188 @@ const COURSE_KEYWORDS = [
   'agronomia', 'desporto', 'teatro', 'música', 'belas',
 ]
 
-// ─── Extract the primary search keyword from the user's message ───────────────
 function extractPrimaryTerm(message: string): string | null {
   const q = message.toLowerCase()
-
-  // 1. Prefer an explicit course/field name if present
   for (const kw of COURSE_KEYWORDS) {
     if (q.includes(kw)) return kw
   }
-
-  // 2. Fallback: use the LAST meaningful token (not the first) — in Portuguese
-  //    questions the subject ("Açores", "Porto") tends to come at the end.
   const words = q
     .split(/\s+/)
     .map(w => w.replace(/[^a-záéíóúâêôãõàèìòùüïçñ]/gi, ''))
     .filter(w => w.length >= 4 && !STOP.has(w))
-
   return words[words.length - 1] ?? null
 }
 
-// ─── Format course rows into a context block ──────────────────────────────────
-function formatContext(
-  data: { nome: string; instituicao_nome: string | null; nota_ultimo_colocado: number | null; vagas: number | null; distrito: string | null }[],
-): string {
+// ─── Re-rank by cutoff proximity to user's media ──────────────────────────────
+// Courses where the cutoff is closest to the user's grade appear first —
+// these are the most actionable (just in reach or just out of reach).
+
+function rerankByCutoffProximity(
+  results: VectorCourseResult[],
+  userMedia: number,   // 0-20 scale, same as nota_ultimo_colocado in DB
+): VectorCourseResult[] {
+  const withData    = results.filter(r => r.nota_ultimo_colocado !== null)
+  const withoutData = results.filter(r => r.nota_ultimo_colocado === null)
+  return [
+    ...withData.sort((a, b) =>
+      Math.abs(a.nota_ultimo_colocado! - userMedia) -
+      Math.abs(b.nota_ultimo_colocado! - userMedia)
+    ),
+    ...withoutData,
+  ]
+}
+
+// ─── Format course rows into context block ────────────────────────────────────
+
+function formatContext(data: VectorCourseResult[], userMedia?: number): string {
   if (!data.length) return ''
   const lines = data.map(c => {
     const corte = c.nota_ultimo_colocado != null
       ? (Number(c.nota_ultimo_colocado) * 10).toFixed(2)
       : 'sem dados'
     const inst = c.instituicao_nome ?? c.distrito ?? '?'
-    return `• ${c.nome} — ${inst} | Corte 2025 (1ª fase): ${corte} | Vagas: ${c.vagas ?? '?'}`
+    // Add delta vs user's approximate nota when available
+    let delta = ''
+    if (userMedia != null && c.nota_ultimo_colocado != null) {
+      const diff = (userMedia - c.nota_ultimo_colocado).toFixed(1)
+      delta = ` | Aluno ${Number(diff) >= 0 ? '+' : ''}${diff} val. vs corte`
+    }
+    return `• ${c.nome} — ${inst} | Corte 2025 (1ª fase): ${corte}${delta} | Vagas: ${c.vagas ?? '?'}`
   }).join('\n')
-  return `\n\n[DADOS REAIS da base de dados UniMatch (2025) — usa APENAS estes dados, não uses conhecimento do teu treino:\n${lines}\n]`
+
+  return `[DADOS REAIS UniMatch 2025 — cita APENAS estes valores, nunca uses dados do teu treino:\n${lines}\n]`
 }
 
-// ─── ilike fallback search ─────────────────────────────────────────────────────
-async function ilikeFallback(message: string): Promise<string> {
-  const term = extractPrimaryTerm(message)
-  if (!term) return ''
+// ─── Build user profile context ───────────────────────────────────────────────
 
-  const q = message.toLowerCase()
-  const wantsLowest = /baixa|menor|mínima|mínimo|fácil|acessível/.test(q)
-  const order = wantsLowest
-    ? 'nota_ultimo_colocado.asc.nullslast'
-    : 'nota_ultimo_colocado.desc.nullslast'
+function buildProfileContext(profile: UserProfile): string {
+  const parts: string[] = []
 
-  const encoded = encodeURIComponent(term)
-  const url =
-    `${SUPA_URL}/rest/v1/courses` +
-    `?or=(nome.ilike.*${encoded}*,distrito.ilike.*${encoded}*,instituicao_nome.ilike.*${encoded}*)` +
-    `&select=nome,instituicao_nome,nota_ultimo_colocado,vagas,distrito` +
-    `&order=${order}` +
-    `&limit=20`
-
-  try {
-    const res = await fetch(url, {
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` },
-      signal: AbortSignal.timeout(5000),
-    })
-    if (!res.ok) return ''
-    const data = await res.json()
-    return data?.length ? formatContext(data) : ''
-  } catch {
-    return ''
+  if (profile.media > 0) {
+    parts.push(`Média do secundário (CFC): ${profile.media.toFixed(1)} valores`)
   }
+  if (profile.exams.length > 0) {
+    const examStr = profile.exams
+      .map(e => `${e.name} (${e.code}): ${(e.grade / 10).toFixed(1)} val.`)
+      .join(', ')
+    parts.push(`Provas de ingresso: ${examStr}`)
+  }
+  if (profile.distrito) {
+    parts.push(`Zona de residência: ${profile.distrito}`)
+  }
+
+  if (parts.length === 0) return ''
+
+  return [
+    `[PERFIL DO ALUNO:`,
+    ...parts.map(p => `• ${p}`),
+    `→ Personaliza as tuas respostas a este perfil. Indica claramente se o aluno provavelmente entra (acima do corte) ou não (abaixo do corte) em cada curso que mencionares.]`,
+  ].join('\n')
 }
 
-// ─── Query Supabase and return a formatted context block ──────────────────────
-async function fetchCourseContext(message: string): Promise<string> {
+// ─── Fetch course context (vector → ilike fallback, always ≥ 5 results) ──────
+
+async function fetchCourseContext(
+  message: string,
+  profile?: UserProfile | null,
+): Promise<string> {
   if (!SUPA_URL || !SUPA_KEY) return ''
 
   const q = message.toLowerCase()
   const wantsLowest = /baixa|menor|mínima|mínimo|fácil|acessível/.test(q)
 
-  // 1. Try semantic vector search first
-  const vectorResults = await vectorSearchCourses(message, 20, wantsLowest)
-  if (vectorResults && vectorResults.length > 0) {
-    return formatContext(vectorResults)
+  let results: VectorCourseResult[] | null = null
+
+  // 1. Try semantic vector search
+  results = await vectorSearchCourses(message, 20, wantsLowest)
+
+  // 2. If vector search returned nothing, fall back to ilike
+  if (!results || results.length === 0) {
+    const term = extractPrimaryTerm(message)
+    if (term) {
+      const order = wantsLowest
+        ? 'nota_ultimo_colocado.asc.nullslast'
+        : 'nota_ultimo_colocado.desc.nullslast'
+      try {
+        const res = await fetch(
+          `${SUPA_URL}/rest/v1/courses` +
+          `?or=(nome.ilike.*${encodeURIComponent(term)}*,distrito.ilike.*${encodeURIComponent(term)}*,instituicao_nome.ilike.*${encodeURIComponent(term)}*)` +
+          `&select=nome,instituicao_nome,nota_ultimo_colocado,vagas,distrito` +
+          `&order=${order}&limit=20`,
+          { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }, signal: AbortSignal.timeout(5000) },
+        )
+        if (res.ok) results = await res.json()
+      } catch { /* ignore */ }
+    }
   }
 
-  // 2. Fall back to keyword ilike search
-  return ilikeFallback(message)
+  // 3. If still nothing, inject at least 5 courses sorted by nota
+  //    so the AI always has some real data to reference
+  if (!results || results.length === 0) {
+    try {
+      const res = await fetch(
+        `${SUPA_URL}/rest/v1/courses` +
+        `?select=nome,instituicao_nome,nota_ultimo_colocado,vagas,distrito` +
+        `&nota_ultimo_colocado=not.is.null` +
+        `&order=nota_ultimo_colocado.desc.nullslast&limit=5`,
+        { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }, signal: AbortSignal.timeout(5000) },
+      )
+      if (res.ok) results = await res.json()
+    } catch { /* ignore */ }
+  }
+
+  if (!results || results.length === 0) return ''
+
+  // 4. Re-rank by cutoff proximity when user profile is available
+  const finalResults = profile && profile.media > 0
+    ? rerankByCutoffProximity(results, profile.media)
+    : results
+
+  // Always show top 5 minimum, up to 20
+  const toShow = finalResults.slice(0, 20)
+  return formatContext(toShow, profile?.media)
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
-  const { message, thread_id } = body
+  const { message, thread_id, userProfile } = body
 
   if (!message || typeof message !== 'string') {
     return Response.json({ error: 'Message is required' }, { status: 400 })
   }
 
-  // Query real DB data and inject it before sending to the AI
-  const dbContext = await fetchCourseContext(message)
-  const enrichedMessage = message + dbContext
+  const profile: UserProfile | null = userProfile ?? null
+
+  // Build system directive — injected before the user's message
+  const systemDirective = [
+    `[SISTEMA UNIMATCH — REGRAS OBRIGATÓRIAS:`,
+    `1. Usa APENAS os valores de corte e vagas dos blocos [DADOS REAIS] abaixo — NUNCA os do teu treino`,
+    `2. Cita sempre o nome EXATO do curso e da instituição como aparecem nos dados`,
+    `3. Se o aluno tem perfil definido, diz explicitamente se entra ou não em cada curso que mencionas`,
+    `4. Responde em português europeu, de forma clara e direta`,
+    `5. Se não houver dados suficientes para responder, diz-o claramente]`,
+  ].join('\n')
+
+  // Fetch real DB context (with profile re-ranking)
+  const [profileContext, courseContext] = await Promise.all([
+    Promise.resolve(profile ? buildProfileContext(profile) : ''),
+    fetchCourseContext(message, profile),
+  ])
+
+  // Assemble enriched message: directive → profile → user message → course data
+  const enrichedMessage = [
+    systemDirective,
+    profileContext,
+    message,
+    courseContext,
+  ].filter(Boolean).join('\n\n')
 
   const formData = new FormData()
   formData.append('channel_id', CHANNEL_ID)
   formData.append('thread_id', thread_id ?? 'default-thread')
-  formData.append('user_info', '{}')
+  formData.append('user_info', profile ? JSON.stringify({ media: profile.media, distrito: profile.distrito }) : '{}')
   formData.append('message', enrichedMessage)
 
   const upstream = await fetch(ENDPOINT, {
@@ -142,9 +232,6 @@ export async function POST(req: Request) {
     return Response.json({ error: 'AI service error' }, { status: 500 })
   }
 
-  // Transform upstream newline-delimited JSON into SSE.
-  // iaedu format: {"run_id":"...","type":"token","content":"text chunk"}
-  //               {"run_id":"...","type":"done","content":"..."}
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
@@ -182,9 +269,6 @@ export async function POST(req: Request) {
   })
 
   return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-    },
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
   })
 }

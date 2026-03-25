@@ -18,15 +18,14 @@ interface CourseDetailDialogProps {
 export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps) {
   const { isLoggedIn, profile, exams } = useUser()
 
-  if (!course) return null
-
-  const notaCorte = course.notaUltimoColocado
+  // Move all course-dependent calculations after the Dialog check
+  const notaCorte = course?.notaUltimoColocado ?? null
 
   let userGrade = 0
   let meetsMinimum = false
   let hasRequiredExams = false
 
-  if (isLoggedIn && profile && profile.media_final_calculada > 0) {
+  if (course && isLoggedIn && profile && profile.media_final_calculada > 0) {
     const result = calculateAdmissionGrade(
       profile.media_final_calculada,
       filterValidExams(exams, 1),
@@ -41,6 +40,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
 
   return (
     <Dialog open={!!course} onOpenChange={open => { if (!open) onClose() }}>
+      {course && (
       <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-2">
@@ -214,6 +214,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
           })()}
         </div>
       </DialogContent>
+      )}
     </Dialog>
   )
 }

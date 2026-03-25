@@ -73,7 +73,10 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
   return (
     <div
       className="group flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-border"
-      onClick={() => onViewDetails(course)}
+      onClick={() => {
+        console.log('Card clicked:', course.id, course.nome)
+        onViewDetails(course)
+      }}
     >
       {/* Area colour bar */}
       <div className={`h-0.5 w-full shrink-0 ${AREA_BAR[course.area] ?? 'bg-navy'}`} />

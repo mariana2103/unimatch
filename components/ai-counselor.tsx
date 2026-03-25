@@ -53,72 +53,6 @@ interface RankedCourse {
   score: number
 }
 
-// ─── Course context builder ────────────────────────────────────────────────────
-// Searches loaded courses by the user's message keywords and returns a
-// compact context block with real DB numbers for the AI to cite.
-
-// Portuguese letter set for whole-word boundary checks
-const PT_LETTER = /[a-záéíóúâêôãõàèìòùüïçñ]/i
-
-// Returns true only if `word` appears as a standalone word in `haystack`
-// (not as a substring of a longer word, e.g. "média" must NOT match "multimédia")
-function wholeWordMatch(haystack: string, word: string): boolean {
-  let start = 0
-  while (true) {
-    const idx = haystack.indexOf(word, start)
-    if (idx === -1) return false
-    const beforeOk = idx === 0 || !PT_LETTER.test(haystack[idx - 1])
-    const afterOk = idx + word.length >= haystack.length || !PT_LETTER.test(haystack[idx + word.length])
-    if (beforeOk && afterOk) return true
-    start = idx + 1
-  }
-}
-
-function buildCourseContext(message: string, courses: CourseUI[]): string {
-  if (courses.length === 0) return ''
-
-  const q = message.toLowerCase()
-  const words = q.split(/\s+/).filter(w => w.length >= 3)
-  if (words.length === 0) return ''
-
-  // Score each course by how many query words appear as whole words in its fields
-  const scored = courses
-    .map(c => {
-      // Deliberately excludes c.distrito — location only matters when the user says so
-      const haystack = `${c.nome} ${c.area} ${c.instituicao}`.toLowerCase()
-      let score = 0
-      for (const w of words) {
-        if (wholeWordMatch(haystack, w)) score++
-      }
-      return { c, score }
-    })
-    .filter(x => x.score > 0)
-
-  if (scored.length === 0) return ''
-
-  // If asking for the lowest/easiest entry, sort ascending by cutoff.
-  // Courses with no cutoff data go at the end (not excluded entirely).
-  const wantsLowest = /baixa|baixo|m[íi]nima|menor|m[íi]nimo|mais f[áa]cil|f[áa]cil/.test(q)
-  const sorted = wantsLowest
-    ? [
-        ...scored
-          .filter(x => x.c.notaUltimoColocado !== null)
-          .sort((a, b) => (a.c.notaUltimoColocado ?? 999) - (b.c.notaUltimoColocado ?? 999)),
-        ...scored.filter(x => x.c.notaUltimoColocado === null),
-      ]
-    : scored.sort((a, b) => b.score - a.score)
-
-  const top = sorted.slice(0, 25)
-
-  const lines = top.map(({ c }) => {
-    const corte = c.notaUltimoColocado !== null
-      ? (c.notaUltimoColocado / 10).toFixed(2)
-      : 'sem dados'
-    return `• ${c.nome} — ${c.instituicao} (${c.distrito}) | Último colocado: ${corte} | Vagas: ${c.vagas ?? '?'}`
-  }).join('\n')
-
-  return `\n\n[DADOS ATUAIS UniMatch — usa APENAS estes dados, ignora quaisquer cursos mencionados antes nesta conversa:\n${lines}\n]`
-}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -213,7 +147,7 @@ function SidebarCourseCard({
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () => {} }: AICounselorProps) {
-  const { isLoggedIn, profile } = useUser()
+  const { isLoggedIn, profile, exams } = useUser()
   const endRef = useRef<HTMLDivElement>(null)
 
   // ── Tabs ──
@@ -244,15 +178,18 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     if (!text || isChatLoading) return
     setChatInput('')
 
-    let content = text
-    if (isLoggedIn && profile && chatMessages.length === 0) {
-      content += `\n\n[Perfil do aluno — Média: ${profile.media_final_calculada > 0 ? profile.media_final_calculada.toFixed(1) : 'N/D'} (escala 0-20). Quando fores apresentar cursos, usa SEMPRE os dados reais que te são fornecidos em cada mensagem, não inventas valores.]`
-    }
-
-    // Course DB lookup is now handled server-side in /api/chat
-    // Show only the original text in the bubble; enriched content goes to the API silently
+    // Show only the raw text in the chat bubble — enrichment is done server-side
     setChatMessages(prev => [...prev, { role: 'user', content: text }])
     setIsChatLoading(true)
+
+    // Build user profile to send for server-side personalisation
+    const userProfile = isLoggedIn && profile && profile.media_final_calculada > 0
+      ? {
+          media: profile.media_final_calculada,
+          exams: exams.map(e => ({ code: e.exam_code, name: e.exam_code, grade: e.grade })),
+          distrito: profile.distrito_residencia ?? null,
+        }
+      : null
 
     let assistantContent = ''
     let bubbleAdded = false
@@ -261,7 +198,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, thread_id: threadId }),
+        body: JSON.stringify({ message: text, thread_id: threadId, userProfile }),
       })
 
       if (!response.ok || !response.body) throw new Error('API error')

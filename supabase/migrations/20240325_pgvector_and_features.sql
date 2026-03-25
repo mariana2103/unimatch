@@ -2,8 +2,9 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Add embedding column to courses
+-- NOTE: voyage-3 outputs 1024 dimensions (not 1536 which is OpenAI)
 ALTER TABLE courses
-ADD COLUMN IF NOT EXISTS embedding vector(1536);
+ADD COLUMN IF NOT EXISTS embedding vector(1024);
 
 -- Create index for fast similarity search
 CREATE INDEX IF NOT EXISTS courses_embedding_idx
@@ -24,38 +25,36 @@ ADD COLUMN IF NOT EXISTS salario_medio_1ano DECIMAL(8,2) DEFAULT NULL,
 ADD COLUMN IF NOT EXISTS area_cnap_code VARCHAR(20) DEFAULT NULL;
 
 -- Function to search courses by vector similarity
+-- Signature matches pgvector-search.ts vectorSearchCourses() call exactly
 CREATE OR REPLACE FUNCTION search_courses_by_embedding(
   query_embedding vector,
-  match_threshold float DEFAULT 0.5,
-  match_count int DEFAULT 10
+  match_count     int     DEFAULT 20,
+  order_by_cutoff boolean DEFAULT false
 )
 RETURNS TABLE (
-  id UUID,
-  nome TEXT,
-  instituicao_nome TEXT,
-  area TEXT,
-  tipo TEXT,
-  similarity float
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    c.id,
-    c.nome,
-    c.instituicao_nome,
-    c.area,
-    c.tipo,
-    1 - (c.embedding <=> query_embedding) AS similarity
-  FROM courses c
-  WHERE c.embedding IS NOT NULL
-    AND 1 - (c.embedding <=> query_embedding) > match_threshold
-  ORDER BY c.embedding <=> query_embedding
+  nome                  text,
+  instituicao_nome      text,
+  nota_ultimo_colocado  numeric,
+  vagas                 int,
+  distrito              text
+)
+LANGUAGE sql STABLE AS $$
+  SELECT
+    nome,
+    instituicao_nome,
+    nota_ultimo_colocado,
+    vagas,
+    distrito
+  FROM courses
+  WHERE embedding IS NOT NULL
+  ORDER BY
+    CASE WHEN order_by_cutoff THEN nota_ultimo_colocado END ASC NULLS LAST,
+    embedding <=> query_embedding
   LIMIT match_count;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
--- Enable RLS for new function (public read-only access)
-GRANT EXECUTE ON FUNCTION search_courses_by_embedding(vector, float, int) TO anon, authenticated;
+-- Public read access (no auth required for search)
+GRANT EXECUTE ON FUNCTION search_courses_by_embedding(vector, int, boolean) TO anon, authenticated;
 
 -- Add candidatura_order table for persistent ordering
 CREATE TABLE IF NOT EXISTS user_candidatura_order (

@@ -402,7 +402,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
   return (
     <aside
       className={cn(
-        'fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-[360px] border-l bg-card transition-transform duration-300 ease-in-out z-40 shadow-2xl flex flex-col',
+        'fixed right-0 top-16 h-[calc(100dvh-64px)] w-full sm:w-90 border-l bg-card transition-transform duration-300 ease-in-out z-40 shadow-2xl flex flex-col',
         isOpen ? 'translate-x-0' : 'translate-x-full',
       )}
     >
@@ -672,7 +672,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
             <div ref={endRef} />
           </div>
 
-          <div className="p-3 border-t bg-card shrink-0">
+          <div className="p-3 pb-[max(12px,env(safe-area-inset-bottom))] border-t bg-card shrink-0">
             <form
               onSubmit={e => { e.preventDefault(); sendChatMessage() }}
               className="relative"
@@ -682,7 +682,9 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 onChange={e => setChatInput(e.target.value)}
                 placeholder="Pergunta algo..."
                 disabled={isChatLoading}
-                className="w-full rounded-full border bg-muted/50 py-2.5 pl-4 pr-12 text-xs focus:outline-none focus:ring-2 focus:ring-navy/20"
+                autoComplete="off"
+                enterKeyHint="send"
+                className="w-full rounded-full border bg-muted/50 py-2.5 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
               />
               <Button
                 type="submit"

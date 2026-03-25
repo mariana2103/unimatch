@@ -61,11 +61,12 @@ export default async function PartilhaPage({ params }: { params: { slug: string 
           const cutoff = course.nota_ultimo_colocado != null
             ? (course.nota_ultimo_colocado * 10).toFixed(2)
             : null
+          // diff on 0-20 scale → multiply by 10 for display alongside the 0-200 cutoff
           const diff = userMedia != null && course.nota_ultimo_colocado != null
-            ? userMedia - course.nota_ultimo_colocado
+            ? (userMedia - course.nota_ultimo_colocado) * 10
             : null
           const accessible = diff != null && diff >= 0
-          const marginal = diff != null && diff < 0 && diff >= -1
+          const marginal = diff != null && diff < 0 && diff >= -5
 
           return (
             <li

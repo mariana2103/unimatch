@@ -197,6 +197,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
   const [simGrades, setSimGrades]   = useState<Record<string, number>>({})
   // Exam codes added by the user (hypothetical)
   const [extraCodes, setExtraCodes] = useState<string[]>([])
+  // Mobile: whether controls panel is expanded
+  const [showControls, setShowControls] = useState(false)
 
   const realMedia  = (profile?.media_final_calculada ?? 0) * 10  // to 0-200
   const realExams  = useMemo(
@@ -519,8 +521,19 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
 
-        {/* ── Left: inputs panel ───────────────────────────────────────────── */}
-        <div className="space-y-4">
+        {/* ── Left: inputs panel (collapsible on mobile) ───────────────────── */}
+        <div>
+
+          {/* Mobile toggle */}
+          <button
+            className="lg:hidden flex w-full items-center justify-between rounded-xl border border-border/50 bg-card px-4 py-3 text-sm font-medium text-foreground mb-3"
+            onClick={() => setShowControls(v => !v)}
+          >
+            <span>Configurar simulação</span>
+            <ChevronDown className={cn('h-4 w-4 transition-transform text-muted-foreground', showControls && 'rotate-180')} />
+          </button>
+
+          <div className={cn('space-y-4', !showControls && 'hidden lg:block')}>
 
           {/* Média Interna — stat-style +/- control */}
           <div className="rounded-xl border border-border/50 bg-card p-5">
@@ -624,7 +637,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               </div>
             )}
           </div>
-        </div>
+          </div>{/* end collapsible */}
+        </div>{/* end left panel */}
 
         {/* ── Right: results ───────────────────────────────────────────────── */}
         <div>

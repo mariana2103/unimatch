@@ -51,7 +51,7 @@ const OPTION_LABELS = ['1ª Opção', '2ª Opção', '3ª Opção', '4ª Opção
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
 
-function PlacementBanner({ placement }: { placement: number }) {
+function PlacementBanner({ placement, marginal }: { placement: number; marginal: boolean }) {
   if (placement === 0) {
     return (
       <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3">
@@ -59,6 +59,21 @@ function PlacementBanner({ placement }: { placement: number }) {
         <div>
           <p className="text-xs font-semibold text-destructive">Nenhuma opção acessível</p>
           <p className="text-[11px] text-muted-foreground">Com as tuas notas atuais, não estarias colocado em nenhuma das opções.</p>
+        </div>
+      </div>
+    )
+  }
+  if (marginal) {
+    return (
+      <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-warning/25 bg-warning/5 px-4 py-3">
+        <AlertCircle className="h-4 w-4 shrink-0 text-warning" />
+        <div>
+          <p className="text-xs font-semibold text-warning">
+            Próximo do corte na {OPTION_LABELS[placement - 1]}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            A tua nota está dentro de 0,5 valores do corte — entrada possível mas não garantida.
+          </p>
         </div>
       </div>
     )
@@ -305,7 +320,7 @@ export function SavedCoursesSection() {
   const [order, setOrder] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [shareState, setShareState] = useState<'idle' | 'loading' | 'copied'>('idle')
+  const [shareState, setShareState] = useState<'idle' | 'loading' | 'copied' | 'error'>('idle')
 
   // Load saved order from localStorage (keyed per user)
   useEffect(() => {
@@ -396,14 +411,21 @@ export function SavedCoursesSection() {
           userMedia: profile?.media_final_calculada ?? null,
         }),
       })
+      if (!res.ok) { setShareState('error'); setTimeout(() => setShareState('idle'), 3000); return }
       const { slug } = await res.json()
-      if (slug) {
-        await navigator.clipboard.writeText(`${window.location.origin}/partilha/${slug}`)
-        setShareState('copied')
-        setTimeout(() => setShareState('idle'), 3000)
+      if (!slug) { setShareState('error'); setTimeout(() => setShareState('idle'), 3000); return }
+      const url = `${window.location.origin}/partilha/${slug}`
+      try {
+        await navigator.clipboard.writeText(url)
+      } catch {
+        // clipboard blocked (HTTP) — open in new tab instead
+        window.open(url, '_blank')
       }
+      setShareState('copied')
+      setTimeout(() => setShareState('idle'), 3000)
     } catch {
-      setShareState('idle')
+      setShareState('error')
+      setTimeout(() => setShareState('idle'), 3000)
     }
   }, [order, profile])
 
@@ -422,17 +444,17 @@ export function SavedCoursesSection() {
   const validExams = useMemo(() => filterValidExams(exams, 1), [exams])
 
   // Placement prediction: first slot where user is above cutoff
-  const placement = useMemo((): number | null => {
+  const placement = useMemo((): { index: number; marginal: boolean } | null => {
     if (!hasGrades || candidatura.length === 0) return null
     for (let i = 0; i < candidatura.length; i++) {
       const course = candidatura[i]
       const result = calculateAdmissionGrade(profile!.media_final_calculada, validExams, course)
       const cutoff = course.notaUltimoColocado
       if (result.hasRequiredExams && result.meetsMinimum && cutoff !== null && result.grade >= cutoff) {
-        return i + 1
+        return { index: i + 1, marginal: result.grade - cutoff <= 5 }
       }
     }
-    return 0
+    return { index: 0, marginal: false }
   }, [candidatura, hasGrades, profile, validExams])
 
   // ── Not logged in ────────────────────────────────────────────────────────────
@@ -467,7 +489,7 @@ export function SavedCoursesSection() {
         <>
           {/* Placement prediction */}
           {placement !== null && (
-            <PlacementBanner placement={placement} />
+            <PlacementBanner placement={placement.index} marginal={placement.marginal} />
           )}
 
           {/* No grades warning */}
@@ -550,12 +572,20 @@ export function SavedCoursesSection() {
             <button
               onClick={shareCandidatura}
               disabled={shareState === 'loading'}
-              className="mt-3 flex items-center gap-1.5 rounded-lg border border-navy/20 bg-navy/5 px-3 py-2 text-xs font-medium text-navy hover:bg-navy/10 disabled:opacity-60 transition-colors"
+              className={cn(
+                'mt-3 flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-60',
+                shareState === 'error'
+                  ? 'border-destructive/30 bg-destructive/5 text-destructive'
+                  : shareState === 'copied'
+                    ? 'border-emerald/30 bg-emerald/5 text-emerald-700'
+                    : 'border-navy/20 bg-navy/5 text-navy hover:bg-navy/10',
+              )}
             >
               {shareState === 'loading' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {shareState === 'copied' && <Check className="h-3.5 w-3.5 text-emerald-600" />}
-              {shareState === 'idle' && <Share2 className="h-3.5 w-3.5" />}
-              {shareState === 'copied' ? 'Link copiado!' : 'Partilhar candidatura'}
+              {shareState === 'copied'  && <Check className="h-3.5 w-3.5" />}
+              {shareState === 'error'   && <X className="h-3.5 w-3.5" />}
+              {shareState === 'idle'    && <Share2 className="h-3.5 w-3.5" />}
+              {shareState === 'copied' ? 'Link copiado!' : shareState === 'error' ? 'Erro — tenta novamente' : 'Partilhar candidatura'}
             </button>
           )}
         </>

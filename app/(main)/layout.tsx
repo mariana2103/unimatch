@@ -9,7 +9,7 @@ import { CourseContext } from '@/lib/course-context'
 import { useUser } from '@/lib/user-context'
 import { AlertCircle, X } from 'lucide-react'
 import { BetaBanner, FeedbackButton } from '@/components/beta-banner'
-import { BuyMeCoffeeMinimal } from '@/components/buy-me-coffee'
+import { SupportButtonMinimal } from '@/components/support-button'
 import type { CourseUI } from '@/lib/types'
 
 const TAB_TO_PATH: Record<string, string> = {
@@ -120,7 +120,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               © 2026 UniMatch — Dados oficiais baseados na DGES.
             </p>
             <div className="flex items-center gap-4">
-              <BuyMeCoffeeMinimal />
+              <SupportButtonMinimal />
               <FeedbackButton />
               <a
                 href="https://www.dges.gov.pt"

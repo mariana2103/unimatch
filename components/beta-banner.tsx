@@ -165,7 +165,7 @@ export function BetaBanner() {
             <div className="flex shrink-0 items-center gap-1">
               <button
                 onClick={() => setDialogOpen(true)}
-                className="flex items-center gap-1 rounded-md bg-blue-100 px-2.5 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-200 transition-colors dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-900"
+                className="flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted/80 transition-colors"
               >
                 <MessageSquare className="h-3 w-3" />
                 Feedback

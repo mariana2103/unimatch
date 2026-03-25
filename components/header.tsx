@@ -27,10 +27,11 @@ export function Header({
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const tabs = [
-    { id: 'explorer',   label: 'Explorar',   icon: Search },
-    { id: 'simulador',  label: 'Simulador',  icon: SlidersHorizontal },
-    { id: 'timeline',   label: 'Calendário', icon: CalendarDays },
-    { id: 'bolsas',     label: 'Bolsas',     icon: BookMarked },
+    { id: 'explorer',     label: 'Explorar',    icon: Search },
+    { id: 'simulador',  label: 'Simulador',   icon: SlidersHorizontal },
+    { id: 'candidatura',label: 'Candidatura', icon: User },
+    { id: 'timeline',   label: 'Calendário',  icon: CalendarDays },
+    { id: 'bolsas',     label: 'Bolsas',      icon: BookMarked },
   ]
 
   const handleTabChange = (tab: string) => {

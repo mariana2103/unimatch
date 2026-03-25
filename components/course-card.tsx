@@ -90,17 +90,6 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.instituicao}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 pt-0.5" onClick={e => e.stopPropagation()}>
-            {course.link_oficial && (
-              <a
-                href={course.link_oficial}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Ver no DGES"
-                className="text-muted-foreground/30 hover:text-navy transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(course.id)}
@@ -125,28 +114,21 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
           </div>
         </div>
 
-        {/* Provas — group by conjunto to show alternatives */}
+        {/* Provas — show unique exams only */}
         {course.provasIngresso.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            {Array.from(conjuntos.entries()).map(([cid, provas], idx) => (
-              <div key={cid} className="flex flex-wrap items-center gap-1">
-                {idx > 0 && (
-                  <span className="text-[10px] text-muted-foreground/50 font-medium">ou</span>
-                )}
-                {provas.map(p => (
-                  <span
-                    key={p.code}
-                    className="rounded-md bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-                  >
-                    {abbrevExam(p.code, p.name)}
-                  </span>
-                ))}
-              </div>
-            ))}
-            {conjuntos.size > 1 && (
-              <p className="text-[10px] text-muted-foreground/40">
-                Precisas de todas as provas de uma das opções acima
-              </p>
+          <div className="flex flex-wrap gap-1">
+            {Array.from(new Map(course.provasIngresso.map(p => [p.code, p])).values())
+              .slice(0, 4)
+              .map(p => (
+                <span
+                  key={p.code}
+                  className="rounded-md bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                >
+                  {abbrevExam(p.code, p.name)}
+                </span>
+              ))}
+            {new Set(course.provasIngresso.map(p => p.code)).size > 4 && (
+              <span className="text-[10px] text-muted-foreground/50">+{new Set(course.provasIngresso.map(p => p.code)).size - 4}</span>
             )}
           </div>
         )}

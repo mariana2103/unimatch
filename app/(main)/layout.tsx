@@ -9,21 +9,23 @@ import { CourseContext } from '@/lib/course-context'
 import { useUser } from '@/lib/user-context'
 import { AlertCircle, X } from 'lucide-react'
 import { BetaBanner, FeedbackButton } from '@/components/beta-banner'
-import { MobileTabBar } from '@/components/mobile-tab-bar'
+import { BuyMeCoffeeMinimal } from '@/components/buy-me-coffee'
 import type { CourseUI } from '@/lib/types'
 
 const TAB_TO_PATH: Record<string, string> = {
-  explorer:  '/',
-  simulador: '/simulador',
-  timeline:  '/calendario',
-  bolsas:    '/bolsas',
+  explorer:    '/',
+  simulador:   '/simulador',
+  candidatura: '/candidatura',
+  timeline:    '/calendario',
+  bolsas:      '/bolsas',
 }
 
 const PATH_TO_TAB: Record<string, string> = {
-  '/':           'explorer',
-  '/simulador':  'simulador',
-  '/calendario': 'timeline',
-  '/bolsas':     'bolsas',
+  '/':             'explorer',
+  '/simulador':    'simulador',
+  '/candidatura':  'candidatura',
+  '/calendario':   'timeline',
+  '/bolsas':       'bolsas',
 }
 
 function AuthErrorBanner() {

@@ -5,7 +5,6 @@ import { ProfileHeader } from './profile-header'
 import { ProfileSettings } from './profile-settings'
 import { GradesSection } from './grades-section'
 import { ExamsSection } from './exams-section'
-import { SavedCoursesSection } from './saved-courses-section'
 
 export function ProfileView() {
   const { isLoggedIn, profile, grades, exams } = useUser()
@@ -23,7 +22,6 @@ export function ProfileView() {
       <ProfileHeader profile={profile} />
 
       <div className="grid gap-8 md:grid-cols-1">
-        <SavedCoursesSection />
         <ProfileSettings profile={profile} />
         <GradesSection grades={grades} courseGroup={profile.course_group || 'CIENCIAS'} />
         <ExamsSection exams={exams} />

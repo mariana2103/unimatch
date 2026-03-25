@@ -363,12 +363,12 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
   // ── Main UI ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
 
       {/* ── Header + sub-tabs ─────────────────────────────────────────────── */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Simulador de Candidatura</h2>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Simulador de Candidatura</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Favoritos e simulação de candidatura em tempo real.
           </p>

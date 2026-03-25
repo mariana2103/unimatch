@@ -122,9 +122,9 @@ export function ScholarshipCalendar() {
     : SCHOLARSHIPS.filter(s => s.category === filter)
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
       <div className="mb-6">
-        <h2 className="text-lg font-bold text-foreground">Bolsas de Estudo 2025/26</h2>
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Bolsas de Estudo 2025/26</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Guia para quem vai entrar no Ensino Superior este ano. Muitos alunos perdem bolsas por candidatarem-se tarde — marca os prazos com antecedência.
         </p>

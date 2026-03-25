@@ -179,7 +179,7 @@ export function DGESTimeline() {
   const starredCount = starred.size
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold tracking-tight text-foreground">Calendário 2025</h1>

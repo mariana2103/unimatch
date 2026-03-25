@@ -415,12 +415,7 @@ export function SavedCoursesSection() {
       const { slug } = await res.json()
       if (!slug) { setShareState('error'); setTimeout(() => setShareState('idle'), 3000); return }
       const url = `${window.location.origin}/partilha/${slug}`
-      try {
-        await navigator.clipboard.writeText(url)
-      } catch {
-        // clipboard blocked (HTTP) — open in new tab instead
-        window.open(url, '_blank')
-      }
+      window.open(url, '_blank')
       setShareState('copied')
       setTimeout(() => setShareState('idle'), 3000)
     } catch {

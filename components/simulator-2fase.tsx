@@ -53,6 +53,7 @@ function transformCourse(row: any, courseReqs: any[]): CourseUI {
 interface GradeSliderProps {
   label: string
   value: number           // 0–200 (exam) or 0–200 (media *10)
+  min?: number            // lower bound of slider (default 0); use 95 for exam PIs
   max: number             // 200 for exams; 200 for media shown as ×10
   realValue?: number      // show a tick at this position
   onChange: (v: number) => void
@@ -61,10 +62,11 @@ interface GradeSliderProps {
 }
 
 function GradeSlider({
-  label, value, max, realValue, onChange, onRemove, displayScale = 10,
+  label, value, min = 0, max, realValue, onChange, onRemove, displayScale = 10,
 }: GradeSliderProps) {
   const delta  = realValue !== undefined ? value - realValue : 0
-  const pctRef = realValue !== undefined ? (realValue / max) * 100 : null
+  const range  = max - min
+  const pctRef = realValue !== undefined ? ((realValue - min) / range) * 100 : null
 
   return (
     <div>
@@ -105,19 +107,19 @@ function GradeSlider({
         )}
         <input
           type="range"
-          min={0}
+          min={min}
           max={max}
           step={1}
           value={value}
           onChange={e => onChange(Number(e.target.value))}
           className="w-full"
           style={{
-            background: `linear-gradient(to right, var(--navy) ${(value / max) * 100}%, var(--border) ${(value / max) * 100}%)`,
+            background: `linear-gradient(to right, var(--navy) ${((value - min) / range) * 100}%, var(--border) ${((value - min) / range) * 100}%)`,
           }}
         />
         {realValue !== undefined && (
           <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground/40">
-            <span>0</span>
+            <span>{(min / displayScale).toFixed(1)}</span>
             <span>real: {(realValue / displayScale).toFixed(1)}</span>
             <span>{max / displayScale}</span>
           </div>
@@ -249,7 +251,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
     )
     return allSimCodes
       .filter(code => extraCodes.includes(code) || validRealCodes.has(code))
-      .map(code => ({ subjectCode: code, grade: simGrades[code] ?? 100 }))
+      .map(code => ({ subjectCode: code, grade: simGrades[code] ?? 95 }))
   }, [allSimCodes, simGrades, exams, extraCodes, phase])
 
   // The media as a 0-20 float for calculateAdmissionGrade
@@ -311,7 +313,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
 
   function addExtra(code: string) {
     setExtraCodes(prev => [...prev, code])
-    setSimGrades(prev => ({ ...prev, [code]: 100 }))
+    setSimGrades(prev => ({ ...prev, [code]: 95 }))
   }
 
   function removeExtra(code: string) {
@@ -573,7 +575,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                     <GradeSlider
                       key={code}
                       label={name}
-                      value={simGrades[code] ?? 100}
+                      value={simGrades[code] ?? 95}
+                      min={95}
                       max={200}
                       realValue={realGrade}
                       onChange={v => setSimGrades(prev => ({ ...prev, [code]: v }))}

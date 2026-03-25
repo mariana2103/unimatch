@@ -128,35 +128,55 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   }, [deferredFilters, sortOrder])
 
   useEffect(() => {
+    let cancelled = false
     const fetchCourses = async () => {
       const supabase = createClient()
       const PAGE = 1000
-      const all: any[] = []
+      const SELECT = `
+        id, nome, instituicao_nome, distrito, area, tipo, vagas,
+        nota_ultimo_colocado, nota_ultimo_colocado_f2,
+        peso_secundario, peso_exames,
+        nota_minima_p_ingresso, nota_minima_prova,
+        link_oficial, history,
+        course_requirements(exam_code, weight, conjunto_id)
+      `
       let from = 0
-      while (true) {
+      let isFirst = true
+
+      while (!cancelled) {
         const { data, error } = await supabase
           .from('courses')
-          .select(`
-            id, nome, instituicao_nome, distrito, area, tipo, vagas,
-            nota_ultimo_colocado, nota_ultimo_colocado_f2,
-            peso_secundario, peso_exames,
-            nota_minima_p_ingresso, nota_minima_prova,
-            link_oficial, history,
-            course_requirements(exam_code, weight, conjunto_id)
-          `)
+          .select(SELECT)
           .order('nome', { ascending: true })
           .range(from, from + PAGE - 1)
+
+        if (cancelled) break
         if (error || !data || data.length === 0) break
-        all.push(...data)
+
+        const batch = data.map((row: any) => transformCourse(row, row.course_requirements ?? []))
+
+        if (isFirst) {
+          // Show results immediately on first batch — page feels instant
+          setCourses(batch)
+          onCoursesLoaded?.(batch)
+          setLoading(false)
+          isFirst = false
+        } else {
+          setCourses(prev => {
+            const updated = [...prev, ...batch]
+            onCoursesLoaded?.(updated)
+            return updated
+          })
+        }
+
         if (data.length < PAGE) break
         from += PAGE
       }
-      const transformed = all.map(row => transformCourse(row, row.course_requirements ?? []))
-      setCourses(transformed)
-      onCoursesLoaded?.(transformed)
-      setLoading(false)
+
+      if (isFirst && !cancelled) setLoading(false)
     }
     fetchCourses()
+    return () => { cancelled = true }
   }, [])
 
   const userExamCodes = useMemo(() => new Set(exams.map(e => e.exam_code)), [exams])

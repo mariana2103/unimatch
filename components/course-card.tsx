@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock, Heart } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock, Heart, ExternalLink } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade, filterValidExams } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
@@ -86,6 +86,17 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.instituicao}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 pt-0.5" onClick={e => e.stopPropagation()}>
+            {course.link_oficial && (
+              <a
+                href={course.link_oficial}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Ver no DGES"
+                className="text-muted-foreground/30 hover:text-navy transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(course.id)}

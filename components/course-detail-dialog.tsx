@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, BookOpen, Users, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { MapPin, BookOpen, Users, CheckCircle2, XCircle, AlertCircle, ExternalLink } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
@@ -43,8 +43,23 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
     <Dialog open={!!course} onOpenChange={open => { if (!open) onClose() }}>
       <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base text-foreground">{course.nome}</DialogTitle>
-          <DialogDescription>{course.instituicao}</DialogDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-base text-foreground">{course.nome}</DialogTitle>
+              <DialogDescription>{course.instituicao}</DialogDescription>
+            </div>
+            {course.link_oficial && (
+              <a
+                href={course.link_oficial}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-0.5 flex shrink-0 items-center gap-1 rounded-lg border border-border/50 bg-muted/40 px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-navy/40 hover:text-navy transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Ver no DGES
+              </a>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -57,16 +72,17 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             <Badge variant="outline" className="text-[10px]">{course.tipo === 'publica' ? 'Pública' : 'Privada'}</Badge>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
-              { label: 'Último Colocado', value: notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—', highlight: true },
+              { label: 'Corte 1ª Fase', value: notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—', highlight: true },
+              { label: 'Corte 2ª Fase', value: course.notaUltimoColocadoF2 !== null ? (course.notaUltimoColocadoF2 / 10).toFixed(2) : '—', highlight: false },
               { label: 'Nota Mínima', value: course.notaMinima !== null ? (course.notaMinima / 10).toFixed(2) : '—', highlight: false },
-              { label: 'Pesos Sec./Exam.', value: course.pesoSecundario !== null && course.pesoExame !== null
-                  ? `${(course.pesoSecundario * 100).toFixed(0)}/${(course.pesoExame * 100).toFixed(0)}`
+              { label: 'Sec. / Exam.', value: course.pesoSecundario !== null && course.pesoExame !== null
+                  ? `${(course.pesoSecundario * 100).toFixed(0)}% / ${(course.pesoExame * 100).toFixed(0)}%`
                   : '—', highlight: false },
             ].map(s => (
               <div key={s.label} className="flex flex-col items-center gap-0.5 rounded-lg bg-muted/40 p-2.5">
-                <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</span>
+                <span className="text-center text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</span>
                 <span className={`text-lg font-bold tabular-nums ${s.highlight ? 'text-navy' : 'text-foreground'}`}>{s.value}</span>
               </div>
             ))}
@@ -146,6 +162,56 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
           )}
 
           {course.historico && <GradeEvolutionChart historico={course.historico} />}
+
+          {course.historico && course.historico.length > 0 && (() => {
+            const rows = [...course.historico]
+              .filter(h => h.nota_f1 !== null || h.vagas_f1 !== null)
+              .sort((a, b) => b.year - a.year)
+              .slice(0, 6)
+            if (rows.length === 0) return null
+            const hasF2 = rows.some(h => h.nota_f2 !== null || h.vagas_f2 !== null)
+            return (
+              <div>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Histórico</p>
+                <div className="overflow-x-auto rounded-lg border border-border/40">
+                  <table className="w-full text-[11px] tabular-nums">
+                    <thead>
+                      <tr className="border-b border-border/40 bg-muted/30">
+                        <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Ano</th>
+                        <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Corte 1ª F.</th>
+                        <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Vagas 1ª</th>
+                        {hasF2 && <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Corte 2ª F.</th>}
+                        {hasF2 && <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Vagas 2ª</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map(h => (
+                        <tr key={h.year} className="border-b border-border/20 last:border-0 hover:bg-muted/20">
+                          <td className="px-3 py-2 font-medium text-foreground">{h.year}</td>
+                          <td className="px-3 py-2 text-right text-foreground">
+                            {h.nota_f1 !== null ? (h.nota_f1 / 10).toFixed(2) : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-right text-muted-foreground">
+                            {h.vagas_f1 ?? '—'}
+                          </td>
+                          {hasF2 && (
+                            <td className="px-3 py-2 text-right text-muted-foreground">
+                              {h.nota_f2 !== null ? (h.nota_f2 / 10).toFixed(2) : '—'}
+                            </td>
+                          )}
+                          {hasF2 && (
+                            <td className="px-3 py-2 text-right text-muted-foreground">
+                              {h.vagas_f2 ?? '—'}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </DialogContent>
     </Dialog>

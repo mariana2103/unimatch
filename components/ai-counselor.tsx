@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import {
-  X, Send, GraduationCap, Sparkles, RotateCcw, RefreshCw,
-  ChevronLeft, ChevronRight, MessageSquare, Star, ArrowRight,
+  X, Send, GraduationCap, Sparkles, RotateCcw,
+  MessageSquare, Star, ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUser } from '@/lib/user-context'
@@ -56,8 +56,6 @@ interface RankedCourse {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const RESULTS_PER_PAGE = 30
-
 const QUESTIONS: QuestionDef[] = [
   {
     id: 'interests',
@@ -97,43 +95,62 @@ function SidebarCourseCard({
   course,
   score,
   rank,
+  userGrade200,
   onViewDetails,
 }: {
   course: CourseUI
   score: number
   rank: number
+  userGrade200: number | null
   onViewDetails: (c: CourseUI) => void
 }) {
-  const matchPct = Math.min(100, Math.round(score * 200))
+  const matchPct = Math.min(100, Math.round(score * 100))
+
+  const reachability: 'in' | 'marginal' | 'out' | null =
+    userGrade200 != null && course.notaUltimoColocado != null
+      ? course.notaUltimoColocado - userGrade200 <= 0 ? 'in'
+        : course.notaUltimoColocado - userGrade200 <= 10 ? 'marginal'
+        : 'out'
+      : null
 
   return (
     <button
       onClick={() => onViewDetails(course)}
-      className="w-full text-left p-3 rounded-xl border bg-card hover:border-navy/30 hover:bg-navy/[0.02] transition-all group"
+      className={cn(
+        'w-full text-left p-3 rounded-xl border bg-card hover:border-navy/30 transition-all group',
+        reachability === 'in' && 'border-emerald/30 bg-emerald/3',
+        reachability === 'marginal' && 'border-warning/30 bg-warning/3',
+      )}
     >
       <div className="flex items-start gap-2">
-        <span className="text-[10px] font-bold text-muted-foreground/50 w-5 shrink-0 mt-0.5">
+        <span className="text-[10px] font-bold text-muted-foreground/40 w-5 shrink-0 mt-0.5">
           {rank}
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">{course.nome}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{course.instituicao}</p>
 
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full truncate max-w-[110px]">
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full truncate max-w-25">
               {course.area}
             </span>
-            {course.notaUltimoColocado && (
+            {reachability === 'in' && (
+              <span className="text-[10px] font-semibold text-emerald">✓ Acessível</span>
+            )}
+            {reachability === 'marginal' && (
+              <span className="text-[10px] font-semibold text-warning">≈ ±1 valor</span>
+            )}
+            {course.notaUltimoColocado != null && (
               <span className="text-[10px] font-bold text-navy ml-auto">
-                {(course.notaUltimoColocado / 10).toFixed(2)}
+                {(course.notaUltimoColocado / 10).toFixed(1)}
               </span>
             )}
           </div>
 
-          {/* Match score bar */}
-          <div className="mt-1.5 h-1 bg-muted rounded-full overflow-hidden">
+          {/* Interest match bar */}
+          <div className="mt-1.5 h-0.5 bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-navy/40 rounded-full transition-all"
+              className="h-full bg-navy/40 rounded-full"
               style={{ width: `${matchPct}%` }}
             />
           </div>
@@ -161,9 +178,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
   // ── Results state ──
   const [ranked, setRanked] = useState<RankedCourse[]>([])
-  const [resultsPage, setResultsPage] = useState(0)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [aiProfile, setAiProfile] = useState<AIProfile | null>(null)
   const [profileSummary, setProfileSummary] = useState<string>('')
 
   // ── Chat state (manual streaming, no useChat hook) ──
@@ -291,7 +306,12 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     ? profile.media_final_calculada * 10
     : null
 
-  // Boost courses within reach + quality signal (higher cutoff = more prestigious)
+  // Rank: big weight on interests, but among reachable courses favour the highest cutoff.
+  // Zones (diff = cutoff - userGrade, 0-200 scale):
+  //   diff ≤  0  → can get in    → strong boost + prestige signal
+  //   diff ≤ 10  → within 1 val  → moderate boost + prestige signal
+  //   diff ≤ 20  → 1-2 val away  → slight penalty
+  //   diff  > 20 → out of reach  → heavy penalty (still shows but far down)
   const applyGradeBoost = (scored: { id: string; score: number }[]): RankedCourse[] => {
     return scored
       .map(({ id, score }) => {
@@ -299,19 +319,28 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
         if (!course) return null
         let s = score
 
-        // Reachability boost relative to user grade
         if (userGrade200 !== null && course.notaUltimoColocado !== null) {
           const diff = course.notaUltimoColocado - userGrade200
-          if (diff <= 10) s *= 1.35        // within 1 valor — best match
-          else if (diff <= 20) s *= 1.15   // slightly above — still good
-          else if (diff <= 40) s *= 0.85   // 2-4 valores above — stretch
-          else s *= 0.55                   // too far — deprioritise
-        }
+          // prestige: higher cutoff = more sought-after (0→1 scale)
+          const prestige = course.notaUltimoColocado / 200
 
-        // Quality signal: higher cutoff = more competitive/sought-after course
-        if (course.notaUltimoColocado !== null) {
-          const quality = Math.min(1, course.notaUltimoColocado / 200)
-          s = s * 0.85 + quality * 0.15
+          if (diff <= 0) {
+            // Can get in — boost and elevate higher-cutoff options first
+            s = s * 2.0 + prestige * 0.5
+          } else if (diff <= 10) {
+            // Within 1 valor — very achievable with a bit of effort
+            s = s * 1.4 + prestige * 0.25
+          } else if (diff <= 20) {
+            // 1-2 valores away — moderate stretch
+            s *= 0.65
+          } else {
+            // Out of reach — show at the bottom of the 20
+            s *= 0.25
+          }
+        } else if (course.notaUltimoColocado !== null) {
+          // No user grade: still apply a mild prestige signal so results feel ordered
+          const prestige = course.notaUltimoColocado / 200
+          s = s * 0.85 + prestige * 0.15
         }
 
         return { course, score: s }
@@ -332,7 +361,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       if (res.ok) {
         const data = await res.json()
         aiProfileData = { areaWeights: data.areaWeights ?? {}, keywords: data.keywords ?? [] }
-        setAiProfile(aiProfileData)
         if (data.summary) setProfileSummary(data.summary)
       }
 
@@ -341,7 +369,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       const rankedWithCourse = applyGradeBoost(scoredCourses)
 
       setRanked(rankedWithCourse)
-      setResultsPage(0)
+
       setIsAnalyzing(false)
       setTab('results')
     } catch {
@@ -350,7 +378,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       const scoredCourses = rankCourses(queryText, courses)
       const rankedWithCourse = applyGradeBoost(scoredCourses)
       setRanked(rankedWithCourse)
-      setResultsPage(0)
+
       setTab('results')
     }
   }, [courses])
@@ -360,25 +388,12 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     setAnswers({})
     setConversation([{ role: 'ai', text: QUESTIONS[0].text }])
     setRanked([])
-    setResultsPage(0)
-    setAiProfile(null)
     setProfileSummary('')
     setInputValue('')
     setTab('questionnaire')
   }
 
-  const refreshResults = () => {
-    setResultsPage(prev => {
-      const maxPage = Math.floor((ranked.length - 1) / RESULTS_PER_PAGE)
-      return prev >= maxPage ? 0 : prev + 1
-    })
-  }
-
   // ── Derived values ──
-  const pageStart = resultsPage * RESULTS_PER_PAGE
-  const pageEnd = pageStart + RESULTS_PER_PAGE
-  const currentPageResults = ranked.slice(pageStart, pageEnd)
-  const totalPages = Math.ceil(ranked.length / RESULTS_PER_PAGE)
 
   const currentQuestion = QUESTIONS[questionStep]
   const questionnaireComplete = ranked.length > 0 || isAnalyzing
@@ -575,12 +590,13 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
               )}
 
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {currentPageResults.map((r, i) => (
+                {ranked.slice(0, 20).map((r, i) => (
                   <SidebarCourseCard
                     key={r.course.id}
                     course={r.course}
                     score={r.score}
-                    rank={pageStart + i + 1}
+                    rank={i + 1}
+                    userGrade200={userGrade200}
                     onViewDetails={onViewDetails}
                   />
                 ))}
@@ -588,42 +604,9 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
               </div>
 
               <div className="border-t bg-card p-3 shrink-0">
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => setResultsPage(p => Math.max(0, p - 1))}
-                    disabled={resultsPage === 0}
-                    className="flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft className="h-3 w-3" />
-                    Anterior
-                  </button>
-
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground">
-                      {resultsPage + 1} / {totalPages}
-                    </span>
-                    <button
-                      onClick={refreshResults}
-                      className="flex items-center gap-1 rounded-lg border border-navy/20 bg-navy/5 px-2.5 py-1.5 text-[11px] font-medium text-navy hover:bg-navy/10 transition-colors"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Mais
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => setResultsPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={resultsPage >= totalPages - 1}
-                    className="flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Seguinte
-                    <ChevronRight className="h-3 w-3" />
-                  </button>
-                </div>
-
                 <button
                   onClick={resetQuestionnaire}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <RotateCcw className="h-2.5 w-2.5" />
                   Nova pesquisa

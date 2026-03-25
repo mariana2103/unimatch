@@ -22,8 +22,9 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
 
   const trend = (course: CourseUI) => {
     if (!course.historico || course.historico.length < 2) return null
-    const first = course.historico[0].nota
-    const last = course.historico[course.historico.length - 1].nota
+    const first = course.historico[0].nota_f1
+    const last = course.historico[course.historico.length - 1].nota_f1
+    if (first == null || last == null) return null
     return last - first
   }
 

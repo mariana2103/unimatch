@@ -15,10 +15,10 @@ if (!SUPA_URL || !SUPA_KEY || !VOYAGE_KEY) {
   process.exit(1)
 }
 
-const BATCH_SIZE      = 20    // conservative — well within rate limits
-const DELAY_MS        = 1500  // 1.5s between batches → ~40 req/min (free tier allows 60 RPM)
+const BATCH_SIZE      = 128   // voyage max inputs per request
+const DELAY_MS        = 22000 // 22s between batches → ~2.7 req/min (free tier limit: 3 RPM)
 const MAX_RETRIES     = 3
-const RETRY_DELAY_MS  = 5000
+const RETRY_DELAY_MS  = 25000 // on 429, wait 25s before retry
 
 interface CourseRow {
   id: string

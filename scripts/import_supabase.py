@@ -486,6 +486,7 @@ def main():
             "nota_minima_p_ingresso":  detail.get("nota_minima_p_ingresso"),
             "nota_minima_prova":       detail.get("nota_minima_prova"),
             "history":                 history,
+            "link_oficial":            DETAIL_URL.format(codc=cod_curso, code=cod_uo),
         }
 
         courses_2026[(nome, inst_nome)] = {

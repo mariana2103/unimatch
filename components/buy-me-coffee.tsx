@@ -1,36 +1,125 @@
 'use client'
 
-import { Coffee } from 'lucide-react'
+import { useState } from 'react'
+import { Heart, X, ExternalLink } from 'lucide-react'
 
-export function BuyMeCoffee() {
+const PAYPAL_URL = 'https://www.paypal.com/donate?business=marianacabralmeida%40gmail.com&currency_code=EUR'
+
+const MESSAGE = `O UniMatch é um projeto pessoal que criei para ajudar estudantes portugueses a navegar no acesso ao ensino superior.
+
+Mantenho o sistema a funcionar com dados reais da DGES, um assistente de IA e atualizações regulares — tudo isto tem custos reais de servidor e API.
+
+Sou estudante e faço isto no meu tempo livre. Se o UniMatch te ajudou, qualquer contribuição faz diferença — literalmente. Obrigada 💙`
+
+export function SupportButton() {
+  const [open, setOpen] = useState(false)
+
   return (
-    <a
-      href="https://www.buymeacoffee.com/unimatch"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group inline-flex items-center gap-2.5 rounded-xl border border-amber-200/50 bg-gradient-to-r from-amber-50/80 to-orange-50/80 px-4 py-2.5 text-sm transition-all hover:shadow-md hover:border-amber-300 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-800/30"
-    >
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700 transition-transform group-hover:scale-110 dark:bg-amber-800/50 dark:text-amber-300">
-        <Coffee className="h-3.5 w-3.5" />
-      </div>
-      <div className="flex flex-col">
-        <span className="font-medium text-amber-900 dark:text-amber-200">Contribui com um café</span>
-        <span className="text-[10px] text-amber-700/70 dark:text-amber-400/70">Ajuda a manter os dados atualizados</span>
-      </div>
-    </a>
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="group flex items-center gap-2 rounded-xl border border-navy/20 bg-navy/5 px-4 py-2.5 text-sm font-medium text-navy transition-all hover:bg-navy/10 hover:border-navy/30 hover:shadow-sm"
+      >
+        <Heart className="h-4 w-4 text-navy/70 group-hover:text-navy transition-colors" />
+        Apoiar o projeto
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl">
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy/10">
+              <Heart className="h-6 w-6 text-navy" />
+            </div>
+
+            <h2 className="text-lg font-bold text-foreground">Apoiar o UniMatch</h2>
+            <p className="mt-1 text-sm text-muted-foreground">por Mariana Cabral Meida</p>
+
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+              {MESSAGE}
+            </p>
+
+            <a
+              href={PAYPAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-navy px-4 py-3 text-sm font-semibold text-white hover:bg-navy/90 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Contribuir via PayPal
+            </a>
+
+            <p className="mt-3 text-center text-[11px] text-muted-foreground/60">
+              marianacabralmeida@gmail.com
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
-export function BuyMeCoffeeMinimal() {
+export function SupportMinimal() {
+  const [open, setOpen] = useState(false)
+
   return (
-    <a
-      href="https://www.buymeacoffee.com/unimatch"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/70 transition-colors hover:text-amber-600 dark:hover:text-amber-400"
-    >
-      <Coffee className="h-3 w-3" />
-      <span>Contribui com um café</span>
-    </a>
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/70 transition-colors hover:text-navy"
+      >
+        <Heart className="h-3 w-3" />
+        <span>Apoiar o projeto</span>
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl">
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy/10">
+              <Heart className="h-6 w-6 text-navy" />
+            </div>
+
+            <h2 className="text-lg font-bold text-foreground">Apoiar o UniMatch</h2>
+            <p className="mt-1 text-sm text-muted-foreground">por Mariana Cabral Meida</p>
+
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+              {MESSAGE}
+            </p>
+
+            <a
+              href={PAYPAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-navy px-4 py-3 text-sm font-semibold text-white hover:bg-navy/90 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Contribuir via PayPal
+            </a>
+
+            <p className="mt-3 text-center text-[11px] text-muted-foreground/60">
+              marianacabralmeida@gmail.com
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
+
+// Keep old export names so existing imports don't break
+export { SupportButton as BuyMeCoffee, SupportMinimal as BuyMeCoffeeMinimal }

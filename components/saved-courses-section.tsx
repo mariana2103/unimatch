@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Heart, ChevronUp, ChevronDown, AlertCircle, GraduationCap,
-  ExternalLink, Plus, X, CheckCircle2, XCircle, LogIn,
+  ExternalLink, Plus, X, CheckCircle2, XCircle, LogIn, Share2, Check, Loader2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/user-context'
@@ -305,6 +305,7 @@ export function SavedCoursesSection() {
   const [order, setOrder] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [shareState, setShareState] = useState<'idle' | 'loading' | 'copied'>('idle')
 
   // Load saved order from localStorage (keyed per user)
   useEffect(() => {
@@ -381,6 +382,30 @@ export function SavedCoursesSection() {
     setOrder(prev => prev.filter(id => id !== courseId))
     toggleFavorite(courseId)
   }, [toggleFavorite])
+
+  const shareCandidatura = useCallback(async () => {
+    const ids = order.slice(0, MAX_CANDIDATURA)
+    if (ids.length === 0) return
+    setShareState('loading')
+    try {
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseIds: ids,
+          userMedia: profile?.media_final_calculada ?? null,
+        }),
+      })
+      const { slug } = await res.json()
+      if (slug) {
+        await navigator.clipboard.writeText(`${window.location.origin}/partilha/${slug}`)
+        setShareState('copied')
+        setTimeout(() => setShareState('idle'), 3000)
+      }
+    } catch {
+      setShareState('idle')
+    }
+  }, [order, profile])
 
   const orderedCourses = useMemo(
     () => order.map(id => courses.find(c => c.id === id)).filter(Boolean) as CourseUI[],
@@ -520,6 +545,19 @@ export function SavedCoursesSection() {
           <p className="mt-2 text-[10px] text-muted-foreground/40">
             Cortes da 1ª fase 2025. Usa as setas para reordenar. A ordem é guardada localmente.
           </p>
+
+          {candidatura.length > 0 && (
+            <button
+              onClick={shareCandidatura}
+              disabled={shareState === 'loading'}
+              className="mt-3 flex items-center gap-1.5 rounded-lg border border-navy/20 bg-navy/5 px-3 py-2 text-xs font-medium text-navy hover:bg-navy/10 disabled:opacity-60 transition-colors"
+            >
+              {shareState === 'loading' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {shareState === 'copied' && <Check className="h-3.5 w-3.5 text-emerald-600" />}
+              {shareState === 'idle' && <Share2 className="h-3.5 w-3.5" />}
+              {shareState === 'copied' ? 'Link copiado!' : 'Partilhar candidatura'}
+            </button>
+          )}
         </>
       )}
 

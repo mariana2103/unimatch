@@ -6,7 +6,7 @@ import { Header } from '@/components/header'
 import { ProfileView } from '@/components/profile/profile-view'
 import { AICounselor } from '@/components/ai-counselor'
 import { BetaBanner, FeedbackButton } from '@/components/beta-banner'
-import { BuyMeCoffeeMinimal } from '@/components/buy-me-coffee'
+import { BuyMeCoffee, BuyMeCoffeeMinimal } from '@/components/buy-me-coffee'
 
 export default function ProfilePage() {
   const [aiOpen, setAiOpen] = useState(false)
@@ -38,7 +38,7 @@ export default function ProfilePage() {
             © 2026 UniMatch — Dados oficiais baseados na DGES.
           </p>
           <div className="flex items-center gap-4">
-            <BuyMeCoffeeMinimal />
+            <BuyMeCoffee />
             <FeedbackButton />
             <a
               href="https://www.dges.gov.pt"

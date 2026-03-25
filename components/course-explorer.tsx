@@ -129,6 +129,14 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
     setCurrentPage(0)
   }, [deferredFilters, sortOrder])
 
+  // Fetch total DB count immediately so the hero shows it before all courses load
+  useEffect(() => {
+    createClient()
+      .from('courses')
+      .select('*', { count: 'exact', head: true })
+      .then(({ count }) => { if (count != null) setTotalCount(count) })
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     const fetchCourses = async () => {
@@ -298,9 +306,11 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
           Encontra o teu <span className="text-navy">curso ideal</span>
         </h1>
         <p className="text-sm text-muted-foreground">
-          {courses.length > 0
-            ? `${courses.filter(c => c.tipo === 'publica').length} cursos públicos · dados oficiais `
-            : 'Todos os cursos do Ensino Superior português · dados oficiais '}
+          {totalCount != null
+            ? `${totalCount.toLocaleString('pt-PT')} cursos · dados oficiais `
+            : courses.length > 0
+              ? `${courses.length} cursos carregados · dados oficiais `
+              : 'Todos os cursos do Ensino Superior português · dados oficiais '}
           <a
             href="https://www.dges.gov.pt"
             target="_blank"

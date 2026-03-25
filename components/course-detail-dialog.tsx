@@ -1,6 +1,7 @@
 'use client'
 
-import { MapPin, BookOpen, Users, CheckCircle2, XCircle, AlertCircle, ExternalLink } from 'lucide-react'
+import { MapPin, BookOpen, Users, CheckCircle2, XCircle, AlertCircle, ExternalLink, Link2 } from 'lucide-react'
+import Link from 'next/link'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { GradeEvolutionChart } from './grade-evolution-chart'
 import { useUser } from '@/lib/user-context'
 import { calculateAdmissionGrade, filterValidExams } from '@/lib/data'
+import { toCourseSlug } from '@/lib/course-slug'
 import type { CourseUI } from '@/lib/types'
 
 interface CourseDetailDialogProps {
@@ -48,17 +50,26 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
               <DialogTitle className="text-base text-foreground">{course.nome}</DialogTitle>
               <DialogDescription>{course.instituicao}</DialogDescription>
             </div>
-            {course.link_oficial && (
-              <a
-                href={course.link_oficial}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-0.5 flex shrink-0 items-center gap-1 rounded-lg border border-border/50 bg-muted/40 px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-navy/40 hover:text-navy transition-colors"
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Link
+                href={`/cursos/${toCourseSlug(course.nome, course.instituicao)}`}
+                className="flex items-center gap-1 rounded-lg border border-border/50 bg-muted/40 px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-navy/40 hover:text-navy transition-colors"
+                title="Página permanente"
               >
-                <ExternalLink className="h-3 w-3" />
-                Ver no DGES
-              </a>
-            )}
+                <Link2 className="h-3 w-3" />
+              </Link>
+              {course.link_oficial && (
+                <a
+                  href={course.link_oficial}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 rounded-lg border border-border/50 bg-muted/40 px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-navy/40 hover:text-navy transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Ver no DGES
+                </a>
+              )}
+            </div>
           </div>
         </DialogHeader>
 

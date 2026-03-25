@@ -141,10 +141,10 @@
 ───────────────────────────────────────────────────────────────────────── */
 .dark {
   /* ── Layers ──────────────────────────────────────────────────────── */
-  --background:         oklch(0.09 0.016 210);   /* deep canvas          */
-  --card:               oklch(0.17 0.020 210);   /* surface — clear lift */
+  --background:         oklch(0.12 0.016 210);   /* deep canvas — lighter than before */
+  --card:               oklch(0.20 0.020 210);   /* surface — clear lift */
   --card-foreground:    oklch(0.95 0.012 205);
-  --popover:            oklch(0.24 0.020 210);   /* elevated             */
+  --popover:            oklch(0.28 0.020 210);   /* elevated             */
   --popover-foreground: oklch(0.95 0.012 205);
 
   /* ── Text ─────────────────────────────────────────────────────────── */
@@ -154,12 +154,13 @@
 
   /* ── Primary — #90c3da ───────────────────────────────────────────────
      Light sky-blue; high lightness so it pops against dark surfaces.
-     navy mirrors primary so `text-navy` stays the interactive colour. */
-  --primary:            oklch(0.77 0.068 205);
+     navy mirrors primary so `text-navy` stays the interactive colour.
+     Slightly toned down from original to be less flashy. */
+  --primary:            oklch(0.72 0.062 205);
   --primary-foreground: oklch(0.09 0.016 210);   /* dark text on light primary */
-  --navy:               oklch(0.77 0.068 205);
-  --navy-light:         oklch(0.84 0.058 205);
-  --navy-dark:          oklch(0.62 0.072 205);
+  --navy:               oklch(0.72 0.062 205);
+  --navy-light:         oklch(0.79 0.055 205);
+  --navy-dark:          oklch(0.58 0.068 205);
 
   /* ── Secondary — #1c5a73 ─────────────────────────────────────────────
      Mid-depth teal; used for filled secondary elements. */

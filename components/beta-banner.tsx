@@ -154,10 +154,10 @@ export function BetaBanner() {
     <>
       {/* Banner */}
       {visible && (
-        <div className="border-b border-blue-200/60 bg-blue-50/80 dark:border-blue-900/40 dark:bg-blue-950/30 backdrop-blur-sm">
+        <div className="border-b border-border/40 bg-muted/80 dark:bg-card/80 dark:border-border/30 backdrop-blur-sm">
           <div className="mx-auto flex max-w-7xl items-start gap-3 px-4 py-2.5 sm:items-center sm:px-6 lg:px-8">
-            <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 sm:mt-0" />
-            <p className="flex-1 text-xs text-blue-800 dark:text-blue-300">
+            <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-navy sm:mt-0" />
+            <p className="flex-1 text-xs text-foreground/80">
               <span className="font-semibold">Versão beta</span> — Desenvolvido por um estudante universitário.
               Os dados da DGES são oficiais e precisos, mas os cálculos de média e o agente de IA podem ter erros pontuais.
               O teu feedback ajuda a melhorar a plataforma.

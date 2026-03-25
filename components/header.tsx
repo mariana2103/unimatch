@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked, SlidersHorizontal, Menu, User } from 'lucide-react'
+import { GraduationCap, CalendarDays, Search, Sparkles, Sun, Moon, BookMarked, SlidersHorizontal, Menu, User, Heart } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useUser } from '@/lib/user-context'
 import { AuthDialog } from './auth-dialog'
 import { UserMenu } from './user-menu'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import Link from 'next/link'
 
 interface HeaderProps {
   activeTab: string
@@ -163,6 +164,17 @@ export function Header({
               <Sparkles className="h-4 w-4 shrink-0" />
               Conselheiro IA
             </button>
+
+            <div className="my-2 h-px bg-border/40" />
+
+            <Link
+              href="/apoio"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-pink-600 hover:bg-pink-500/8 transition-all dark:text-pink-400"
+            >
+              <Heart className="h-4 w-4 shrink-0 fill-pink-500/20" />
+              Apoiar o UniMatch
+            </Link>
           </nav>
         </SheetContent>
       </Sheet>

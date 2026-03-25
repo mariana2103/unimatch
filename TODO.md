@@ -37,3 +37,32 @@ Let users share their 6-option candidatura list via a public link, no login requ
 - Generate a short slug (e.g. `/partilha/abc123`)
 - Page shows read-only ordered list with cutoff and diff vs. the sharer's grade (stored in snapshot)
 - Auto-expires after 30 days
+
+
+Mobile simulator overflow - The slider (GradeSlider) likely has a fixed width or the overall page has overflow-x: hidden missing. The slider uses input[type='range'] which can be wider than its container. The grid on mobile is fine (single column), but the sliders might need w-full + overflow-hidden on the card.
+
+Partilhar still not working - The API route looks correct. The issue is almost certainly that the SQL migration wasn't run yet in Supabase.
+
+I should verify whether the table actually exists and potentially guide them through running the migration if needed.
+
+Apoiar/MBway - No public MBway API for sending payment links. The best options are Ko-fi (free, built for creators, accepts card payments including MBway), Stripe Payment Links (one-time setup, no code), or Revolut Payment Links (very common in Portugal, supports MBway). Since they're a student in Portugal, Revolut.me or their existing PayPal link would be the most practical approach.
+
+Dark mode too dark - The background at oklch(0.18) and card at oklch(0.24) could be lightened slightly to oklch(0.20) and oklch(0.26) for better contrast.
+
+AI chatbot mobile - The current sidebar layout probably doesn't work well on mobile. I'm considering either a bottom drawer that slides up or a full-screen modal with a floating bubble to trigger it.
+
+Terminology - Still working through this section.
+
+Padding - The max-w-7xl container at 1280px feels cramped on smaller desktops with only px-4 padding, so I should increase padding on larger screens.
+
+Footer positioning - The flex layout with min-h-screen and flex-1 on main should handle this correctly, and the mb-16 spacing accounts for the mobile nav bar, so this looks fine.
+
+Apoiar button - Moving it from the footer to a floating button in the bottom-right corner would be less intrusive, or I could integrate it into the mobile navigation instead.
+
+Legal considerations - DGES data is public government information covered under Portugal's PSI Directive implementation, so scraping is permitted. For user data storage, I need privacy policies and GDPR compliance through Supabase's EU infrastructure. Course and institution names are factual data without copyright protection.
+
+Course page 404 issue - The static route generation might be mismatching the slug format between build time and runtime, or the database migration for shared_candidaturas hasn't been applied yet.
+
+Looking at the specific URL structure, the slug generation from toCourseSlug() should combine the course name and institution, but there might be a discrepancy in how dashes are being handled in the institution name that's causing the lookup to fail. the slug generation logic looks right, so the 404 is almost certainly because these pages haven't been built yet—either the build process hasn't run with the new code, or generateStaticParams() is failing silently during the build. The user could also set dynamicParams = fal
+
+AI chat suggested questions — the current chips are in Portuguese but generic ("Cursos de engenharia?"). Could be improved with more contextual chips based on the user's profile

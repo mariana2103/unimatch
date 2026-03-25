@@ -141,18 +141,18 @@
 ───────────────────────────────────────────────────────────────────────── */
 .dark {
   /* ── Layers ────────────────────────────────────────────────────────
-     Much lighter background for eye comfort — reduced contrast */
-  --background:         oklch(0.18 0.018 210);   /* deep canvas — easier on eyes */
-  --card:               oklch(0.24 0.020 210);   /* surface — clear lift */
-  --card-foreground:    oklch(0.90 0.010 205);
-  --popover:            oklch(0.30 0.020 210);   /* elevated             */
-  --popover-foreground: oklch(0.90 0.010 205);
+     Comfortable dark — not pitch black, clear surface hierarchy */
+  --background:         oklch(0.22 0.018 210);   /* less extreme dark */
+  --card:               oklch(0.28 0.020 210);   /* clear lift above canvas */
+  --card-foreground:    oklch(0.92 0.010 205);
+  --popover:            oklch(0.34 0.020 210);   /* elevated             */
+  --popover-foreground: oklch(0.92 0.010 205);
 
   /* ── Text ───────────────────────────────────────────────────────────
      Softer white for less eye strain */
   --foreground:       oklch(0.88 0.015 205);     /* softer white, less harsh */
-  --muted:            oklch(0.28 0.020 210);
-  --muted-foreground: oklch(0.58 0.020 210);   /* dimmer for less contrast */
+  --muted:            oklch(0.32 0.020 210);
+  --muted-foreground: oklch(0.62 0.020 210);
 
   /* ── Primary — muted teal-blue ─────────────────────────────────────
      Reduced chroma and lightness for less eye strain in dark mode */
@@ -180,8 +180,8 @@
   --destructive-foreground: oklch(0.97 0 0);
 
   /* ── Borders & inputs ────────────────────────────────────────────── */
-  --border: oklch(0.32 0.022 210);
-  --input:  oklch(0.22 0.020 210);
+  --border: oklch(0.36 0.022 210);
+  --input:  oklch(0.27 0.020 210);
   --ring:   oklch(0.77 0.068 205);
 
   /* ── Area colours — brighter shift for dark surfaces ─────────────── */
@@ -202,7 +202,7 @@
   --chart-5: oklch(0.37 0.070 210);
 
   /* ── Sidebar ──────────────────────────────────────────────────────── */
-  --sidebar:                    oklch(0.14 0.018 210);
+  --sidebar:                    oklch(0.18 0.018 210);
   --sidebar-foreground:         oklch(0.93 0.012 205);
   --sidebar-primary:            oklch(0.77 0.068 205);
   --sidebar-primary-foreground: oklch(0.09 0.016 210);

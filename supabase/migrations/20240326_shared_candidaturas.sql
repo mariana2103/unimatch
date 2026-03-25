@@ -13,10 +13,12 @@ CREATE TABLE IF NOT EXISTS shared_candidaturas (
 -- Anyone can insert and read (no login needed)
 ALTER TABLE shared_candidaturas ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can create a shared candidatura" ON shared_candidaturas;
 CREATE POLICY "Anyone can create a shared candidatura"
   ON shared_candidaturas FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Anyone can view non-expired shared candidaturas" ON shared_candidaturas;
 CREATE POLICY "Anyone can view non-expired shared candidaturas"
   ON shared_candidaturas FOR SELECT
   USING (expires_at > NOW());

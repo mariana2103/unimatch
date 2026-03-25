@@ -46,6 +46,9 @@ async function getAllCourses() {
   return all
 }
 
+// ─── Allow on-demand rendering for any slug not pre-built ─────────────────────
+export const dynamicParams = true
+
 // ─── Static params — pre-render every course page at build time ───────────────
 
 export async function generateStaticParams() {
@@ -69,7 +72,7 @@ export async function generateMetadata(
     : null
 
   const title = corte
-    ? `${row.nome} — ${row.instituicao_nome} | Nota de Corte ${corte} | UniMatch`
+    ? `${row.nome} — ${row.instituicao_nome} | Nota de Entrada ${corte} | UniMatch`
     : `${row.nome} — ${row.instituicao_nome} | UniMatch`
 
   const reqs: any[] = row.course_requirements ?? []
@@ -79,7 +82,7 @@ export async function generateMetadata(
 
   const description = [
     `${row.nome} na ${row.instituicao_nome}.`,
-    corte ? `Nota de corte 2025 (1ª fase): ${corte} valores.` : null,
+    corte ? `Nota de entrada 2025 (1ª fase, último colocado): ${corte} valores.` : null,
     row.vagas ? `${row.vagas} vagas.` : null,
     examNames ? `Provas de ingresso: ${examNames}.` : null,
     `Histórico de médias, simulador de candidatura e mais no UniMatch.`,
@@ -181,7 +184,7 @@ export default async function CursoPage({ params }: { params: { slug: string } }
 
       <div className="min-h-screen bg-background">
         {/* Nav bar */}
-        <nav className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <nav className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
           <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-navy hover:opacity-80 transition-opacity">
               <span className="text-lg font-bold">UniMatch</span>
@@ -240,14 +243,14 @@ export default async function CursoPage({ params }: { params: { slug: string } }
           {/* Key stats */}
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: 'Corte 1ª Fase 2025', value: corte1 ?? '—', highlight: true },
-              { label: 'Corte 2ª Fase 2025', value: corte2 ?? '—', highlight: false },
+              { label: 'Últ. Colocado 1ª F. 2025', value: corte1 ?? '—', highlight: true },
+              { label: 'Últ. Colocado 2ª F. 2025', value: corte2 ?? '—', highlight: false },
               { label: 'Nota Mínima', value: notaMin ?? '—', highlight: false },
-              { label: 'Ponderação', value: pesos ?? '—', highlight: false },
+              { label: 'Ponderação', value: pesos ?? '—', highlight: false, small: true },
             ].map(s => (
               <div key={s.label} className="flex flex-col gap-1 rounded-xl border bg-card p-3">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</span>
-                <span className={`text-xl font-bold tabular-nums ${s.highlight ? 'text-navy' : 'text-foreground'}`}>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">{s.label}</span>
+                <span className={`font-bold tabular-nums ${'small' in s && s.small ? 'text-base' : 'text-xl'} ${s.highlight ? 'text-navy' : 'text-foreground'}`}>
                   {s.value}
                 </span>
               </div>
@@ -313,9 +316,9 @@ export default async function CursoPage({ params }: { params: { slug: string } }
                   <thead>
                     <tr className="border-b border-border/40 bg-muted/30">
                       <th className="px-4 py-2.5 text-left font-semibold text-muted-foreground">Ano</th>
-                      <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">Corte 1ª Fase</th>
+                      <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">Ult. Colocado 1ª</th>
                       <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">Vagas</th>
-                      {hasF2 && <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">Corte 2ª Fase</th>}
+                      {hasF2 && <th className="px-4 py-2.5 text-right font-semibold text-muted-foreground">Ult. Colocado 2ª</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -347,7 +350,7 @@ export default async function CursoPage({ params }: { params: { slug: string } }
               Qual é a tua nota de candidatura para {row.nome}?
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Simula a tua nota, compara com o corte e descobre as tuas hipóteses de entrada.
+              Simula a tua nota, compara com a nota do último colocado e descobre as tuas hipóteses.
             </p>
             <Link
               href="/"

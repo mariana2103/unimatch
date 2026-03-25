@@ -115,21 +115,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         />
 
         <footer className="mb-16 border-t border-border/40 bg-card py-6 md:mb-0">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
-            <p className="text-xs text-muted-foreground">
-              © 2026 UniMatch — Dados oficiais baseados na DGES.
-            </p>
-            <div className="flex items-center gap-4">
-              <SupportButtonMinimal />
-              <FeedbackButton />
-              <a
-                href="https://www.dges.gov.pt"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-medium text-navy hover:underline"
-              >
-                Acesso ao Ensino Superior
-              </a>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                © 2026 UniMatch — Dados para fins informativos, baseados na{' '}
+                <a href="https://www.dges.gov.pt" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:underline">DGES</a>.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <SupportButtonMinimal />
+                <FeedbackButton />
+                <a href="/privacidade" className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors">Privacidade</a>
+                <a href="/termos" className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors">Termos</a>
+              </div>
             </div>
           </div>
         </footer>

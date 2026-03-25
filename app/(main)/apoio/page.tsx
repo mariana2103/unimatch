@@ -1,78 +1,96 @@
 'use client'
 
-import { Heart, Copy } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { Heart, Copy, Check, ExternalLink } from 'lucide-react'
+
+const MBWAY_PHONE = '+351 968 145 322'
+const REVOLUT_URL = 'https://revolut.me/unimatch'
+const PAYPAL_URL = 'https://www.paypal.com/donate?business=marianacabralmeida%40gmail.com&currency_code=EUR'
 
 export default function ApoioPage() {
-  const phoneNumber = '+351 968 145 322' // <-- ALTERA AQUI O TEU NÚMERO
-  const revolutLink = 'https://revolut.me/unimatch' // <-- ALTERA AQUI O TEU LINK REVOLUT
+  const [copied, setCopied] = useState(false)
+
+  const copyPhone = async () => {
+    try { await navigator.clipboard.writeText(MBWAY_PHONE) } catch {}
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 sm:px-6">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted/50 mb-4">
-          <Heart className="h-6 w-6 text-muted-foreground" />
+    <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
+
+      {/* Header */}
+      <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-500/10 border border-pink-500/20">
+          <Heart className="h-7 w-7 text-pink-500 fill-pink-500/20" />
         </div>
-        <h1 className="text-xl font-bold text-foreground mb-2">Apoiar o UniMatch</h1>
-        <p className="text-muted-foreground text-sm">
-          Se este projeto te ajudou, agradeço qualquer contributo. É opcional.
+        <h1 className="text-xl font-bold text-foreground">Apoiar o UniMatch</h1>
+        <p className="mt-1 text-sm text-muted-foreground">por Mariana Cabral Meida</p>
+      </div>
+
+      {/* Message */}
+      <div className="mb-6 rounded-xl border border-border/50 bg-card p-5 text-sm text-muted-foreground leading-relaxed space-y-3">
+        <p>
+          O UniMatch é um projeto pessoal que criei para ajudar estudantes portugueses a navegar no acesso ao ensino superior.
+        </p>
+        <p>
+          Mantenho o sistema com dados reais da DGES, um assistente de IA e atualizações regulares — tudo com custos reais de servidor e API.
+        </p>
+        <p>
+          Sou estudante e faço isto no meu tempo livre. Se o UniMatch te ajudou, qualquer contribuição faz diferença. Obrigada <span className="text-navy font-medium">💙</span>
         </p>
       </div>
 
-      <div className="space-y-3">
-        {/* MBway - Opção 1 */}
+      {/* Payment options */}
+      <div className="flex flex-col gap-3">
+
+        {/* MBway */}
         <div className="rounded-xl border border-border/50 bg-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-medium text-foreground">MBway</span>
-            <span className="text-xs text-muted-foreground">Transferência</span>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">MBway</p>
+          <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2.5 mb-2">
+            <span className="font-mono text-base font-semibold flex-1 text-foreground">{MBWAY_PHONE}</span>
+            <button
+              onClick={copyPhone}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              {copied ? <Check className="h-4 w-4 text-emerald" /> : <Copy className="h-4 w-4" />}
+            </button>
           </div>
-          
-          <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-3 mb-2">
-            <span className="font-mono text-lg font-semibold flex-1">{phoneNumber}</span>
-            <CopyButton text={phoneNumber} />
-          </div>
-          
-          <p className="text-xs text-muted-foreground">
-            Copia e usa na app do teu banco
-          </p>
+          <p className="text-[11px] text-muted-foreground">{copied ? 'Número copiado — cola na app do teu banco' : 'Copia e usa na app do teu banco'}</p>
         </div>
 
-        {/* Revolut - Opção 2 */}
+        {/* Revolut */}
         <a
-          href={revolutLink}
+          href={REVOLUT_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4 transition-colors hover:bg-muted/30"
+          className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4 hover:bg-muted/30 transition-colors group"
         >
           <div>
             <p className="font-medium text-foreground">Revolut</p>
             <p className="text-xs text-muted-foreground">Abre diretamente na app</p>
           </div>
-          <Button size="sm" className="bg-[#0075EB] hover:bg-[#0066CC] text-white">
-            Abrir
-          </Button>
+          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </a>
+
+        {/* PayPal */}
+        <a
+          href={PAYPAL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4 hover:bg-muted/30 transition-colors group"
+        >
+          <div>
+            <p className="font-medium text-foreground">PayPal</p>
+            <p className="text-xs text-muted-foreground">marianacabralmeida@gmail.com</p>
+          </div>
+          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
         </a>
       </div>
 
-      <p className="mt-8 text-center text-xs text-muted-foreground/50">
-        Obrigado 💙
+      <p className="mt-6 text-center text-[11px] text-muted-foreground/50">
+        Não tens como apoiar? Partilha o UniMatch com alguém que esteja a preparar a candidatura.
       </p>
     </div>
-  )
-}
-
-function CopyButton({ text }: { text: string }) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 w-8 p-0"
-      onClick={() => {
-        navigator.clipboard.writeText(text)
-        // Podes adicionar aqui um toast se quiseres
-      }}
-    >
-      <Copy className="h-4 w-4" />
-    </Button>
   )
 }

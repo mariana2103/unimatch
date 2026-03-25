@@ -85,8 +85,8 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
-              { label: 'Corte 1ª Fase', value: notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—', highlight: true },
-              { label: 'Corte 2ª Fase', value: course.notaUltimoColocadoF2 !== null ? (course.notaUltimoColocadoF2 / 10).toFixed(2) : '—', highlight: false },
+              { label: 'Últ. Colocado 1ª F.', value: notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—', highlight: true },
+              { label: 'Últ. Colocado 2ª F.', value: course.notaUltimoColocadoF2 !== null ? (course.notaUltimoColocadoF2 / 10).toFixed(2) : '—', highlight: false },
               { label: 'Nota Mínima', value: course.notaMinima !== null ? (course.notaMinima / 10).toFixed(2) : '—', highlight: false },
               { label: 'Sec. / Exam.', value: course.pesoSecundario !== null && course.pesoExame !== null
                   ? `${(course.pesoSecundario * 100).toFixed(0)}% / ${(course.pesoExame * 100).toFixed(0)}%`
@@ -154,15 +154,15 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                   </div>
                   {nearCutoff ? (
                     <span className="flex items-center gap-1 text-xs font-semibold text-warning">
-                      <AlertCircle className="h-4 w-4" /> Próximo ao corte
+                      <AlertCircle className="h-4 w-4" /> Próximo da nota de entrada
                     </span>
                   ) : userGrade >= (notaCorte ?? 0) && meetsMinimum ? (
                     <span className="flex items-center gap-1 text-xs font-semibold text-emerald">
-                      <CheckCircle2 className="h-4 w-4" /> Acima do corte
+                      <CheckCircle2 className="h-4 w-4" /> Acima da nota de entrada
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-xs font-semibold text-destructive">
-                      <XCircle className="h-4 w-4" /> {!meetsMinimum ? 'Nota mínima' : 'Abaixo do corte'}
+                      <XCircle className="h-4 w-4" /> {!meetsMinimum ? 'Nota mínima' : 'Abaixo da nota de entrada'}
                     </span>
                   )}
                 </div>
@@ -189,9 +189,9 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                     <thead>
                       <tr className="border-b border-border/40 bg-muted/30">
                         <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Ano</th>
-                        <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Corte 1ª F.</th>
+                        <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Ult. Col. 1ª</th>
                         <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Vagas 1ª</th>
-                        {hasF2 && <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Corte 2ª F.</th>}
+                        {hasF2 && <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Ult. Col. 2ª</th>}
                         {hasF2 && <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Vagas 2ª</th>}
                       </tr>
                     </thead>

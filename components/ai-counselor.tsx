@@ -410,14 +410,36 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
   // ── Render ──
   return (
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+          onClick={onClose}
+        />
+      )}
+
     <aside
       className={cn(
-        'fixed right-0 top-16 h-[calc(100dvh-64px)] w-full sm:w-90 border-l bg-card transition-transform duration-300 ease-in-out z-40 shadow-2xl flex flex-col',
-        isOpen ? 'translate-x-0' : 'translate-x-full',
+        // Mobile: bottom sheet slides up
+        'fixed inset-x-0 bottom-0 rounded-t-2xl',
+        'max-h-[88dvh] sm:max-h-none sm:rounded-none',
+        // Desktop: right sidebar slides in
+        'sm:inset-x-auto sm:right-0 sm:top-16 sm:bottom-auto sm:h-[calc(100dvh-64px)]',
+        'w-full sm:w-90 border-t sm:border-t-0 sm:border-l bg-card',
+        'transition-transform duration-300 ease-in-out z-50 shadow-2xl flex flex-col',
+        isOpen
+          ? 'translate-y-0 sm:translate-x-0'
+          : 'translate-y-full sm:translate-y-0 sm:translate-x-full',
       )}
     >
+      {/* Drag handle — mobile only */}
+      <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
+        <div className="h-1 w-10 rounded-full bg-border" />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between bg-navy px-4 py-3 shrink-0">
+      <div className="flex items-center justify-between bg-navy px-4 py-3 shrink-0 sm:rounded-none rounded-none">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
             <GraduationCap className="h-4 w-4 text-white" />
@@ -633,8 +655,11 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
             {chatMessages.length === 0 ? (
               <div className="space-y-3">
-                <div className="rounded-2xl bg-white border p-4 shadow-sm text-xs text-muted-foreground leading-relaxed">
+                <div className="rounded-2xl bg-card border p-4 shadow-sm text-xs text-muted-foreground leading-relaxed">
                   Olá! Sou o teu orientador. Podes fazer-me qualquer pergunta sobre cursos, candidaturas ou o processo da DGES.
+                </div>
+                <div className="rounded-xl border border-warning/20 bg-warning/5 px-3 py-2 text-[10px] text-warning/80 leading-relaxed">
+                  As respostas são informativas. Consulta sempre a DGES oficial antes de decidires.
                 </div>
                 <div className="grid gap-1.5">
                   {['Cursos de engenharia?', 'Como funciona a nota?', 'Melhores cursos para medicina?'].map(s => (
@@ -709,5 +734,6 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
         </>
       )}
     </aside>
+    </>
   )
 }

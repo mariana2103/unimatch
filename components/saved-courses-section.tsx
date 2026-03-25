@@ -69,10 +69,10 @@ function PlacementBanner({ placement, marginal }: { placement: number; marginal:
         <AlertCircle className="h-4 w-4 shrink-0 text-warning" />
         <div>
           <p className="text-xs font-semibold text-warning">
-            Próximo do corte na {OPTION_LABELS[placement - 1]}
+            Próximo da nota de entrada na {OPTION_LABELS[placement - 1]}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            A tua nota está dentro de 0,5 valores do corte — entrada possível mas não garantida.
+            A tua nota está dentro de 0,5 valores da nota do último colocado — entrada possível mas não garantida.
           </p>
         </div>
       </div>
@@ -86,7 +86,7 @@ function PlacementBanner({ placement, marginal }: { placement: number; marginal:
           Serias colocado na {OPTION_LABELS[placement - 1]}
         </p>
         <p className="text-[11px] text-muted-foreground">
-          Primeira opção onde a tua nota de candidatura supera o corte.
+          Primeira opção onde a tua nota de candidatura supera a nota do último colocado.
         </p>
       </div>
     </div>
@@ -196,7 +196,7 @@ function CourseSlot({ course, index, total, profile, exams, onMoveUp, onMoveDown
       <div className="flex shrink-0 flex-col items-end gap-1">
         {cutoff !== null && (
           <p className="text-[10px] tabular-nums text-muted-foreground">
-            Corte: <span className="font-medium">{(cutoff / 10).toFixed(2)}</span>
+            Ult. col.: <span className="font-medium">{(cutoff / 10).toFixed(2)}</span>
           </p>
         )}
         {course.link_oficial && (
@@ -553,14 +553,14 @@ export function SavedCoursesSection() {
           {/* Legend */}
           {hasGrades && candidatura.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground/60">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald/70" /> Acima do corte (&gt;+0.5 val.)</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald/70" /> Acima da nota de entrada (&gt;+0.5 val.)</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-warning/70" /> Próximo (0–0.5 val.)</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive/70" /> Abaixo do corte</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive/70" /> Abaixo da nota de entrada</span>
             </div>
           )}
 
           <p className="mt-2 text-[10px] text-muted-foreground/40">
-            Cortes da 1ª fase 2025. Usa as setas para reordenar. A ordem é guardada localmente.
+            Notas do último colocado, 1ª fase 2025. Usa as setas para reordenar. A ordem é guardada localmente.
           </p>
 
           {candidatura.length > 0 && (

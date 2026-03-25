@@ -62,8 +62,11 @@ export function GradeEvolutionChart({ historico }: Props) {
     (_, i) => minY + i * 0.5,
   )
 
-  const navyColor = '#1a2e4a'
-  const f2Color   = '#6b8bbd'
+  // Use CSS variables for theme-aware colors
+  const navyColor = 'var(--navy)'
+  const f2Color   = 'var(--navy-light)'
+  const gridColor = 'var(--border)'
+  const textColor = 'var(--muted-foreground)'
 
   return (
     <Card className="border-border/40">
@@ -104,8 +107,8 @@ export function GradeEvolutionChart({ historico }: Props) {
             {/* Y-axis ticks */}
             {yTicks.map(v => (
               <g key={v}>
-                <line x1={PAD.left} y1={toY(v)} x2={PAD.left + chartW} y2={toY(v)} stroke="#f0f0f0" strokeWidth={1} />
-                <text x={PAD.left - 4} y={toY(v)} dy="0.35em" textAnchor="end" fontSize={9} fill="#aaa">
+                <line x1={PAD.left} y1={toY(v)} x2={PAD.left + chartW} y2={toY(v)} stroke={gridColor} strokeWidth={1} opacity={0.3} />
+                <text x={PAD.left - 4} y={toY(v)} dy="0.35em" textAnchor="end" fontSize={9} fill={textColor}>
                   {v.toFixed(1)}
                 </text>
               </g>
@@ -113,7 +116,7 @@ export function GradeEvolutionChart({ historico }: Props) {
 
             {/* X-axis labels */}
             {pts1.map(p => (
-              <text key={p.year} x={p.px} y={H - 5} textAnchor="middle" fontSize={9} fill="#aaa">
+              <text key={p.year} x={p.px} y={H - 5} textAnchor="middle" fontSize={9} fill={textColor}>
                 {p.year}
               </text>
             ))}

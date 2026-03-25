@@ -50,16 +50,16 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
         <BookOpen className="h-4 w-4" /> Exames e Provas de Ingresso
       </Label>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2">
         {exams.map((e) => (
           <div
             key={e.id}
-            className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/40 shadow-sm"
+            className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/40"
           >
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full ${
                   (e.fase ?? 1) === 2
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                     : 'bg-navy/10 text-navy'
@@ -67,16 +67,16 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
                   {(e.fase ?? 1)}ª fase
                 </span>
               </div>
-              <span className="text-sm font-semibold">
+              <span className="text-sm font-semibold truncate">
                 {EXAM_SUBJECTS.find((s) => s.code === e.exam_code)?.name || e.exam_code}
               </span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 shrink-0">
               <span className="text-lg font-bold text-navy">{(e.grade / 10).toFixed(1)}</span>
               <button
                 onClick={() => handleRemove(e.id)}
                 disabled={isPending}
-                className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50 p-1"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

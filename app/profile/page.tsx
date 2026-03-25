@@ -6,7 +6,7 @@ import { Header } from '@/components/header'
 import { ProfileView } from '@/components/profile/profile-view'
 import { AICounselor } from '@/components/ai-counselor'
 import { BetaBanner, FeedbackButton } from '@/components/beta-banner'
-import { MobileTabBar } from '@/components/mobile-tab-bar'
+import { BuyMeCoffeeMinimal } from '@/components/buy-me-coffee'
 
 export default function ProfilePage() {
   const [aiOpen, setAiOpen] = useState(false)
@@ -17,7 +17,7 @@ export default function ProfilePage() {
       <Header
         activeTab="profile"
         onTabChange={(tab) => {
-          const paths: Record<string, string> = { explorer: '/', simulador: '/simulador', timeline: '/calendario', bolsas: '/bolsas' }
+          const paths: Record<string, string> = { explorer: '/', simulador: '/simulador', candidatura: '/candidatura', timeline: '/calendario', bolsas: '/bolsas' }
           router.push(paths[tab] ?? '/')
         }}
         isAISidebarOpen={aiOpen}
@@ -26,20 +26,19 @@ export default function ProfilePage() {
 
       <BetaBanner />
 
-      <main className="flex-1 pb-16 md:pb-0">
+      <main className="flex-1 pb-16 md:pb-0 px-4 sm:px-6">
         <ProfileView />
       </main>
 
       <AICounselor isOpen={aiOpen} onClose={() => setAiOpen(false)} />
 
-      <MobileTabBar />
-
-      <footer className="mb-16 border-t border-border/40 bg-card py-6 md:mb-0">
+      <footer className="border-t border-border/40 bg-card py-6">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
           <p className="text-xs text-muted-foreground">
             © 2026 UniMatch — Dados oficiais baseados na DGES.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <BuyMeCoffeeMinimal />
             <FeedbackButton />
             <a
               href="https://www.dges.gov.pt"

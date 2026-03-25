@@ -114,14 +114,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           onClose={() => setSelectedCourse(null)}
         />
 
-        <MobileTabBar />
-
         <footer className="mb-16 border-t border-border/40 bg-card py-6 md:mb-0">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
             <p className="text-xs text-muted-foreground">
               © 2026 UniMatch — Dados oficiais baseados na DGES.
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              <BuyMeCoffeeMinimal />
               <FeedbackButton />
               <a
                 href="https://www.dges.gov.pt"

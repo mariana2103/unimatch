@@ -140,27 +140,27 @@
    Accent flips to #466d7c (muted teal) — subtle, for decorative use.
 ───────────────────────────────────────────────────────────────────────── */
 .dark {
-  /* ── Layers ──────────────────────────────────────────────────────── */
-  --background:         oklch(0.12 0.016 210);   /* deep canvas — lighter than before */
-  --card:               oklch(0.20 0.020 210);   /* surface — clear lift */
-  --card-foreground:    oklch(0.95 0.012 205);
-  --popover:            oklch(0.28 0.020 210);   /* elevated             */
-  --popover-foreground: oklch(0.95 0.012 205);
+  /* ── Layers ────────────────────────────────────────────────────────
+     Much lighter background for eye comfort — reduced contrast */
+  --background:         oklch(0.18 0.018 210);   /* deep canvas — easier on eyes */
+  --card:               oklch(0.24 0.020 210);   /* surface — clear lift */
+  --card-foreground:    oklch(0.90 0.010 205);
+  --popover:            oklch(0.30 0.020 210);   /* elevated             */
+  --popover-foreground: oklch(0.90 0.010 205);
 
-  /* ── Text ─────────────────────────────────────────────────────────── */
-  --foreground:       oklch(0.95 0.012 205);     /* #e0eff5 — bright     */
-  --muted:            oklch(0.22 0.020 210);
-  --muted-foreground: oklch(0.65 0.022 210);
+  /* ── Text ───────────────────────────────────────────────────────────
+     Softer white for less eye strain */
+  --foreground:       oklch(0.88 0.015 205);     /* softer white, less harsh */
+  --muted:            oklch(0.28 0.020 210);
+  --muted-foreground: oklch(0.58 0.020 210);   /* dimmer for less contrast */
 
-  /* ── Primary — #90c3da ───────────────────────────────────────────────
-     Light sky-blue; high lightness so it pops against dark surfaces.
-     navy mirrors primary so `text-navy` stays the interactive colour.
-     Slightly toned down from original to be less flashy. */
-  --primary:            oklch(0.72 0.062 205);
-  --primary-foreground: oklch(0.09 0.016 210);   /* dark text on light primary */
-  --navy:               oklch(0.72 0.062 205);
-  --navy-light:         oklch(0.79 0.055 205);
-  --navy-dark:          oklch(0.58 0.068 205);
+  /* ── Primary — muted teal-blue ─────────────────────────────────────
+     Reduced chroma and lightness for less eye strain in dark mode */
+  --primary:            oklch(0.68 0.045 205);  /* darker, less saturated */
+  --primary-foreground: oklch(0.15 0.016 210);   /* dark text on light primary */
+  --navy:               oklch(0.68 0.045 205);
+  --navy-light:         oklch(0.75 0.040 205);
+  --navy-dark:          oklch(0.55 0.055 205);
 
   /* ── Secondary — #1c5a73 ─────────────────────────────────────────────
      Mid-depth teal; used for filled secondary elements. */

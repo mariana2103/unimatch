@@ -1,4 +1,4 @@
-import { SavedCoursesSection } from '@/components/profile/saved-courses-section'
+import { SavedCoursesSection } from '@/components/saved-courses-section'
 
 export default function CandidaturaPage() {
   return (

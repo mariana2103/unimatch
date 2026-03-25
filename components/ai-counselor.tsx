@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import ReactMarkdown from 'react-markdown'
 import {
   X, Send, GraduationCap, Sparkles, RotateCcw, RefreshCw,
   ChevronLeft, ChevronRight, MessageSquare, Star, ArrowRight,
@@ -722,13 +723,17 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                 <div key={idx} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
-                      'max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed whitespace-pre-wrap',
+                      'max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed',
                       m.role === 'user'
                         ? 'bg-navy text-white rounded-tr-none'
-                        : 'bg-card border text-foreground rounded-tl-none',
+                        : 'bg-card border text-foreground rounded-tl-none prose prose-sm dark:prose-invert max-w-none',
                     )}
                   >
-                    {m.content}
+                    {m.role === 'assistant' ? (
+                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                    ) : (
+                      <span className="whitespace-pre-wrap">{m.content}</span>
+                    )}
                   </div>
                 </div>
               ))

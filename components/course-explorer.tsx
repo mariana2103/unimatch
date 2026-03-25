@@ -8,7 +8,7 @@ import { CourseFilters, type Filters } from './course-filters'
 import { CourseCard } from './course-card'
 import { ComparisonPanel } from './comparison-panel'
 import { EXAM_SUBJECTS } from '@/lib/constants'
-import { calculateAdmissionGrade } from '@/lib/data'
+import { calculateAdmissionGrade, filterValidExams } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
 
 type SortOrder = 'none' | 'asc' | 'desc'
@@ -136,7 +136,14 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
       while (true) {
         const { data, error } = await supabase
           .from('courses')
-          .select('*, course_requirements(*)')
+          .select(`
+            id, nome, instituicao_nome, distrito, area, tipo, vagas,
+            nota_ultimo_colocado, nota_ultimo_colocado_f2,
+            peso_secundario, peso_exames,
+            nota_minima_p_ingresso, nota_minima_prova,
+            link_oficial, history,
+            course_requirements(exam_code, weight, conjunto_id)
+          `)
           .order('nome', { ascending: true })
           .range(from, from + PAGE - 1)
         if (error || !data || data.length === 0) break
@@ -157,7 +164,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   // Pre-compute user admission grade for every course (used by withinRange filter)
   const userGradeMap = useMemo(() => {
     if (!isLoggedIn || !profile || profile.media_final_calculada <= 0) return new Map<string, number>()
-    const userExams = exams.map(e => ({ subjectCode: e.exam_code, grade: e.grade }))
+    const userExams = filterValidExams(exams, 1)
     const map = new Map<string, number>()
     for (const c of courses) {
       const { grade, hasRequiredExams } = calculateAdmissionGrade(
@@ -270,8 +277,16 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
         </h1>
         <p className="text-sm text-muted-foreground">
           {courses.length > 0
-            ? `${courses.filter(c => c.tipo === 'publica').length} cursos públicos · dados oficiais DGES`
-            : 'Todos os cursos do Ensino Superior português · dados oficiais DGES'}
+            ? `${courses.filter(c => c.tipo === 'publica').length} cursos públicos · dados oficiais `
+            : 'Todos os cursos do Ensino Superior português · dados oficiais '}
+          <a
+            href="https://www.dges.gov.pt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-navy hover:underline"
+          >
+            DGES
+          </a>
         </p>
       </div>
 

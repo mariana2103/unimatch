@@ -2,7 +2,7 @@
 
 import { CheckCircle2, XCircle, AlertCircle, GitCompareArrows, Lock, Heart } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
-import { calculateAdmissionGrade } from '@/lib/data'
+import { calculateAdmissionGrade, filterValidExams } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
 
 interface CourseCardProps {
@@ -50,7 +50,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
   if (isLoggedIn && profile && profile.media_final_calculada > 0) {
     const result = calculateAdmissionGrade(
       profile.media_final_calculada,
-      exams.map(e => ({ subjectCode: e.exam_code, grade: e.grade })),
+      filterValidExams(exams, 1),
       course
     )
     userGrade = result.grade

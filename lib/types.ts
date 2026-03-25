@@ -26,6 +26,7 @@ export interface UserExam {
   exam_code: string
   grade: number
   exam_year: number
+  fase: 1 | 2  // 1 = 1ª fase, 2 = 2ª fase (only fase 1 exams can be used in 1ª fase candidacy)
 }
 
 // Raw DB row

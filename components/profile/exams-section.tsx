@@ -18,6 +18,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
   const { addExam, removeExam } = useUser()
   const [newExamCode, setNewExamCode] = useState('')
   const [newExamGrade, setNewExamGrade] = useState('')
+  const [newExamFase, setNewExamFase] = useState<'1' | '2'>('1')
   const [isPending, startTransition] = useTransition()
 
   const handleAdd = () => {
@@ -25,9 +26,15 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
     if (!newExamCode || isNaN(grade) || grade < 0 || grade > 20) return
     startTransition(async () => {
       // Store on 0–200 scale to match calculateAdmissionGrade expectations
-      await addExam({ exam_code: newExamCode, grade: Math.round(grade * 10), exam_year: new Date().getFullYear() })
+      await addExam({
+        exam_code: newExamCode,
+        grade: Math.round(grade * 10),
+        exam_year: new Date().getFullYear(),
+        fase: Number(newExamFase) as 1 | 2,
+      })
       setNewExamCode('')
       setNewExamGrade('')
+      setNewExamFase('1')
     })
   }
 
@@ -49,8 +56,17 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
             key={e.id}
             className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/40 shadow-sm"
           >
-            <div className="flex flex-col">
-              <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                  (e.fase ?? 1) === 2
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    : 'bg-navy/10 text-navy'
+                }`}>
+                  {(e.fase ?? 1)}ª fase
+                </span>
+              </div>
               <span className="text-sm font-semibold">
                 {EXAM_SUBJECTS.find((s) => s.code === e.exam_code)?.name || e.exam_code}
               </span>
@@ -80,6 +96,15 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
                 {s.name} ({s.code})
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={newExamFase} onValueChange={(v) => setNewExamFase(v as '1' | '2')}>
+          <SelectTrigger className="h-10 w-full sm:w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1ª Fase</SelectItem>
+            <SelectItem value="2">2ª Fase</SelectItem>
           </SelectContent>
         </Select>
         <Input

@@ -89,6 +89,7 @@ function GradeRow({ grade, onRemove, isPending, readOnly }: GradeRowProps) {
 // ─── CFA summary badge ────────────────────────────────────────────────────────
 
 function CFASummary({ allGrades, courseGroup }: { allGrades: UserGrade[]; courseGroup: string }) {
+  const { exams } = useUser()
   const cfa = useMemo(() => {
     if (!allGrades || allGrades.length === 0) return null
 
@@ -103,8 +104,9 @@ function CFASummary({ allGrades, courseGroup }: { allGrades: UserGrade[]; course
       {}
     )
 
-    return calculateCFA(Object.values(bySubject), courseGroup)
-  }, [allGrades, courseGroup])
+    const examGrades = exams.map(e => ({ examCode: e.exam_code, grade: e.grade }))
+    return calculateCFA(Object.values(bySubject), courseGroup, undefined, examGrades)
+  }, [allGrades, courseGroup, exams])
 
   if (cfa === null || cfa === 0) return null
 

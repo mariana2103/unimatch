@@ -6,7 +6,7 @@ import {
   Plus, X, Info, ChevronDown, Heart, Lock,
 } from 'lucide-react'
 import { useUser } from '@/lib/user-context'
-import { calculateAdmissionGrade } from '@/lib/data'
+import { calculateAdmissionGrade, filterValidExams } from '@/lib/data'
 import { EXAM_SUBJECTS } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -198,8 +198,8 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
 
   const realMedia  = (profile?.media_final_calculada ?? 0) * 10  // to 0-200
   const realExams  = useMemo(
-    () => exams.map(e => ({ subjectCode: e.exam_code, grade: e.grade })),
-    [exams],
+    () => filterValidExams(exams, phase === '1' ? 1 : 2),
+    [exams, phase],
   )
 
   // Initialise simulation from profile whenever profile/exams change
@@ -242,10 +242,15 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
     [exams, extraCodes],
   )
 
-  const simExamsList = useMemo(
-    () => allSimCodes.map(code => ({ subjectCode: code, grade: simGrades[code] ?? 100 })),
-    [allSimCodes, simGrades],
-  )
+  // Apply validity rules: fase restriction + 4-year window (+ extra hypothetical codes always valid)
+  const simExamsList = useMemo(() => {
+    const validRealCodes = new Set(
+      filterValidExams(exams, phase === '1' ? 1 : 2).map(e => e.subjectCode)
+    )
+    return allSimCodes
+      .filter(code => extraCodes.includes(code) || validRealCodes.has(code))
+      .map(code => ({ subjectCode: code, grade: simGrades[code] ?? 100 }))
+  }, [allSimCodes, simGrades, exams, extraCodes, phase])
 
   // The media as a 0-20 float for calculateAdmissionGrade
   const simMediaScaled  = simMedia / 10

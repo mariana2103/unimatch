@@ -7,7 +7,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { GradeEvolutionChart } from './grade-evolution-chart'
 import { useUser } from '@/lib/user-context'
-import { calculateAdmissionGrade } from '@/lib/data'
+import { calculateAdmissionGrade, filterValidExams } from '@/lib/data'
 import type { CourseUI } from '@/lib/types'
 
 interface CourseDetailDialogProps {
@@ -29,7 +29,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
   if (isLoggedIn && profile && profile.media_final_calculada > 0) {
     const result = calculateAdmissionGrade(
       profile.media_final_calculada,
-      exams.map(e => ({ subjectCode: e.exam_code, grade: e.grade })),
+      filterValidExams(exams, 1),
       course
     )
     userGrade = result.grade

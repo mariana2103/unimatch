@@ -42,7 +42,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
-  const recalculateCFA = useCallback(async (userId: string, updatedGrades: UserGrade[], courseGroup: string) => {
+  const recalculateCFA = useCallback(async (userId: string, updatedGrades: UserGrade[], courseGroup: string, updatedExams?: UserExam[]) => {
     const bySubject = updatedGrades.reduce<Record<string, { name: string; grades: { year: number; grade: number }[] }>>(
       (acc, g) => {
         if (!acc[g.subject_name]) acc[g.subject_name] = { name: g.subject_name, grades: [] }
@@ -50,10 +50,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return acc
       }, {}
     )
-    const cfa = calculateCFA(Object.values(bySubject), courseGroup)
+    const examGrades = (updatedExams ?? exams).map(e => ({ examCode: e.exam_code, grade: e.grade }))
+    const cfa = calculateCFA(Object.values(bySubject), courseGroup, undefined, examGrades)
     await supabase.from('profiles').update({ media_final_calculada: cfa }).eq('id', userId)
     setProfile(prev => prev ? { ...prev, media_final_calculada: cfa } : null)
-  }, [supabase])
+  }, [supabase, exams])
 
   useEffect(() => {
     let isMounted = true
@@ -227,21 +228,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (!profile) return
     const { data } = await supabase.from('user_exams').upsert(
       { ...exam, user_id: profile.id },
-      { onConflict: 'user_id,exam_code,exam_year' }
+      { onConflict: 'user_id,exam_code,exam_year,fase' }
     ).select().single()
     if (data) {
-      setExams(prev => [
-        ...prev.filter(e => !(e.exam_code === exam.exam_code && e.exam_year === exam.exam_year)),
+      const updatedExams = [
+        ...exams.filter(e => !(e.exam_code === exam.exam_code && e.exam_year === exam.exam_year)),
         data,
-      ])
+      ]
+      setExams(updatedExams)
+      await recalculateCFA(profile.id, grades, profile.course_group || 'CIENCIAS', updatedExams)
     }
-  }, [profile, supabase])
+  }, [profile, exams, grades, supabase, recalculateCFA])
 
   const removeExam = useCallback(async (examId: string) => {
     if (!profile) return
     await supabase.from('user_exams').delete().eq('id', examId)
-    setExams(prev => prev.filter(e => e.id !== examId))
-  }, [profile, supabase])
+    const updatedExams = exams.filter(e => e.id !== examId)
+    setExams(updatedExams)
+    await recalculateCFA(profile.id, grades, profile.course_group || 'CIENCIAS', updatedExams)
+  }, [profile, exams, grades, supabase, recalculateCFA])
 
   const toggleComparison = useCallback((courseId: string) => {
     setComparisonList(prev => {

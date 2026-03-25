@@ -1,11 +1,7 @@
-import type { Metadata } from 'next'
-import { Heart, Copy, CheckCircle2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Apoiar o UniMatch',
-  description: 'O UniMatch é feito por um estudante. Se te ajudou, qualquer valor faz diferença.',
-}
+import { Heart, Copy } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function ApoioPage() {
   const phoneNumber = '+351 968 145 322' // <-- ALTERA AQUI O TEU NÚMERO

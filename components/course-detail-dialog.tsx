@@ -41,40 +41,42 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
     <Dialog open={!!course} onOpenChange={open => { if (!open) onClose() }}>
       {course && (
       <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto p-0">
-        {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-border/40">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="text-base font-bold text-foreground leading-tight">{course.nome}</DialogTitle>
-              <DialogDescription className="mt-1 text-sm text-muted-foreground">{course.instituicao}</DialogDescription>
-            </div>
-            {course.link_oficial && (
-              <a
-                href={course.link_oficial}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/50 bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-navy/40 hover:text-navy transition-colors"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Ver na DGES
-              </a>
-            )}
-          </div>
+        {/* Header — clean hierarchy */}
+        <div className="px-5 pt-5 pb-4 border-b border-border/40">
+          {/* Course name */}
+          <h2 className="text-lg font-bold text-foreground leading-tight pr-8">{course.nome}</h2>
+          {/* Institution */}
+          <p className="text-sm text-muted-foreground mt-0.5">{course.instituicao}</p>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mt-3">
+          {/* Tags row */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
             <Badge className="bg-navy text-primary-foreground text-[11px] font-medium">{course.area}</Badge>
-            <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] text-muted-foreground border-border/50">
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-0.5 text-[11px] text-muted-foreground">
               <MapPin className="h-2.5 w-2.5" />{course.distrito}
             </span>
             {course.vagas !== null && (
-              <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] text-muted-foreground border-border/50">
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-0.5 text-[11px] text-muted-foreground">
                 <Users className="h-2.5 w-2.5" />{course.vagas} vagas
               </span>
             )}
             <Badge variant="outline" className="text-[11px]">{course.tipo === 'publica' ? 'Pública' : 'Privada'}</Badge>
           </div>
-        </DialogHeader>
+        </div>
+
+        {/* DGES link — separate, bottom of header area */}
+        {course.link_oficial && (
+          <div className="px-5 pt-3 pb-0">
+            <a
+              href={course.link_oficial}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-navy hover:underline font-medium"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Ver na DGES
+            </a>
+          </div>
+        )}
 
         <div className="px-5 pb-5 flex flex-col gap-5">
 
@@ -141,25 +143,50 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             </div>
           )}
 
-          {/* Provas de ingresso — compact 2-column grid */}
+          {/* Provas de ingresso — grouped by conjunto */}
           {course.provasIngresso.length > 0 && (() => {
-            const uniqueExams = [...new Map(course.provasIngresso.map(p => [p.code, p])).values()]
+            // Group by conjunto_id
+            const grupos = new Map<number, typeof course.provasIngresso>()
+            for (const p of course.provasIngresso) {
+              const cid = p.conjunto_id ?? 1
+              if (!grupos.has(cid)) grupos.set(cid, [])
+              grupos.get(cid)!.push(p)
+            }
+            const gruposList = Array.from(grupos.entries())
             return (
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
                   Provas de Ingresso
                   <span className="ml-1.5 font-normal normal-case tracking-normal text-muted-foreground/60">
-                    ({uniqueExams.length})
+                    ({gruposList.length} {gruposList.length === 1 ? 'conjunto' : 'conjuntos'})
                   </span>
                 </p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {uniqueExams.map(exam => (
+                <div className="flex flex-col gap-2">
+                  {gruposList.map(([cid, exams]) => (
                     <div
-                      key={exam.code}
-                      className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/30 px-2.5 py-1.5"
+                      key={cid}
+                      className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-2"
                     >
-                      <span className="font-mono text-[11px] font-bold text-navy shrink-0">{exam.code}</span>
-                      <span className="text-[11px] text-foreground leading-tight truncate">{exam.name}</span>
+                      {exams.length === 1 ? (
+                        // Single exam — show inline
+                        <>
+                          <span className="font-mono text-[11px] font-bold text-navy shrink-0">{exams[0].code}</span>
+                          <span className="text-[11px] text-foreground leading-tight">{exams[0].name}</span>
+                        </>
+                      ) : (
+                        // Bundle of 2+ exams — show each with +
+                        <>
+                          {exams.map((exam, i) => (
+                            <span key={exam.code} className="flex items-center gap-1">
+                              <span className="font-mono text-[11px] font-bold text-navy shrink-0">{exam.code}</span>
+                              <span className="text-[11px] text-foreground leading-tight">{exam.name}</span>
+                              {i < exams.length - 1 && (
+                                <span className="text-muted-foreground/50 font-bold text-[11px] mx-0.5">+</span>
+                              )}
+                            </span>
+                          ))}
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -249,7 +249,7 @@ export default async function CursoPage({ params }: { params: { slug: string } }
               { label: 'Ponderação', value: pesos ?? '—', highlight: false, small: true },
             ].map(s => (
               <div key={s.label} className="flex flex-col gap-1 rounded-xl border bg-card p-3">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">{s.label}</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">{s.label}</span>
                 <span className={`font-bold tabular-nums ${'small' in s && s.small ? 'text-base' : 'text-xl'} ${s.highlight ? 'text-navy' : 'text-foreground'}`}>
                   {s.value}
                 </span>

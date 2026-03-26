@@ -85,7 +85,7 @@ function GradeSlider({
         <div className="flex shrink-0 items-center gap-1.5">
           {delta !== 0 && (
             <span className={cn(
-              'text-[10px] font-bold tabular-nums',
+              'text-[11px] font-bold tabular-nums',
               delta > 0 ? 'text-emerald' : 'text-destructive',
             )}>
               {delta > 0 ? '+' : ''}{(delta / displayScale).toFixed(1)}
@@ -118,7 +118,7 @@ function GradeSlider({
           }}
         />
         {realValue !== undefined && (
-          <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground/40">
+          <div className="mt-0.5 flex justify-between text-[11px] text-muted-foreground/40">
             <span>{(min / displayScale).toFixed(1)}</span>
             <span>real: {(realValue / displayScale).toFixed(1)}</span>
             <span>{max / displayScale}</span>
@@ -389,7 +389,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               <Heart className="h-3 w-3" />
               Favoritos
               {!loadingCourses && allFavoriteCourses.length > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold text-destructive-foreground">
                   {allFavoriteCourses.length}
                 </span>
               )}
@@ -472,10 +472,10 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                 <div
                   key={course.id}
                   onClick={() => onViewDetails?.(course)}
-                  className="group flex cursor-pointer items-center gap-4 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-all hover:border-border hover:shadow-sm"
+                  className="group flex cursor-pointer items-center gap-2 sm:gap-4 rounded-xl border border-border/50 bg-card px-3 sm:px-4 py-3 transition-all hover:border-border hover:shadow-sm"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-2 sm:gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-foreground">{course.nome}</p>
                         <p className="truncate text-[11px] text-muted-foreground">
@@ -489,10 +489,10 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                             <p className="text-sm font-bold tabular-nums text-foreground">
                               {(course.notaUltimoColocado / 10).toFixed(1)}
                             </p>
-                            <p className="text-[10px] text-muted-foreground">último colocado</p>
+                            <p className="text-[11px] text-muted-foreground">último colocado</p>
                           </>
                         ) : (
-                          <p className="text-[10px] text-muted-foreground/50">sem dados</p>
+                          <p className="text-[11px] text-muted-foreground/50">sem dados</p>
                         )}
                       </div>
                     </div>
@@ -515,7 +515,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
       {view === 'simulator' && (<>
 
 
-      <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[300px_1fr]">
 
         {/* ── Left: inputs panel (collapsible on mobile) ───────────────────── */}
         <div>
@@ -535,15 +535,15 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
           <div className="rounded-xl border border-border/50 bg-card p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Média do Secundário</p>
+                <p className="text-[11px] text-muted-foreground">Média do Secundário</p>
                 {realMedia > 0 && simMedia !== realMedia && (
-                  <p className="text-[9px] text-muted-foreground/50">
+                  <p className="text-[11px] text-muted-foreground/50">
                     real: {(realMedia / 10).toFixed(1)}
                   </p>
                 )}
               </div>
               {simMedia !== realMedia && realMedia > 0 && (
-                <span className={`text-[10px] font-bold tabular-nums ${simMedia > realMedia ? 'text-emerald' : 'text-destructive'}`}>
+                <span className={`text-[11px] font-bold tabular-nums ${simMedia > realMedia ? 'text-emerald' : 'text-destructive'}`}>
                   {simMedia > realMedia ? '+' : ''}{((simMedia - realMedia) / 10).toFixed(1)}
                 </span>
               )}
@@ -575,7 +575,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
               </h3>
               <button
                 onClick={reset}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 <RotateCcw className="h-3 w-3" />
                 Repor
@@ -679,7 +679,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                     key={course.id}
                     onClick={() => onViewDetails?.(course)}
                     className={cn(
-                      'group relative flex cursor-pointer items-center gap-4 rounded-xl border px-4 py-3.5 transition-all',
+                      'group relative flex cursor-pointer items-center gap-2 sm:gap-4 rounded-xl border px-3 sm:px-4 py-3 transition-all',
                       newlyReachable
                         ? 'border-emerald/25 bg-emerald/8 shadow-sm'
                         : simAbove
@@ -692,20 +692,20 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                     )}
                   >
                     {newlyReachable && (
-                      <span className="absolute -top-2.5 left-3 rounded-full bg-emerald px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm">
+                      <span className="absolute -top-2.5 left-3 rounded-full bg-emerald px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm">
                         Novo
                       </span>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-2 sm:gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-foreground">{course.nome}</p>
                           <p className="truncate text-[11px] text-muted-foreground">
                             {course.instituicao} · {course.distrito}
                           </p>
                           {failsMinimum && (
-                            <p className="mt-0.5 text-[10px] font-semibold text-destructive">
+                            <p className="mt-0.5 text-[11px] font-semibold text-destructive">
                               Nota mínima não atingida
                             </p>
                           )}
@@ -714,7 +714,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                         <div className="shrink-0 text-right">
                           <div className="flex items-baseline justify-end gap-1.5">
                             {real.hasRequiredExams && real.grade !== sim.grade && (
-                              <span className="text-[10px] tabular-nums text-muted-foreground/50 line-through">
+                              <span className="text-[11px] tabular-nums text-muted-foreground/50 line-through">
                                 {(real.grade / 10).toFixed(1)}
                               </span>
                             )}
@@ -730,7 +730,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                           </div>
 
                           {cutoff !== null && (
-                            <p className="text-[10px] tabular-nums text-muted-foreground">
+                            <p className="text-[11px] tabular-nums text-muted-foreground">
                               ú.c. {(cutoff / 10).toFixed(1)}{' '}
                               <span className={cn(
                                 'font-semibold',

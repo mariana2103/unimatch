@@ -158,9 +158,9 @@ export function BetaBanner() {
           <div className="mx-auto flex max-w-7xl items-start gap-3 px-4 py-2.5 sm:items-center sm:px-6 lg:px-8">
             <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-navy sm:mt-0" />
             <p className="flex-1 text-xs text-foreground/80">
-              <span className="font-semibold">Versão beta</span> — Desenvolvido por um estudante universitário.
-              Os dados da DGES são oficiais e precisos, mas os cálculos de média e o agente de IA podem ter erros pontuais.
-              O teu feedback ajuda a melhorar a plataforma.
+              <span className="font-semibold">Versão inicial — dados de 2025.</span>{' '}
+              Os valores de nota são oficiais (DGES), mas os cálculos e o conselheiro IA podem ter erros pontuais.
+              Encontraste algo errado? O teu feedback ajuda.
             </p>
             <div className="flex shrink-0 items-center gap-1">
               <button

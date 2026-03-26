@@ -103,13 +103,28 @@ export function ProfileView() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl py-12 px-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="mx-auto max-w-2xl py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <ProfileHeader profile={profile} />
 
-      <div className="grid gap-8 md:grid-cols-1">
-        <ProfileSettings profile={profile} />
-        <GradesSection grades={grades} courseGroup={profile.course_group || 'CIENCIAS'} />
-        <ExamsSection exams={exams} />
+      <div className="flex flex-col gap-8">
+        <section>
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Preferências</h2>
+          <ProfileSettings profile={profile} />
+        </section>
+
+        <div className="h-px bg-border/40" />
+
+        <section>
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Notas do Secundário</h2>
+          <GradesSection grades={grades} courseGroup={profile.course_group || 'CIENCIAS'} />
+        </section>
+
+        <div className="h-px bg-border/40" />
+
+        <section>
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Provas de Ingresso</h2>
+          <ExamsSection exams={exams} />
+        </section>
       </div>
 
       <DeleteAccountSection />

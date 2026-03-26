@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const oauthError = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
   if (oauthError) {
-    console.error('OAuth callback error:', oauthError, errorDescription)
+    if (process.env.NODE_ENV === 'development') console.error('OAuth callback error:', oauthError, errorDescription)
     const msg = errorDescription ?? oauthError
     return NextResponse.redirect(`${origin}/?authError=${encodeURIComponent(msg)}`)
   }
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${next}`)
     }
 
-    console.error('Erro no callback:', error)
+    if (process.env.NODE_ENV === 'development') console.error('Erro no callback:', error)
     return NextResponse.redirect(`${origin}/?authError=${encodeURIComponent(error.message)}`)
   }
 

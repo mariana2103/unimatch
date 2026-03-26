@@ -2,6 +2,7 @@ export const maxDuration = 30
 
 import { vectorSearchCourses, type VectorCourseResult } from '@/lib/pgvector-search'
 import { isAllowed, getIP, rateLimitedResponse } from '@/lib/rate-limit'
+import { createClient } from '@/lib/supabase/server'
 
 const ENDPOINT   = process.env.IAEDU_ENDPOINT!
 const API_KEY    = process.env.IAEDU_API_KEY!
@@ -186,6 +187,11 @@ export async function POST(req: Request) {
   // Rate limit: 15 messages per 10 minutes per IP
   const ip = getIP(req)
   if (!isAllowed(`chat:${ip}`, 15, 10 * 60 * 1000)) return rateLimitedResponse()
+
+  // Also rate limit per authenticated user to prevent IP-bypass abuse
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user && !isAllowed(`chat:user:${user.id}`, 15, 10 * 60 * 1000)) return rateLimitedResponse()
 
   const body = await req.json().catch(() => ({}))
   const { message, thread_id, userProfile } = body

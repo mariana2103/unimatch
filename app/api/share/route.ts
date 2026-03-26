@@ -1,8 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { isAllowed, getIP, rateLimitedResponse } from '@/lib/rate-limit'
-
-const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPA_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+import { createClient } from '@/lib/supabase/server'
 
 function randomSlug(len = 8): string {
   const chars = 'abcdefghijkmnpqrstuvwxyz23456789'
@@ -14,14 +11,16 @@ export async function POST(req: Request) {
   const ip = getIP(req)
   if (!isAllowed(`share:${ip}`, 10, 60 * 60 * 1000)) return rateLimitedResponse()
 
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 })
+
   const body = await req.json().catch(() => ({}))
   const { courseIds, userMedia } = body
 
   if (!Array.isArray(courseIds) || courseIds.length === 0 || courseIds.length > 6) {
     return Response.json({ error: 'courseIds must be an array of 1–6 UUIDs' }, { status: 400 })
   }
-
-  const supabase = createClient(SUPA_URL, SUPA_KEY)
 
   // Try up to 5 times in case of slug collision (astronomically unlikely)
   for (let attempt = 0; attempt < 5; attempt++) {

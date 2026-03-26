@@ -139,12 +139,12 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
         {/* Bottom: cutoff + user grade — simplified */}
         <div className="flex items-start justify-between border-t border-border/40 pt-3">
           <div>
-            <p className="text-[10px] text-muted-foreground mb-0.5">Último Colocado 2025</p>
+            <p className="text-[11px] text-muted-foreground mb-0.5">Último Colocado 2025</p>
             <p className="text-xl font-bold tabular-nums text-foreground leading-none">
               {notaCorte !== null ? (notaCorte / 10).toFixed(2) : '—'}
             </p>
             {course.notaUltimoColocadoF2 !== null && (
-              <p className="text-[10px] tabular-nums text-muted-foreground/60 mt-0.5">
+              <p className="text-[11px] tabular-nums text-muted-foreground/60 mt-0.5">
                 2ª fase {(course.notaUltimoColocadoF2 / 10).toFixed(2)}
               </p>
             )}
@@ -160,7 +160,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
                 ) : (
                   <XCircle className="h-3 w-3 text-destructive" />
                 )}
-                <p className="text-[10px] text-muted-foreground">A tua nota</p>
+                <p className="text-[11px] text-muted-foreground">A tua nota</p>
               </div>
               <p className={`text-xl font-bold tabular-nums leading-none ${
                 nearCutoff ? 'text-warning' :
@@ -171,7 +171,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             </div>
           ) : (
             <div className="text-right">
-              <p className="text-[10px] text-muted-foreground/60 mb-0.5">
+              <p className="text-[11px] text-muted-foreground/60 mb-0.5">
                 {course.vagas !== null ? `${course.vagas} vagas` : 'Vagas N/D'}
               </p>
             </div>

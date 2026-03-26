@@ -20,10 +20,14 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
   const [newExamGrade, setNewExamGrade] = useState('')
   const [newExamFase, setNewExamFase] = useState<'1' | '2'>('1')
   const [isPending, startTransition] = useTransition()
+  const [gradeError, setGradeError] = useState('')
 
   const handleAdd = () => {
     const grade = parseFloat(newExamGrade)
-    if (!newExamCode || isNaN(grade) || grade < 0 || grade > 20) return
+    if (!newExamCode) { setGradeError('Escolhe um exame.'); return }
+    if (isNaN(grade)) { setGradeError('Nota inválida.'); return }
+    if (grade < 0 || grade > 20) { setGradeError('A nota deve estar entre 0 e 20.'); return }
+    setGradeError('')
     startTransition(async () => {
       // Store on 0–200 scale to match calculateAdmissionGrade expectations
       await addExam({
@@ -59,7 +63,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
-                <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full ${
+                <span className={`text-[11px] font-bold px-1 py-0.5 rounded-full ${
                   (e.fase ?? 1) === 2
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                     : 'bg-navy/10 text-navy'
@@ -86,7 +90,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
       </div>
 
       <div className="mt-4 p-4 bg-card rounded-xl border-2 border-dashed flex flex-col sm:flex-row gap-3">
-        <Select value={newExamCode} onValueChange={setNewExamCode}>
+        <Select value={newExamCode} onValueChange={(v) => { setNewExamCode(v); setGradeError('') }}>
           <SelectTrigger className="h-10 flex-1">
             <SelectValue placeholder="Escolher Exame..." />
           </SelectTrigger>
@@ -115,8 +119,11 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
           step={0.1}
           className="h-10 w-full sm:w-32"
           value={newExamGrade}
-          onChange={(e) => setNewExamGrade(e.target.value)}
+          onChange={(e) => { setNewExamGrade(e.target.value); setGradeError('') }}
         />
+        {gradeError && (
+          <p className="text-[11px] text-destructive font-medium">{gradeError}</p>
+        )}
         <Button
           onClick={handleAdd}
           disabled={isPending || !newExamCode || !newExamGrade}

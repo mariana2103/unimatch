@@ -36,7 +36,7 @@ export function MobileTabBar() {
               key={tab.id}
               onClick={() => router.push(tab.path)}
               className={cn(
-                'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors',
+                'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors',
                 isActive ? 'text-navy' : 'text-muted-foreground',
               )}
             >

@@ -99,7 +99,7 @@ function EmptySlot({ index, onAdd }: { index: number; onAdd: () => void }) {
       onClick={onAdd}
       className="flex w-full items-center gap-2.5 rounded-xl border border-dashed border-border/50 px-3 py-2.5 text-left transition-colors hover:border-navy/40 hover:bg-muted/30"
     >
-      <div className="flex h-6 min-w-13 shrink-0 items-center justify-center rounded-md bg-muted/60 text-[9px] font-bold uppercase tracking-wide text-muted-foreground/60">
+      <div className="flex h-6 min-w-13 shrink-0 items-center justify-center rounded-md bg-muted/60 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60">
         {OPTION_LABELS[index]}
       </div>
       <div className="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground/50">
@@ -153,7 +153,7 @@ function CourseSlot({ course, index, total, profile, exams, onMoveUp, onMoveDown
       : 'border-border/50 bg-card',
     )}>
       {/* Slot badge */}
-      <div className="flex h-6 min-w-13 shrink-0 items-center justify-center rounded-md bg-navy/10 text-[9px] font-bold uppercase tracking-wide text-navy dark:bg-navy/20">
+      <div className="flex h-6 min-w-13 shrink-0 items-center justify-center rounded-md bg-navy/10 text-[11px] font-bold uppercase tracking-wide text-navy dark:bg-navy/20">
         {OPTION_LABELS[index]}
       </div>
 
@@ -167,24 +167,24 @@ function CourseSlot({ course, index, total, profile, exams, onMoveUp, onMoveDown
         {hasGrades && (
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
             {admissionGrade !== null && (
-              <span className="text-[10px] tabular-nums text-muted-foreground">
+              <span className="text-[11px] tabular-nums text-muted-foreground">
                 Nota: <span className="font-semibold text-foreground">{(admissionGrade / 10).toFixed(2)}</span>
               </span>
             )}
             {diff !== null && (
-              <span className={cn('text-[10px] tabular-nums font-semibold',
+              <span className={cn('text-[11px] tabular-nums font-semibold',
                 isAbove ? 'text-emerald' : isNear ? 'text-warning' : 'text-destructive'
               )}>
                 {diff >= 0 ? '+' : ''}{(diff / 10).toFixed(2)} val.
               </span>
             )}
             {!hasRequiredExams && (
-              <span className="text-[10px] text-warning flex items-center gap-0.5">
+              <span className="text-[11px] text-warning flex items-center gap-0.5">
                 <AlertCircle className="h-2.5 w-2.5" /> Exames em falta
               </span>
             )}
             {hasRequiredExams && !meetsMinimum && admissionGrade !== null && (
-              <span className="text-[10px] text-destructive flex items-center gap-0.5">
+              <span className="text-[11px] text-destructive flex items-center gap-0.5">
                 <XCircle className="h-2.5 w-2.5" /> Abaixo do mínimo
               </span>
             )}
@@ -195,7 +195,7 @@ function CourseSlot({ course, index, total, profile, exams, onMoveUp, onMoveDown
       {/* Right actions */}
       <div className="flex shrink-0 flex-col items-end gap-1">
         {cutoff !== null && (
-          <p className="text-[10px] tabular-nums text-muted-foreground">
+          <p className="text-[11px] tabular-nums text-muted-foreground">
             Ult. col.: <span className="font-medium">{(cutoff / 10).toFixed(2)}</span>
           </p>
         )}
@@ -205,7 +205,7 @@ function CourseSlot({ course, index, total, profile, exams, onMoveUp, onMoveDown
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
-            className="flex items-center gap-1 text-[10px] text-navy hover:underline"
+            className="flex items-center gap-1 text-[11px] text-navy hover:underline"
           >
             <ExternalLink className="h-3 w-3" />DGES
           </a>
@@ -529,7 +529,7 @@ export function SavedCoursesSection() {
           {/* Extra saved courses beyond 6 */}
           {extra.length > 0 && (
             <div className="mt-4">
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Outros guardados (fora da candidatura)
               </p>
               <div className="flex flex-col gap-2">
@@ -552,14 +552,14 @@ export function SavedCoursesSection() {
 
           {/* Legend */}
           {hasGrades && candidatura.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground/60">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground/60">
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald/70" /> Acima da nota de entrada (&gt;+0.5 val.)</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-warning/70" /> Próximo (0–0.5 val.)</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive/70" /> Abaixo da nota de entrada</span>
             </div>
           )}
 
-          <p className="mt-2 text-[10px] text-muted-foreground/40">
+          <p className="mt-2 text-[11px] text-muted-foreground/40">
             Notas do último colocado, 1ª fase 2025. Usa as setas para reordenar. A ordem é guardada localmente.
           </p>
 

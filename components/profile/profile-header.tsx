@@ -9,19 +9,27 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
+  const media = profile.media_final_calculada
+    ? (profile.media_final_calculada / 10).toFixed(1)
+    : null
+
   return (
-    <div className="mb-8 flex flex-col md:flex-row items-center gap-6 p-6 bg-navy rounded-2xl text-white shadow-xl">
-      <UserAvatar className="h-24 w-24 border-4 border-white/20" />
-      <div className="text-center md:text-left">
-        <h1 className="text-3xl font-bold">{profile.full_name}</h1>
-        <p className="text-white/70 text-sm">{profile.email}</p>
-        <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
-          <Badge className="bg-white/20 text-white hover:bg-white/30 border-none">
-            {profile.distrito_residencia || 'Distrito não definido'}
-          </Badge>
-          <Badge className="bg-white/20 text-white hover:bg-white/30 border-none">
-            Média: {profile.media_final_calculada || 0} pts
-          </Badge>
+    <div className="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-5 rounded-2xl border border-border/50 bg-card p-6">
+      <UserAvatar className="h-16 w-16 shrink-0" />
+      <div className="flex-1 text-center sm:text-left min-w-0">
+        <h1 className="text-xl font-bold text-foreground truncate">{profile.full_name}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{profile.email}</p>
+        <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
+          {profile.distrito_residencia && (
+            <Badge variant="secondary" className="text-xs font-medium">
+              {profile.distrito_residencia}
+            </Badge>
+          )}
+          {media && (
+            <Badge className="bg-navy/10 text-navy border-none text-xs font-semibold dark:bg-navy/20">
+              Nota candidatura: {media} val.
+            </Badge>
+          )}
         </div>
       </div>
     </div>

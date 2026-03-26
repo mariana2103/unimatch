@@ -93,42 +93,33 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                   : '—', highlight: false },
             ].map(s => (
               <div key={s.label} className="flex flex-col items-center gap-0.5 rounded-lg bg-muted/40 p-2.5">
-                <span className="text-center text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</span>
+                <span className="text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</span>
                 <span className={`text-lg font-bold tabular-nums ${s.highlight ? 'text-navy' : 'text-foreground'}`}>{s.value}</span>
               </div>
             ))}
           </div>
 
           {course.provasIngresso.length > 0 && (() => {
-            const conjuntoMap = new Map<number, typeof course.provasIngresso>()
-            for (const p of course.provasIngresso) {
-              const cid = p.conjunto_id ?? 1
-              if (!conjuntoMap.has(cid)) conjuntoMap.set(cid, [])
-              conjuntoMap.get(cid)!.push(p)
-            }
-            const groups = Array.from(conjuntoMap.values())
+            const uniqueCodes = [...new Set(course.provasIngresso.map(p => p.code))]
+            const displayed = uniqueCodes.slice(0, 4)
+            const remaining = uniqueCodes.length - displayed.length
             return (
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Provas de Ingresso</span>
-                {groups.map((exams, i) => (
-                  <div key={i} className="flex flex-col gap-1">
-                    {i > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="h-px flex-1 bg-border/40" />
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">ou</span>
-                        <div className="h-px flex-1 bg-border/40" />
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-1.5">
-                      {exams.map(p => (
-                        <Badge key={p.code} variant="secondary" className="gap-1.5 py-1 px-2.5 text-[10px]">
-                          <BookOpen className="h-3 w-3" />
-                          {p.code} · {p.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Provas de Ingresso</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {displayed.map(code => {
+                    const p = course.provasIngresso.find(x => x.code === code)
+                    return (
+                      <Badge key={code} variant="secondary" className="gap-1 py-0.5 px-2 text-[10px]">
+                        <BookOpen className="h-2.5 w-2.5" />
+                        {code}
+                      </Badge>
+                    )
+                  })}
+                  {remaining > 0 && (
+                    <Badge variant="outline" className="py-0.5 px-2 text-[10px]">+{remaining}</Badge>
+                  )}
+                </div>
               </div>
             )
           })()}
@@ -143,12 +134,12 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                     ? 'border-emerald/20 bg-emerald/[0.04]'
                     : 'border-destructive/20 bg-destructive/[0.04]'
             }`}>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nota de Candidatura</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Nota de Candidatura</span>
               {hasRequiredExams ? (
                 <div className="mt-1 flex items-center justify-between">
                   <div>
                     <div className="text-xl font-bold tabular-nums">{(userGrade / 10).toFixed(2)}</div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground">
                       ({profile.media_final_calculada.toFixed(1)} x {course.pesoSecundario !== null ? (course.pesoSecundario * 100).toFixed(0) : '?'}%) + (Exames x {course.pesoExame !== null ? (course.pesoExame * 100).toFixed(0) : '?'}%)
                     </div>
                   </div>
@@ -167,7 +158,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                   )}
                 </div>
               ) : (
-                <p className="mt-1 text-[10px] text-muted-foreground">Adiciona as provas necessárias no teu perfil.</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Adiciona as provas necessárias no teu perfil.</p>
               )}
             </div>
           )}
@@ -183,7 +174,7 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             const hasF2 = rows.some(h => h.nota_f2 !== null || h.vagas_f2 !== null)
             return (
               <div>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Histórico</p>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Histórico</p>
                 <div className="overflow-x-auto rounded-lg border border-border/40">
                   <table className="w-full text-[11px] tabular-nums">
                     <thead>

@@ -1,11 +1,11 @@
 
 
 export const DISTRICTS = [
-  'Aveiro', 'Beja', 'Braga', 'Braganca', 'Castelo Branco',
-  'Coimbra', 'Evora', 'Faro', 'Guarda', 'Leiria',
-  'Lisboa', 'Portalegre', 'Porto', 'Santarem',
-  'Setubal', 'Viana do Castelo', 'Vila Real', 'Viseu',
-  'Acores', 'Madeira'
+  'Aveiro', 'Beja', 'Braga', 'Bragança', 'Castelo Branco',
+  'Coimbra', 'Évora', 'Faro', 'Guarda', 'Leiria',
+  'Lisboa', 'Portalegre', 'Porto', 'Santarém',
+  'Setúbal', 'Viana do Castelo', 'Vila Real', 'Viseu',
+  'Açores', 'Madeira'
 ]
 
 export const CONTINGENTES = [

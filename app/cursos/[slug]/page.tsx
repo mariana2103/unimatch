@@ -219,7 +219,7 @@ export default async function CursoPage({ params }: { params: { slug: string } }
                   className="mt-1 flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium text-muted-foreground hover:border-navy/40 hover:text-navy transition-colors"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Ver no DGES
+                  Ver na DGES
                 </a>
               )}
             </div>

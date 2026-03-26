@@ -43,3 +43,10 @@ next-env.d.ts
 
 /dados_dges/
 .agents/
+app/cursos/\[slug]/page.tsx
+MARKETING.md
+.gitignore
+.junie/
+skills-lock.json
+.claude/
+.windsurf/

@@ -100,6 +100,25 @@ const DEFAULT_FILTERS: Filters = {
 
 const WITHIN_RANGE_PTS = 20 // 0-200 scale
 
+function relevanceScore(course: CourseUI, q: string): number {
+  const nome = course.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const inst = course.instituicao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const area = course.area.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const dist = course.distrito.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  let score = 0
+  // nome matches: exact start > whole word > substring
+  if (nome.startsWith(q)) score += 100
+  else if (nome.includes(` ${q}`) || nome.includes(`(${q}`)) score += 60
+  else if (nome.includes(q)) score += 30
+  // instituicao matches
+  if (inst.startsWith(q)) score += 20
+  else if (inst.includes(q)) score += 10
+  // area / distrito
+  if (area.includes(q)) score += 5
+  if (dist.includes(q)) score += 3
+  return score
+}
+
 const SORT_LABELS: Record<SortOrder, { label: string; icon: typeof ArrowUpDown }> = {
   none: { label: 'Ordenar', icon: ArrowUpDown },
   asc: { label: 'Nota ↑', icon: ArrowUp },
@@ -213,8 +232,12 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
     const f = deferredFilters
     const result = courses.filter(c => {
       if (f.search) {
-        const q = f.search.toLowerCase()
-        if (!c.nome.toLowerCase().includes(q) && !c.instituicao.toLowerCase().includes(q)) return false
+        const q = f.search.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const normNome = c.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const normInst = c.instituicao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const normArea = c.area.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const normDist = c.distrito.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        if (!normNome.includes(q) && !normInst.includes(q) && !normArea.includes(q) && !normDist.includes(q)) return false
       }
       if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
       if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
@@ -261,7 +284,17 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
       return true
     })
 
-    if (sortOrder === 'asc') {
+    // Relevance scoring when search is active
+    if (deferredFilters.search) {
+      const q = deferredFilters.search.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      result.sort((a, b) => {
+        const scoreA = relevanceScore(a, q)
+        const scoreB = relevanceScore(b, q)
+        if (scoreB !== scoreA) return scoreB - scoreA
+        // tiebreak: higher nota first
+        return (b.notaUltimoColocado ?? 0) - (a.notaUltimoColocado ?? 0)
+      })
+    } else if (sortOrder === 'asc') {
       result.sort((a, b) => (a.notaUltimoColocado ?? 0) - (b.notaUltimoColocado ?? 0))
     } else if (sortOrder === 'desc') {
       result.sort((a, b) => (b.notaUltimoColocado ?? 0) - (a.notaUltimoColocado ?? 0))

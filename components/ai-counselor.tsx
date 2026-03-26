@@ -580,7 +580,8 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                   onChange={e => setInputValue(e.target.value)}
                   placeholder={currentQuestion.placeholder || 'Escreve a tua resposta...'}
                   disabled={isAnalyzing}
-                  className="w-full rounded-full border bg-muted/50 py-2.5 pl-4 pr-12 text-xs focus:outline-none focus:ring-2 focus:ring-navy/20"
+                  style={{ fontSize: '16px' }}
+                  className="w-full rounded-full border bg-muted/50 py-2.5 pl-4 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-navy/20"
                 />
                 <Button
                   type="submit"

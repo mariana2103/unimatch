@@ -17,8 +17,16 @@ export async function GET(req: NextRequest) {
   const area = searchParams.get('area') ?? ''
   const district = searchParams.get('district') ?? ''
   const tipo = searchParams.get('tipo') ?? ''
+  const exam = searchParams.get('exam') ?? ''
   const page = parseInt(searchParams.get('page') ?? '0', 10)
   const limit = parseInt(searchParams.get('limit') ?? '48', 10)
+
+  // Exam code equivalences (DGES treats these as the same for admission)
+  const EXAM_EQUIVALENCES: Record<string, string[]> = {
+    '16': ['16', '19'], // Matemática → also Matemática A
+    '17': ['17', '19'], // MACS → also Matemática A
+    '19': ['16', '17', '19'], // Matemática A → Matemática, MACS, Matemática A
+  }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
@@ -44,6 +52,10 @@ export async function GET(req: NextRequest) {
   if (area) query = query.eq('area', area)
   if (district) query = query.eq('distrito', district)
   if (tipo) query = query.eq('tipo', tipo)
+
+  // Fetch more to account for exam post-filtering
+  const fetchLimit = exam ? 400 : limit
+  query = query.limit(fetchLimit)
 
   query = query
     .order('nome', { ascending: true })
@@ -87,5 +99,17 @@ export async function GET(req: NextRequest) {
     link_oficial: row.link_oficial,
   }))
 
-  return NextResponse.json({ courses, total: count ?? 0 })
+  // Apply exam filter with equivalences
+  let filteredCourses = courses
+  if (exam) {
+    const eqCodes = EXAM_EQUIVALENCES[exam] ?? [exam]
+    filteredCourses = courses.filter(c =>
+      c.provasIngresso.some((p: { code: string }) => eqCodes.includes(p.code))
+    )
+  }
+
+  const total = exam ? filteredCourses.length : (count ?? 0)
+  const paginatedCourses = filteredCourses.slice(0, limit)
+
+  return NextResponse.json({ courses: paginatedCourses, total })
 }

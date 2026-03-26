@@ -231,6 +231,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
     if (deferredFilters.areas.length > 0) params.set('area', deferredFilters.areas[0])
     if (deferredFilters.districts.length > 0) params.set('district', deferredFilters.districts[0])
     if (deferredFilters.tipo) params.set('tipo', deferredFilters.tipo)
+    if (deferredFilters.provasIngresso.length > 0) params.set('exam', deferredFilters.provasIngresso[0])
 
     fetch(`/api/courses?${params.toString()}`)
       .then(r => r.json())
@@ -245,7 +246,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
       })
 
     return () => { cancelled = true }
-  }, [deferredSearch, deferredFilters.areas, deferredFilters.districts, deferredFilters.tipo])
+  }, [deferredSearch, deferredFilters.areas, deferredFilters.districts, deferredFilters.tipo, deferredFilters.provasIngresso])
 
   const userExamCodes = useMemo(() => new Set(exams.map(e => e.exam_code)), [exams])
 
@@ -279,19 +280,6 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
         if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
         if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
         if (f.tipo && c.tipo !== f.tipo) return false
-        if (f.provasIngresso.length > 0) {
-          const uniqueCodes = [...new Set(c.provasIngresso.map(p => p.code))]
-          if (f.provasMode === 'any') {
-            if (!f.provasIngresso.some(p => uniqueCodes.includes(p))) return false
-          } else if (f.provasMode === 'all') {
-            if (!f.provasIngresso.every(p => uniqueCodes.includes(p))) return false
-          } else {
-            const filterSet = new Set(f.provasIngresso)
-            const codeSet   = new Set(uniqueCodes)
-            if (filterSet.size !== codeSet.size) return false
-            if (![...filterSet].every(p => codeSet.has(p))) return false
-          }
-        }
         if (f.onlyQualified) {
           const conjuntos = new Map<number, string[]>()
           for (const p of c.provasIngresso) {
@@ -315,6 +303,32 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
           if (c.notaUltimoColocado - userGrade > WITHIN_RANGE_PTS) return false
         }
         return true
+      })
+    }
+
+    // Apply exam filter on top of search results (handles equivalences server-side)
+    if (f.provasIngresso.length > 0) {
+      const EXAM_EQUIV: Record<string, string[]> = {
+        '16': ['16', '19'],
+        '17': ['17', '19'],
+        '19': ['16', '17', '19'],
+      }
+      result = result.filter(c => {
+        const courseCodes = c.provasIngresso.map(p => p.code)
+        if (f.provasMode === 'any') {
+          return f.provasIngresso.some(code => {
+            const eq = EXAM_EQUIV[code] ?? [code]
+            return courseCodes.some(cc => eq.includes(cc))
+          })
+        } else if (f.provasMode === 'all') {
+          return f.provasIngresso.every(code => {
+            const eq = EXAM_EQUIV[code] ?? [code]
+            return courseCodes.some(cc => eq.includes(cc))
+          })
+        } else {
+          const eqCodes = f.provasIngresso.flatMap(code => EXAM_EQUIV[code] ?? [code])
+          return eqCodes.length === courseCodes.length && eqCodes.every(ec => courseCodes.includes(ec))
+        }
       })
     }
 

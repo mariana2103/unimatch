@@ -97,13 +97,13 @@ function EmptySlot({ index, onAdd }: { index: number; onAdd: () => void }) {
   return (
     <button
       onClick={onAdd}
-      className="flex w-full items-center gap-2.5 rounded-xl border border-dashed border-border/50 px-3 py-2.5 text-left transition-colors hover:border-navy/40 hover:bg-muted/30"
+      className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border/50 px-4 py-3.5 text-left transition-colors hover:border-navy/40 hover:bg-muted/30 active:scale-[0.99]"
     >
-      <div className="flex h-6 min-w-13 shrink-0 items-center justify-center rounded-md bg-muted/60 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60">
+      <div className="flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded-md bg-muted/60 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60">
         {OPTION_LABELS[index]}
       </div>
-      <div className="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground/50">
-        <Plus className="h-3.5 w-3.5" />
+      <div className="flex flex-1 items-center gap-1.5 text-sm text-muted-foreground/50">
+        <Plus className="h-4 w-4" />
         Adicionar curso
       </div>
     </button>
@@ -210,27 +210,27 @@ function CourseSlot({ course, index, total, profile, exams, onMoveUp, onMoveDown
             <ExternalLink className="h-3 w-3" />DGES
           </a>
         )}
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           <button
             onClick={onMoveUp}
             disabled={index === 0}
-            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-25 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 disabled:opacity-25 transition-colors active:scale-90"
           >
             <ChevronUp className="h-4 w-4" />
           </button>
           <button
             onClick={onMoveDown}
             disabled={index === total - 1}
-            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-25 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 disabled:opacity-25 transition-colors active:scale-90"
           >
             <ChevronDown className="h-4 w-4" />
           </button>
           <button
             onClick={onRemove}
-            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors active:scale-90"
             aria-label="Remover"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>

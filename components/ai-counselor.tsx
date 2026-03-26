@@ -552,7 +552,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                   <button
                     key={chip}
                     onClick={() => submitAnswer(chip)}
-                    className="rounded-full border border-navy/20 bg-card px-2.5 py-1 text-[10px] font-medium text-navy hover:bg-navy hover:text-white transition-colors shadow-sm"
+                    className="rounded-full border border-navy/20 bg-card px-4 py-2.5 text-xs font-medium text-navy hover:bg-navy hover:text-white transition-colors shadow-sm active:scale-95"
                   >
                     {chip}
                   </button>
@@ -667,7 +667,7 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
                     <button
                       key={s}
                       onClick={() => setChatInput(s)}
-                      className="text-left rounded-xl border bg-card px-3 py-2 text-[11px] text-navy hover:bg-navy/5 transition-colors shadow-sm"
+                      className="text-left rounded-xl border bg-card px-4 py-3 text-xs text-navy hover:bg-navy/5 transition-colors shadow-sm active:scale-[0.98]"
                     >
                       {s}
                     </button>

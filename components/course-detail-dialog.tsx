@@ -141,28 +141,27 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
             </div>
           )}
 
-          {/* Provas de ingresso — simple text rows */}
+          {/* Provas de ingresso — compact 2-column grid */}
           {course.provasIngresso.length > 0 && (() => {
-            const uniqueCodes = [...new Set(course.provasIngresso.map(p => p.code))]
-            const displayed = uniqueCodes.slice(0, 5)
-            const remaining = uniqueCodes.length - displayed.length
+            const uniqueExams = [...new Map(course.provasIngresso.map(p => [p.code, p])).values()]
             return (
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Provas de Ingresso</p>
-                <div className="flex flex-col gap-1.5">
-                  {displayed.map(code => {
-                    const p = course.provasIngresso.find(x => x.code === code)
-                    return (
-                      <div key={code} className="flex items-center gap-2.5 text-sm">
-                        <BookOpen className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
-                        <span className="font-mono text-[11px] text-navy/70 w-5 shrink-0">{code}</span>
-                        <span className="text-foreground">{p?.name ?? code}</span>
-                      </div>
-                    )
-                  })}
-                  {remaining > 0 && (
-                    <p className="text-[11px] text-muted-foreground/60 pl-8.5">+{remaining} mais</p>
-                  )}
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
+                  Provas de Ingresso
+                  <span className="ml-1.5 font-normal normal-case tracking-normal text-muted-foreground/60">
+                    ({uniqueExams.length})
+                  </span>
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {uniqueExams.map(exam => (
+                    <div
+                      key={exam.code}
+                      className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/30 px-2.5 py-1.5"
+                    >
+                      <span className="font-mono text-[11px] font-bold text-navy shrink-0">{exam.code}</span>
+                      <span className="text-[11px] text-foreground leading-tight truncate">{exam.name}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )

@@ -92,12 +92,12 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             </div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.instituicao}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 pt-0.5" onClick={e => e.stopPropagation()}>
+          <div className="flex shrink-0 items-center gap-1 pt-0.5" onClick={e => e.stopPropagation()}>
             {isLoggedIn && (
               <button
                 onClick={() => toggleFavorite(course.id)}
                 aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                className="transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-muted active:scale-90"
               >
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-destructive text-destructive' : 'text-muted-foreground/25 hover:text-destructive/60'}`} />
               </button>
@@ -105,14 +105,14 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
             <button
               onClick={() => toggleComparison(course.id)}
               aria-label={`Comparar ${course.nome}`}
-              className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+              className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
                 isComparing
                   ? 'border-navy/40 bg-navy/10 text-navy'
                   : 'border-border/50 text-muted-foreground/50 hover:border-navy/30 hover:text-navy/70'
               }`}
             >
-              <GitCompareArrows className="h-3 w-3" />
-              Comparar
+              <GitCompareArrows className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Comparar</span>
             </button>
           </div>
         </div>
@@ -125,7 +125,7 @@ export function CourseCard({ course, onViewDetails }: CourseCardProps) {
               .map(p => (
                 <span
                   key={p.code}
-                  className="rounded-md bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                  className="rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
                 >
                   {abbrevExam(p.code, p.name)}
                 </span>

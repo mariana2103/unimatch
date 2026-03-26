@@ -69,7 +69,7 @@ function EventCard({ event, starred, onToggle }: EventCardProps) {
       {/* Star button */}
       <button
         onClick={e => { e.stopPropagation(); onToggle() }}
-        className={`absolute right-3.5 top-3.5 transition-colors ${
+        className={`absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full transition-colors active:scale-90 ${
           starred ? 'text-warning hover:text-warning/80' : 'text-muted-foreground/30 hover:text-warning'
         }`}
         aria-label={starred ? 'Remover estrela' : 'Adicionar estrela'}

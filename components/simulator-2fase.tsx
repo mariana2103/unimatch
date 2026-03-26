@@ -551,18 +551,18 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
             <div className="mt-3 flex items-center justify-between">
               <button
                 onClick={() => setSimMedia(v => Math.max(0, v - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:bg-muted"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:bg-muted"
               >
-                <span className="text-base leading-none">−</span>
+                <span className="text-xl leading-none">−</span>
               </button>
               <span className="text-2xl font-bold tabular-nums text-foreground">
                 {(simMedia / 10).toFixed(1)}
               </span>
               <button
                 onClick={() => setSimMedia(v => Math.min(200, v + 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:bg-muted"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:bg-muted"
               >
-                <span className="text-base leading-none">+</span>
+                <span className="text-xl leading-none">+</span>
               </button>
             </div>
           </div>

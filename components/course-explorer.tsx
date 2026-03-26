@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useDeferredValue } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronDown, Lock } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronDown, Lock, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/user-context'
 import { CourseFilters, type Filters } from './course-filters'
@@ -134,13 +134,20 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   const { isLoggedIn, profile, exams, comparisonList } = useUser()
   const [courses, setCourses] = useState<CourseUI[]>([])
   const [loading, setLoading] = useState(true)
-  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false)
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [sortOrder, setSortOrder] = useState<SortOrder>('none')
   const [currentPage, setCurrentPage] = useState(0)
 
-  // Defer the filter state so typing in search doesn't block the UI
+  // Server-side search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<CourseUI[] | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchTotal, setSearchTotal] = useState(0)
+  const [searchPage, setSearchPage] = useState(0)
+
+  // Defer search so API call is debounced
+  const deferredSearch = useDeferredValue(searchQuery)
   const deferredFilters = useDeferredValue(filters)
 
   // Reset to page 0 when filters change
@@ -149,6 +156,7 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
   }, [deferredFilters, sortOrder])
 
   // Fetch total DB count immediately so the hero shows it before all courses load
+  // Fetch total count
   useEffect(() => {
     createClient()
       .from('courses')
@@ -156,22 +164,23 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
       .then(({ count }) => { if (count != null) setTotalCount(count) })
   }, [])
 
+  // Load all courses in background (for simulator / AI recommendations)
   useEffect(() => {
     let cancelled = false
+    const PAGE = 200
+    const SELECT = `
+      id, nome, instituicao_nome, distrito, area, tipo, vagas,
+      nota_ultimo_colocado, nota_ultimo_colocado_f2,
+      peso_secundario, peso_exames,
+      nota_minima_p_ingresso, nota_minima_prova,
+      link_oficial, history,
+      course_requirements(exam_code, weight, conjunto_id)
+    `
+    let from = 0
+    let isFirst = true
+
     const fetchCourses = async () => {
       const supabase = createClient()
-      const PAGE = 200  // Reduced to avoid rate limits
-      const SELECT = `
-        id, nome, instituicao_nome, distrito, area, tipo, vagas,
-        nota_ultimo_colocado, nota_ultimo_colocado_f2,
-        peso_secundario, peso_exames,
-        nota_minima_p_ingresso, nota_minima_prova,
-        link_oficial, history,
-        course_requirements(exam_code, weight, conjunto_id)
-      `
-      let from = 0
-      let isFirst = true
-
       while (!cancelled) {
         const { data, error } = await supabase
           .from('courses')
@@ -185,7 +194,6 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
         const batch = data.map((row: any) => transformCourse(row, row.course_requirements ?? []))
 
         if (isFirst) {
-          // Show results immediately on first batch — page feels instant
           setCourses(batch)
           onCoursesLoaded?.(batch)
           setLoading(false)
@@ -201,12 +209,43 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
         if (data.length < PAGE) break
         from += PAGE
       }
-
       if (isFirst && !cancelled) setLoading(false)
     }
     fetchCourses()
     return () => { cancelled = true }
   }, [])
+
+  // Server-side search — fires when deferredSearch changes (debounced by useDeferredValue)
+  useEffect(() => {
+    if (deferredSearch.length < 2) {
+      setSearchResults(null)
+      setIsSearching(false)
+      return
+    }
+
+    let cancelled = false
+    setIsSearching(true)
+    setSearchPage(0)
+
+    const params = new URLSearchParams({ q: deferredSearch })
+    if (deferredFilters.areas.length > 0) params.set('area', deferredFilters.areas[0])
+    if (deferredFilters.districts.length > 0) params.set('district', deferredFilters.districts[0])
+    if (deferredFilters.tipo) params.set('tipo', deferredFilters.tipo)
+
+    fetch(`/api/courses?${params.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return
+        setSearchResults(data.courses ?? [])
+        setSearchTotal(data.total ?? 0)
+        setIsSearching(false)
+      })
+      .catch(() => {
+        if (!cancelled) setIsSearching(false)
+      })
+
+    return () => { cancelled = true }
+  }, [deferredSearch, deferredFilters.areas, deferredFilters.districts, deferredFilters.tipo])
 
   const userExamCodes = useMemo(() => new Set(exams.map(e => e.exam_code)), [exams])
 
@@ -230,78 +269,64 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
 
   const filtered = useMemo(() => {
     const f = deferredFilters
-    const result = courses.filter(c => {
-      if (f.search) {
-        const q = f.search.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        const normNome = c.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        const normInst = c.instituicao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        const normArea = c.area.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        const normDist = c.distrito.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        if (!normNome.includes(q) && !normInst.includes(q) && !normArea.includes(q) && !normDist.includes(q)) return false
-      }
-      if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
-      if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
-      if (f.tipo && c.tipo !== f.tipo) return false
-      if (f.provasIngresso.length > 0) {
-        const uniqueCodes = [...new Set(c.provasIngresso.map(p => p.code))]
-        if (f.provasMode === 'any') {
-          // Course has at least one of the selected provas
-          if (!f.provasIngresso.some(p => uniqueCodes.includes(p))) return false
-        } else if (f.provasMode === 'all') {
-          // Course requires all selected provas (possibly others too)
-          if (!f.provasIngresso.every(p => uniqueCodes.includes(p))) return false
-        } else {
-          // 'exact' — course requires exactly these provas, nothing more
-          const filterSet = new Set(f.provasIngresso)
-          const codeSet   = new Set(uniqueCodes)
-          if (filterSet.size !== codeSet.size) return false
-          if (![...filterSet].every(p => codeSet.has(p))) return false
-        }
-      }
-      if (f.onlyQualified) {
-        // Group provas by conjunto_id — user needs all provas in at least one conjunto
-        const conjuntos = new Map<number, string[]>()
-        for (const p of c.provasIngresso) {
-          const cid = p.conjunto_id ?? 1
-          if (!conjuntos.has(cid)) conjuntos.set(cid, [])
-          conjuntos.get(cid)!.push(p.code)
-        }
-        if (conjuntos.size === 0) {
-          // No provas required — anyone qualifies
-        } else {
-          const qualifies = [...conjuntos.values()].some(
-            codes => codes.every(code => userExamCodes.has(code)),
-          )
-          if (!qualifies) return false
-        }
-      }
-      if (f.withinRange) {
-        const userGrade = userGradeMap.get(c.id)
-        if (userGrade === undefined) return false
-        if (c.notaUltimoColocado === null) return false
-        if (c.notaUltimoColocado - userGrade > WITHIN_RANGE_PTS) return false
-      }
-      return true
-    })
+    let result: CourseUI[]
 
-    // Relevance scoring when search is active
-    if (deferredFilters.search) {
-      const q = deferredFilters.search.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      result.sort((a, b) => {
-        const scoreA = relevanceScore(a, q)
-        const scoreB = relevanceScore(b, q)
-        if (scoreB !== scoreA) return scoreB - scoreA
-        // tiebreak: higher nota first
-        return (b.notaUltimoColocado ?? 0) - (a.notaUltimoColocado ?? 0)
+    // Server-side search results when search query is active
+    if (searchResults !== null && deferredSearch.length >= 2) {
+      result = [...searchResults]
+    } else {
+      result = courses.filter(c => {
+        if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
+        if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
+        if (f.tipo && c.tipo !== f.tipo) return false
+        if (f.provasIngresso.length > 0) {
+          const uniqueCodes = [...new Set(c.provasIngresso.map(p => p.code))]
+          if (f.provasMode === 'any') {
+            if (!f.provasIngresso.some(p => uniqueCodes.includes(p))) return false
+          } else if (f.provasMode === 'all') {
+            if (!f.provasIngresso.every(p => uniqueCodes.includes(p))) return false
+          } else {
+            const filterSet = new Set(f.provasIngresso)
+            const codeSet   = new Set(uniqueCodes)
+            if (filterSet.size !== codeSet.size) return false
+            if (![...filterSet].every(p => codeSet.has(p))) return false
+          }
+        }
+        if (f.onlyQualified) {
+          const conjuntos = new Map<number, string[]>()
+          for (const p of c.provasIngresso) {
+            const cid = p.conjunto_id ?? 1
+            if (!conjuntos.has(cid)) conjuntos.set(cid, [])
+            conjuntos.get(cid)!.push(p.code)
+          }
+          if (conjuntos.size === 0) {
+            // No provas required — anyone qualifies
+          } else {
+            const qualifies = [...conjuntos.values()].some(
+              codes => codes.every(code => userExamCodes.has(code)),
+            )
+            if (!qualifies) return false
+          }
+        }
+        if (f.withinRange) {
+          const userGrade = userGradeMap.get(c.id)
+          if (userGrade === undefined) return false
+          if (c.notaUltimoColocado === null) return false
+          if (c.notaUltimoColocado - userGrade > WITHIN_RANGE_PTS) return false
+        }
+        return true
       })
-    } else if (sortOrder === 'asc') {
+    }
+
+    // Sort
+    if (sortOrder === 'asc') {
       result.sort((a, b) => (a.notaUltimoColocado ?? 0) - (b.notaUltimoColocado ?? 0))
     } else if (sortOrder === 'desc') {
       result.sort((a, b) => (b.notaUltimoColocado ?? 0) - (a.notaUltimoColocado ?? 0))
     }
 
     return result
-  }, [courses, deferredFilters, userExamCodes, userGradeMap, sortOrder])
+  }, [courses, searchResults, deferredSearch, deferredFilters, userExamCodes, userGradeMap, sortOrder])
 
   // Split públicas / privadas — privadas go in their own collapsible section
   const showingAll = deferredFilters.tipo === ''
@@ -389,6 +414,8 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
         onFiltersChange={setFilters}
         isLoggedIn={isLoggedIn}
         hasProfile={hasProfile}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {comparisonList.length > 0 && (
@@ -397,15 +424,24 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
 
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
-          {mainCourses.length} {deferredFilters.tipo === 'privada' ? 'privad' : 'público'}
-          {mainCourses.length === 1 ? (deferredFilters.tipo === 'privada' ? 'a' : 'o') : (deferredFilters.tipo === 'privada' ? 'as' : 'os')}
-          {showingAll && sideCourses.length > 0 && (
-            <span className="ml-1 text-muted-foreground/60">+ {sideCourses.length} privad{sideCourses.length === 1 ? 'a' : 'as'}</span>
-          )}
-          {totalPages > 1 && (
-            <span className="ml-1.5 text-muted-foreground/60">
-              · pág. {safePage + 1}/{totalPages}
+          {isSearching ? (
+            <span className="flex items-center gap-1.5">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              A pesquisar...
             </span>
+          ) : searchQuery.length >= 2 ? (
+            `${searchTotal} resultado${searchTotal !== 1 ? 's' : ''} para "${searchQuery}"`
+          ) : (
+            <>
+              {mainCourses.length} {deferredFilters.tipo === 'privada' ? 'privad' : 'público'}
+              {mainCourses.length === 1 ? (deferredFilters.tipo === 'privada' ? 'a' : 'o') : (deferredFilters.tipo === 'privada' ? 'as' : 'os')}
+              {showingAll && sideCourses.length > 0 && (
+                <span className="ml-1 text-muted-foreground/60">+ {sideCourses.length} privad{sideCourses.length === 1 ? 'a' : 'as'}</span>
+              )}
+              {totalPages > 1 && (
+                <span className="ml-1.5 text-muted-foreground/60">pág. {safePage + 1}/{totalPages}</span>
+              )}
+            </>
           )}
         </p>
         <button

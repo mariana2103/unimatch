@@ -23,6 +23,8 @@ interface CourseFiltersProps {
   onFiltersChange: (filters: Filters) => void
   isLoggedIn: boolean
   hasProfile: boolean
+  searchQuery: string
+  onSearchChange: (q: string) => void
 }
 
 function MultiSelectPopover({
@@ -109,9 +111,15 @@ function SmartFilterButton({
   )
 }
 
-export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile }: CourseFiltersProps) {
+export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile, searchQuery, onSearchChange }: CourseFiltersProps) {
   const update = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     onFiltersChange({ ...filters, [key]: value })
+
+  // Keep filters.search in sync so the search chip shows correctly
+  const handleSearchChange = (q: string) => {
+    onSearchChange(q)
+    if (filters.search !== q) update('search', q)
+  }
 
   const toggle = (key: 'areas' | 'districts' | 'provasIngresso', value: string) => {
     const arr = filters[key]
@@ -165,13 +173,13 @@ export function CourseFilters({ filters, onFiltersChange, isLoggedIn, hasProfile
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
           <Input
             placeholder="Pesquisar curso ou universidade..."
-            value={filters.search}
-            onChange={e => update('search', e.target.value)}
+            value={searchQuery}
+            onChange={e => handleSearchChange(e.target.value)}
             className="h-11 pl-10 rounded-xl border-border/60 bg-muted/40 text-sm focus:bg-card transition-colors w-full"
           />
-          {filters.search && (
+          {searchQuery && (
             <button
-              onClick={() => update('search', '')}
+              onClick={() => handleSearchChange('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />

@@ -309,8 +309,8 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
     // Apply exam filter on top of search results (handles equivalences server-side)
     if (f.provasIngresso.length > 0) {
       const EXAM_EQUIV: Record<string, string[]> = {
-        '16': ['16', '19'],
-        '17': ['17', '19'],
+        '16': ['16', '17'],
+        '17': ['17'],
         '19': ['16', '17', '19'],
       }
       result = result.filter(c => {

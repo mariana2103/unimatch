@@ -21,11 +21,12 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get('page') ?? '0', 10)
   const limit = parseInt(searchParams.get('limit') ?? '48', 10)
 
-  // Exam code equivalences (DGES treats these as the same for admission)
+  // Exam code equivalences — directional (stronger exam can substitute weaker, not vice versa)
+  // 19 (Matemática A) > 16 (Matemática/Matemática B) > 17 (MACS)
   const EXAM_EQUIVALENCES: Record<string, string[]> = {
-    '16': ['16', '19'], // Matemática → also Matemática A
-    '17': ['17', '19'], // MACS → also Matemática A
-    '19': ['16', '17', '19'], // Matemática A → Matemática, MACS, Matemática A
+    '16': ['16', '17'], // Matemática B → serves 16 or 17, but NOT 19
+    '17': ['17'],       // MACS → only serves 17
+    '19': ['16', '17', '19'], // Matemática A → serves 19, 16, or 17
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)

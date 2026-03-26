@@ -28,34 +28,35 @@ const SELECT = `
 // ─── Fetch all courses (used both for params and for lookup) ──────────────────
 
 async function getAllCourses() {
-  const sb = supabase()
-  const PAGE = 500
-  let from = 0
-  const all: any[] = []
-  while (true) {
-    const { data, error } = await sb
-      .from('courses')
-      .select(SELECT)
-      .order('nome', { ascending: true })
-      .range(from, from + PAGE - 1)
-    if (error || !data || data.length === 0) break
-    all.push(...data)
-    if (data.length < PAGE) break
-    from += PAGE
+  try {
+    const sb = supabase()
+    const PAGE = 500
+    let from = 0
+    const all: any[] = []
+    while (true) {
+      const { data, error } = await sb
+        .from('courses')
+        .select(SELECT)
+        .order('nome', { ascending: true })
+        .range(from, from + PAGE - 1)
+      if (error || !data || data.length === 0) break
+      all.push(...data)
+      if (data.length < PAGE) break
+      from += PAGE
+    }
+    return all
+  } catch {
+    return []
   }
-  return all
 }
 
 // ─── Allow on-demand rendering for any slug not pre-built ─────────────────────
 export const dynamicParams = true
 
-// ─── Static params — pre-render every course page at build time ───────────────
+// ─── Static params — pre-render nothing at build time (rely on ISR) ───────────
 
 export async function generateStaticParams() {
-  const courses = await getAllCourses()
-  return courses.map(c => ({
-    slug: toCourseSlug(c.nome, c.instituicao_nome),
-  }))
+  return []
 }
 
 // ─── Per-page metadata ────────────────────────────────────────────────────────

@@ -16,9 +16,9 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="text-base font-semibold mb-2">1. Quem somos</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            O UniMatch (<strong>unimatch.pt</strong>) é um projeto pessoal desenvolvido por Mariana Cabral Meida, estudante portuguesa,
+            O UniMatch (<strong>unimatch.pt</strong>) é um projeto pessoal desenvolvido por uma estudante universitáriaportuguesa,
             para ajudar candidatos ao ensino superior a explorar cursos e simular candidaturas.
-            Para questões de privacidade: <a href="mailto:marianacabralmeida@gmail.com" className="text-navy hover:underline">marianacabralmeida@gmail.com</a>
+            Para questões de privacidade: <a href="mailto:unimatch@gmail.com" className="text-navy hover:underline">unimatch@gmail.com</a>
           </p>
         </section>
 
@@ -66,7 +66,7 @@ export default function PrivacidadePage() {
           </ul>
           <p className="text-sm text-muted-foreground mt-2">
             Para exercer qualquer destes direitos, envia um e-mail para{' '}
-            <a href="mailto:marianacabralmeida@gmail.com" className="text-navy hover:underline">marianacabralmeida@gmail.com</a>.
+            <a href="mailto:unimatch@gmail.com" className="text-navy hover:underline">marianacabralmeida@gmail.com</a>.
             Responderemos no prazo de 30 dias.
           </p>
           <p className="text-sm text-muted-foreground mt-2">

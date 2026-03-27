@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
   if (!serviceRoleKey) {
     return Response.json(
-      { error: 'Account deletion not yet configured. Contact marianacabralmeida@gmail.com to delete your account.' },
+      { error: 'Account deletion not yet configured. Contact unimatch@gmail.com to delete your account.' },
       { status: 503 },
     )
   }

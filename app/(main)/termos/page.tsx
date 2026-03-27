@@ -106,7 +106,7 @@ export default function TermosPage() {
           <h2 className="text-base font-semibold mb-2">11. Contacto</h2>
           <p className="text-sm text-muted-foreground">
             Para questões sobre estes termos:{' '}
-            <a href="mailto:marianacabralmeida@gmail.com" className="text-navy hover:underline">marianacabralmeida@gmail.com</a>
+            <a href="mailto:unimatch@gmail.com" className="text-navy hover:underline">unimatch@gmail.com</a>
           </p>
         </section>
 

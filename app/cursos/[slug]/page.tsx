@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { MapPin, BookOpen, Users, ArrowLeft, ExternalLink, TrendingUp } from 'lucide-react'
 import { toCourseSlug } from '@/lib/course-slug'
 import { EXAM_SUBJECTS } from '@/lib/constants'
 
@@ -127,6 +125,9 @@ export default async function CursoPage({ params }: { params: { slug: string } }
   const courses = await getAllCourses()
   const row = courses.find(c => toCourseSlug(c.nome, c.instituicao_nome) === params.slug)
   if (!row) notFound()
+
+  // Redirect users to the main app — this page exists for SEO/OG link previews only
+  redirect('/')
 
   const corte1 = row.nota_ultimo_colocado != null ? (row.nota_ultimo_colocado * 10).toFixed(2) : null
   const corte2 = row.nota_ultimo_colocado_f2 != null ? (row.nota_ultimo_colocado_f2 * 10).toFixed(2) : null

@@ -229,12 +229,12 @@ export function CourseDetailDialog({ course, onClose }: CourseDetailDialogProps)
                         <tr key={h.year} className="border-b border-border/20 last:border-0 hover:bg-muted/20">
                           <td className="py-1.5 pl-3 font-medium text-foreground">{h.year}</td>
                           <td className="py-1.5 pr-3 text-right font-semibold text-navy">
-                            {h.nota_f1 !== null ? (h.nota_f1 * 10).toFixed(1) : '—'}
+                            {h.nota_f1 !== null ? (h.nota_f1 / 10).toFixed(1) : '—'}
                           </td>
                           <td className="py-1.5 pr-3 text-right text-muted-foreground">{h.vagas_f1 ?? '—'}</td>
                           {hasF2 && (
                             <td className="py-1.5 pr-3 text-right text-muted-foreground">
-                              {h.nota_f2 !== null ? (h.nota_f2 * 10).toFixed(1) : '—'}
+                              {h.nota_f2 !== null ? (h.nota_f2 / 10).toFixed(1) : '—'}
                             </td>
                           )}
                           {hasF2 && (

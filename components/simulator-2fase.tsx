@@ -363,18 +363,18 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
   // ── Main UI ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 py-6 sm:py-8 overflow-x-hidden">
+    <div className="mx-auto max-w-6xl px-3 sm:px-6 lg:px-10 py-6 sm:py-8 w-full min-w-0">
 
       {/* ── Header + sub-tabs ─────────────────────────────────────────────── */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">Simulador de Candidatura</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Favoritos e simulação de candidatura em tempo real.
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Favoritos e simulação em tempo real.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Sub-tab toggle */}
           <div className="flex items-center rounded-lg border border-border/60 bg-muted/30 p-0.5">
             <button
@@ -416,7 +416,7 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                     key={p}
                     onClick={() => setPhase(p)}
                     className={cn(
-                      'rounded-md px-4 py-1.5 text-xs font-semibold transition-all',
+                      'rounded-md px-3 py-1.5 text-xs font-semibold transition-all',
                       phase === p
                         ? 'bg-background shadow-sm text-foreground'
                         : 'text-muted-foreground hover:text-foreground',
@@ -436,11 +436,11 @@ export function Simulator2Fase({ onViewDetails }: { onViewDetails?: (course: Cou
                 )}
               >
                 <Lock className="h-3 w-3" />
-                {includePrivadas ? 'Incluindo privadas' : 'Só públicas'}
+                {includePrivadas ? 'C/ privadas' : 'Só públicas'}
               </button>
             </>
           )}
-        </div>
+        </div>{/* end controls row */}
       </div>
 
       {/* ── Favoritos view ────────────────────────────────────────────────── */}

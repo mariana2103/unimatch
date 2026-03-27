@@ -247,17 +247,28 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
       }
 
       if (!bubbleAdded) {
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem resposta do servidor. Tenta novamente.' }])
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'O assistente IA (iaedu) não devolveu uma resposta. É um serviço gratuito que por vezes fica indisponível — tenta novamente em breves momentos.' }])
       }
     } catch {
       setChatMessages(prev => [
         ...prev,
-        { role: 'assistant', content: 'Ocorreu um erro. Tenta novamente.' },
+        { role: 'assistant', content: 'O assistente IA (iaedu) está temporariamente indisponível. É um serviço gratuito para estudantes e por vezes fica sobrecarregado. Tenta novamente em breves momentos — pedimos desculpa pelo incómodo.' },
       ])
     } finally {
       setIsChatLoading(false)
     }
   }
+
+  // Prevent body scroll on mobile when panel is open (stops the "zoom" effect)
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
 
   // Auto-scroll
   useEffect(() => {
@@ -306,12 +317,11 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
     ? profile.media_final_calculada * 10
     : null
 
-  // Rank: big weight on interests, but among reachable courses favour the highest cutoff.
+  // Rank: big weight on interests, only show courses the student can realistically get into.
+  // When user grade is known, only show courses within 0.5 valor (5 pts on 0-200 scale) of cutoff.
   // Zones (diff = cutoff - userGrade, 0-200 scale):
-  //   diff ≤  0  → can get in    → strong boost + prestige signal
-  //   diff ≤ 10  → within 1 val  → moderate boost + prestige signal
-  //   diff ≤ 20  → 1-2 val away  → slight penalty
-  //   diff  > 20 → out of reach  → heavy penalty (still shows but far down)
+  //   diff ≤  5  → can get in (or within 0.5 val) → shown with boost + prestige signal
+  //   diff  > 5  → out of reach                   → EXCLUDED (not suggested)
   const applyGradeBoost = (scored: { id: string; score: number }[]): RankedCourse[] => {
     return scored
       .map(({ id, score }) => {
@@ -321,24 +331,15 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
 
         if (userGrade200 !== null && course.notaUltimoColocado !== null) {
           const diff = course.notaUltimoColocado - userGrade200
+
+          // Only show courses within 0.5 valor of reach (5 on the 0-200 scale)
+          if (diff > 5) return null
+
           // prestige: higher cutoff = more sought-after (0→1 scale)
           const prestige = course.notaUltimoColocado / 200
-
-          if (diff <= 0) {
-            // Can get in — boost and elevate higher-cutoff options first
-            s = s * 2.0 + prestige * 0.5
-          } else if (diff <= 10) {
-            // Within 1 valor — very achievable with a bit of effort
-            s = s * 1.4 + prestige * 0.25
-          } else if (diff <= 20) {
-            // 1-2 valores away — moderate stretch
-            s *= 0.65
-          } else {
-            // Out of reach — show at the bottom of the 20
-            s *= 0.25
-          }
+          s = s * 2.0 + prestige * 0.5
         } else if (course.notaUltimoColocado !== null) {
-          // No user grade: still apply a mild prestige signal so results feel ordered
+          // No user grade: apply a mild prestige signal so results feel ordered
           const prestige = course.notaUltimoColocado / 200
           s = s * 0.85 + prestige * 0.15
         }
@@ -623,16 +624,24 @@ export function AICounselor({ isOpen, onClose, courses = [], onViewDetails = () 
               )}
 
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {ranked.slice(0, 20).map((r, i) => (
-                  <SidebarCourseCard
-                    key={r.course.id}
-                    course={r.course}
-                    score={r.score}
-                    rank={i + 1}
-                    userGrade200={userGrade200}
-                    onViewDetails={onViewDetails}
-                  />
-                ))}
+                {ranked.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-muted-foreground">
+                    {userGrade200 !== null
+                      ? 'Com a tua média actual, não foram encontrados cursos acessíveis neste perfil. Tenta adicionar mais notas de exame.'
+                      : 'Adiciona as tuas notas no perfil para veres cursos acessíveis.'}
+                  </div>
+                ) : (
+                  ranked.slice(0, 20).map((r, i) => (
+                    <SidebarCourseCard
+                      key={r.course.id}
+                      course={r.course}
+                      score={r.score}
+                      rank={i + 1}
+                      userGrade200={userGrade200}
+                      onViewDetails={onViewDetails}
+                    />
+                  ))
+                )}
                 <div ref={endRef} />
               </div>
 

@@ -27,35 +27,53 @@ export const COURSE_GROUPS = {
   PROFISSIONAL: 'Ensino Profissional'
 } as const;
 
-export const GENERAL_SUBJECTS = ['Português', 'Filosofia', 'Inglês', 'Educação Física'];
+// Língua Estrangeira I: students can choose any of these as their main foreign language
+export const GENERAL_SUBJECTS = ['Português', 'Filosofia', 'Inglês', 'Francês', 'Alemão', 'Espanhol', 'Educação Física'];
 
 export const SUBJECTS_BY_GROUP = {
   CIENCIAS: {
     trienais: ['Matemática A'],
     bienais: ['Física e Química A', 'Biologia e Geologia', 'Geometria Descritiva A'],
     anuais_12: [
-      'Biologia', 'Física', 'Química', 'Geologia', 'Antropologia', 
-      'Aplicações Informáticas B', 'Ciência Política', 'Clássicos da Literatura', 
+      'Biologia', 'Física', 'Química', 'Geologia', 'Antropologia',
+      'Aplicações Informáticas B', 'Ciência Política', 'Clássicos da Literatura',
       'Direito', 'Economia C', 'Filosofia A', 'Psicologia B', 'Sociologia'
     ]
   },
   ECONOMIA: {
     trienais: ['Matemática A'],
     bienais: ['Economia A', 'Geografia A', 'História da Cultura e das Artes'],
-    anuais_12: ['Economia C', 'Sociologia', 'Psicologia B', 'Direito', 'Geografia C']
+    anuais_12: [
+      'Economia C', 'Sociologia', 'Psicologia B', 'Direito', 'Geografia C',
+      'Aplicações Informáticas B', 'Antropologia', 'Ciência Política',
+      'Clássicos da Literatura', 'Filosofia A'
+    ]
   },
   HUMANIDADES: {
     trienais: ['História A'],
     bienais: [
-      'Geografia A', 'Latim A', 'Literatura Portuguesa', 
-      'Matemática Aplicada às Ciências Sociais (MACS)', 'Língua Estrangeira II ou III'
+      'Geografia A', 'Latim A', 'Literatura Portuguesa',
+      'Matemática Aplicada às Ciências Sociais (MACS)',
+      // LE II/III — less common languages not already in GENERAL_SUBJECTS
+      'Italiano', 'Mandarim', 'Grego'
     ],
-    anuais_12: ['Filosofia A', 'Psicologia B', 'Sociologia', 'Direito', 'Economia C', 'Clássicos da Literatura']
+    anuais_12: [
+      // LE I continues through 12th year for Línguas e Humanidades
+      'Inglês', 'Francês', 'Alemão', 'Espanhol',
+      'Filosofia A', 'Psicologia B', 'Sociologia', 'Direito', 'Economia C',
+      'Clássicos da Literatura', 'Aplicações Informáticas B',
+      'Ciência Política', 'Antropologia', 'Geografia C'
+    ]
   },
   ARTES: {
     trienais: ['Desenho A'],
     bienais: ['Geometria Descritiva A', 'Matemática B', 'História da Cultura e das Artes'],
-    anuais_12: ['Oficina de Artes', 'Oficina de Multimédia B', 'Materiais e Tecnologias']
+    anuais_12: [
+      'Oficina de Artes', 'Oficina de Multimédia B', 'Materiais e Tecnologias',
+      'Filosofia A', 'Psicologia B', 'Sociologia', 'Direito', 'Economia C',
+      'Clássicos da Literatura', 'Aplicações Informáticas B',
+      'Ciência Política', 'Antropologia'
+    ]
   },
   PROFISSIONAL: {
     trienais: [],

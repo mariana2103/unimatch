@@ -37,6 +37,7 @@ const EXAM_TO_SUBJECT: Record<string, { subjectName: string; examYear: 11 | 12 }
   '01': { subjectName: 'Alemão',                                         examYear: 11 },
   '02': { subjectName: 'Biologia e Geologia',                            examYear: 11 },
   '03': { subjectName: 'Desenho A',                                      examYear: 12 },
+  '04': { subjectName: 'Grego',                                          examYear: 11 },
   '05': { subjectName: 'Espanhol',                                       examYear: 11 },
   '06': { subjectName: 'Filosofia',                                      examYear: 11 },
   '07': { subjectName: 'Física e Química A',                             examYear: 11 },

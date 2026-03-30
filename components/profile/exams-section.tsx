@@ -8,7 +8,19 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EXAM_SUBJECTS } from '@/lib/constants'
 import { useUser } from '@/lib/user-context'
-import type { UserExam } from '@/lib/types'
+import type { UserExam, ExamTipo } from '@/lib/types'
+
+const TIPO_LABELS: Record<ExamTipo, string> = {
+  obrigatorio:    'Obrigatório',
+  melhoria:       'Melhoria',
+  prova_ingresso: 'Prova de Ingresso',
+}
+
+const TIPO_STYLES: Record<ExamTipo, string> = {
+  obrigatorio:    'bg-navy/10 text-navy',
+  melhoria:       'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  prova_ingresso: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+}
 
 interface ExamsSectionProps {
   exams: UserExam[]
@@ -19,6 +31,7 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
   const [newExamCode, setNewExamCode] = useState('')
   const [newExamGrade, setNewExamGrade] = useState('')
   const [newExamFase, setNewExamFase] = useState<'1' | '2'>('1')
+  const [newExamTipo, setNewExamTipo] = useState<ExamTipo>('obrigatorio')
   const [isPending, startTransition] = useTransition()
   const [gradeError, setGradeError] = useState('')
 
@@ -35,10 +48,12 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
         grade: Math.round(grade * 10),
         exam_year: new Date().getFullYear(),
         fase: Number(newExamFase) as 1 | 2,
+        tipo: newExamTipo,
       })
       setNewExamCode('')
       setNewExamGrade('')
       setNewExamFase('1')
+      setNewExamTipo('obrigatorio')
     })
   }
 
@@ -55,82 +70,110 @@ export function ExamsSection({ exams }: ExamsSectionProps) {
       </Label>
 
       <div className="grid gap-2">
-        {exams.map((e) => (
-          <div
-            key={e.id}
-            className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/40"
-          >
-            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
-                <span className={`text-[11px] font-bold px-1 py-0.5 rounded-full ${
-                  (e.fase ?? 1) === 2
-                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                    : 'bg-navy/10 text-navy'
-                }`}>
-                  {(e.fase ?? 1)}ª fase
+        {exams.map((e) => {
+          const tipo: ExamTipo = e.tipo ?? 'obrigatorio'
+          return (
+            <div
+              key={e.id}
+              className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/40"
+            >
+              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-mono text-muted-foreground">{e.exam_code}</span>
+                  <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                    (e.fase ?? 1) === 2
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      : 'bg-navy/10 text-navy'
+                  }`}>
+                    {(e.fase ?? 1)}ª fase
+                  </span>
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${TIPO_STYLES[tipo]}`}>
+                    {TIPO_LABELS[tipo]}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold truncate">
+                  {EXAM_SUBJECTS.find((s) => s.code === e.exam_code)?.name || e.exam_code}
                 </span>
               </div>
-              <span className="text-sm font-semibold truncate">
-                {EXAM_SUBJECTS.find((s) => s.code === e.exam_code)?.name || e.exam_code}
-              </span>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-lg font-bold text-navy">{(e.grade / 10).toFixed(1)}</span>
+                <button
+                  onClick={() => handleRemove(e.id)}
+                  disabled={isPending}
+                  className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50 p-1"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-lg font-bold text-navy">{(e.grade / 10).toFixed(1)}</span>
-              <button
-                onClick={() => handleRemove(e.id)}
-                disabled={isPending}
-                className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50 p-1"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      <div className="mt-4 p-4 bg-card rounded-xl border-2 border-dashed flex flex-col sm:flex-row gap-3">
-        <Select value={newExamCode} onValueChange={(v) => { setNewExamCode(v); setGradeError('') }}>
-          <SelectTrigger className="h-10 flex-1">
-            <SelectValue placeholder="Escolher Exame..." />
-          </SelectTrigger>
-          <SelectContent>
-            {EXAM_SUBJECTS.map((s) => (
-              <SelectItem key={s.code} value={s.code}>
-                {s.name} ({s.code})
+      <div className="mt-4 p-4 bg-card rounded-xl border-2 border-dashed flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Select value={newExamCode} onValueChange={(v) => { setNewExamCode(v); setGradeError('') }}>
+            <SelectTrigger className="h-10 flex-1">
+              <SelectValue placeholder="Escolher Exame..." />
+            </SelectTrigger>
+            <SelectContent>
+              {EXAM_SUBJECTS.map((s) => (
+                <SelectItem key={s.code} value={s.code}>
+                  {s.name} ({s.code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={newExamFase} onValueChange={(v) => setNewExamFase(v as '1' | '2')}>
+            <SelectTrigger className="h-10 w-full sm:w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1ª Fase</SelectItem>
+              <SelectItem value="2">2ª Fase</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            type="number"
+            placeholder="Nota (0–20)"
+            min={0}
+            max={20}
+            step={0.1}
+            className="h-10 w-full sm:w-32"
+            value={newExamGrade}
+            onChange={(e) => { setNewExamGrade(e.target.value); setGradeError('') }}
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <Select value={newExamTipo} onValueChange={(v) => setNewExamTipo(v as ExamTipo)}>
+            <SelectTrigger className="h-10 flex-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="obrigatorio">
+                Exame Obrigatório — conta para a CFC (75% CIF + 25% CE)
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={newExamFase} onValueChange={(v) => setNewExamFase(v as '1' | '2')}>
-          <SelectTrigger className="h-10 w-full sm:w-28">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1ª Fase</SelectItem>
-            <SelectItem value="2">2ª Fase</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="number"
-          placeholder="Nota (0–20)"
-          min={0}
-          max={20}
-          step={0.1}
-          className="h-10 w-full sm:w-32"
-          value={newExamGrade}
-          onChange={(e) => { setNewExamGrade(e.target.value); setGradeError('') }}
-        />
-        {gradeError && (
-          <p className="text-[11px] text-destructive font-medium">{gradeError}</p>
-        )}
-        <Button
-          onClick={handleAdd}
-          disabled={isPending || !newExamCode || !newExamGrade}
-          className="bg-navy h-10 px-6"
-        >
-          Adicionar
-        </Button>
+              <SelectItem value="melhoria">
+                Melhoria (2ª fase) — melhora o exame obrigatório correspondente
+              </SelectItem>
+              <SelectItem value="prova_ingresso">
+                Prova de Ingresso extra — só conta para a nota de candidatura
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {gradeError && (
+              <p className="text-[11px] text-destructive font-medium flex-1">{gradeError}</p>
+            )}
+            <Button
+              onClick={handleAdd}
+              disabled={isPending || !newExamCode || !newExamGrade}
+              className="bg-navy h-10 px-6 shrink-0"
+            >
+              Adicionar
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   )

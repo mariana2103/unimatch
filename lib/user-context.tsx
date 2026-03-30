@@ -50,7 +50,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return acc
       }, {}
     )
-    const examGrades = (updatedExams ?? exams).map(e => ({ examCode: e.exam_code, grade: e.grade }))
+    const examGrades = (updatedExams ?? exams).map(e => ({ examCode: e.exam_code, grade: e.grade, tipo: e.tipo }))
     const cfa = calculateCFA(Object.values(bySubject), courseGroup, undefined, examGrades)
     await supabase.from('profiles').update({ media_final_calculada: cfa }).eq('id', userId)
     setProfile(prev => prev ? { ...prev, media_final_calculada: cfa } : null)

@@ -1,5 +1,5 @@
 
-import type { UserExam } from './types'
+import type { UserExam, ExamTipo } from './types'
 
 /**
  * Returns the best valid exam grade per exam code for the given candidacy phase/year.
@@ -30,30 +30,29 @@ export function filterValidExams(
   return Array.from(bestByCode.entries()).map(([subjectCode, grade]) => ({ subjectCode, grade }))
 }
 
-// Mapping: exam code → subject name as stored in user_grades + exam year
-// Year 11 exams use: CFD = (7.5 × CIF + 2.5 × CE) / 10  (Despacho normativo n.º 14-A/2023)
-// Year 12 exams use: CFD = (7 × CIF + 3 × CE) / 10
-const EXAM_TO_SUBJECT: Record<string, { subjectName: string; examYear: 11 | 12 }> = {
-  '01': { subjectName: 'Alemão',                                         examYear: 11 },
-  '02': { subjectName: 'Biologia e Geologia',                            examYear: 11 },
-  '03': { subjectName: 'Desenho A',                                      examYear: 12 },
-  '04': { subjectName: 'Grego',                                          examYear: 11 },
-  '05': { subjectName: 'Espanhol',                                       examYear: 11 },
-  '06': { subjectName: 'Filosofia',                                      examYear: 11 },
-  '07': { subjectName: 'Física e Química A',                             examYear: 11 },
-  '08': { subjectName: 'Francês',                                        examYear: 11 },
-  '09': { subjectName: 'Geografia A',                                    examYear: 11 },
-  '10': { subjectName: 'Geometria Descritiva A',                         examYear: 11 },
-  '11': { subjectName: 'História A',                                     examYear: 12 },
-  '12': { subjectName: 'História da Cultura e das Artes',                examYear: 11 },
-  '13': { subjectName: 'Inglês',                                         examYear: 11 },
-  '14': { subjectName: 'Latim A',                                        examYear: 11 },
-  '15': { subjectName: 'Literatura Portuguesa',                          examYear: 11 },
-  '17': { subjectName: 'Matemática Aplicada às Ciências Sociais (MACS)', examYear: 11 },
-  '18': { subjectName: 'Português',                                      examYear: 12 },
-  '19': { subjectName: 'Matemática A',                                   examYear: 12 },
-  '20': { subjectName: 'Italiano',                                       examYear: 11 },
-  '21': { subjectName: 'Mandarim',                                       examYear: 11 },
+// Mapping: exam code → subject name as stored in user_grades
+// 2026 rule: all mandatory exams use CFD = (7.5 × CIF + 2.5 × CE) / 10  (75% / 25%)
+const EXAM_TO_SUBJECT: Record<string, string> = {
+  '01': 'Alemão',
+  '02': 'Biologia e Geologia',
+  '03': 'Desenho A',
+  '04': 'Grego',
+  '05': 'Espanhol',
+  '06': 'Filosofia',
+  '07': 'Física e Química A',
+  '08': 'Francês',
+  '09': 'Geografia A',
+  '10': 'Geometria Descritiva A',
+  '11': 'História A',
+  '12': 'História da Cultura e das Artes',
+  '13': 'Inglês',
+  '14': 'Latim A',
+  '15': 'Literatura Portuguesa',
+  '17': 'Matemática Aplicada às Ciências Sociais (MACS)',
+  '18': 'Português',
+  '19': 'Matemática A',
+  '20': 'Italiano',
+  '21': 'Mandarim',
 }
 
 interface SubjectGrade {
@@ -65,7 +64,7 @@ export function calculateCFA(
   subjects: SubjectGrade[] = [],
   courseGroup: string,
   mediaProfissional?: number,
-  examGrades?: { examCode: string; grade: number }[] // grade on 0–200 scale
+  examGrades?: { examCode: string; grade: number; tipo?: ExamTipo }[] // grade on 0–200 scale
 ): number {
   if (courseGroup === 'PROFISSIONAL') {
     return mediaProfissional || 0;
@@ -73,18 +72,18 @@ export function calculateCFA(
 
   if (!subjects || subjects.length === 0) return 0;
 
-  // Build lookup: subject name → { ce on 0-20 scale, examYear }
-  // If the same subject has multiple entries (different fase), use the highest grade
-  const examBySubject: Record<string, { ce: number; examYear: 11 | 12 }> = {}
+  // Only obrigatorio and melhoria exams affect the CFC.
+  // prova_ingresso exams are excluded — they're used only for admission, not for the school average.
+  // For each subject, take the best CE among its obrigatorio + melhoria entries.
+  const examBySubject: Record<string, number> = {} // subject name → best CE on 0-20 scale
   if (examGrades) {
     for (const eg of examGrades) {
-      const mapping = EXAM_TO_SUBJECT[eg.examCode]
-      if (mapping) {
-        const ce = eg.grade / 10
-        const existing = examBySubject[mapping.subjectName]
-        if (!existing || ce > existing.ce) {
-          examBySubject[mapping.subjectName] = { ce, examYear: mapping.examYear }
-        }
+      if (eg.tipo === 'prova_ingresso') continue
+      const subjectName = EXAM_TO_SUBJECT[eg.examCode]
+      if (!subjectName) continue
+      const ce = eg.grade / 10
+      if (examBySubject[subjectName] === undefined || ce > examBySubject[subjectName]) {
+        examBySubject[subjectName] = ce
       }
     }
   }
@@ -96,17 +95,10 @@ export function calculateCFA(
     // CIF = average of internal year grades (0-20 scale, kept as float)
     const cif = validGrades.reduce((acc, curr) => acc + curr.grade, 0) / validGrades.length;
 
-    // Apply CFD formula if exam grade is available for this subject
-    const examInfo = examBySubject[subject.name]
-    if (examInfo) {
-      const ce = examInfo.ce
-      if (examInfo.examYear === 11) {
-        // 11th year exam: CFD = (7.5 × CIF + 2.5 × CE) / 10
-        return (7.5 * cif + 2.5 * ce) / 10
-      } else {
-        // 12th year exam: CFD = (7 × CIF + 3 × CE) / 10
-        return (7 * cif + 3 * ce) / 10
-      }
+    const ce = examBySubject[subject.name]
+    if (ce !== undefined) {
+      // 2026 rule: CFD = 75% CIF + 25% CE for all mandatory exams
+      return (7.5 * cif + 2.5 * ce) / 10
     }
 
     return cif;

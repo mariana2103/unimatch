@@ -20,13 +20,19 @@ export interface UserGrade {
   created_at: string
 }
 
+export type ExamTipo =
+  | 'obrigatorio'    // one of the 3 mandatory exams → counts for CFD (75% CIF + 25% CE)
+  | 'melhoria'       // 2nd-phase improvement → replaces CE component if better; never valid for 1ª fase candidacy as PI
+  | 'prova_ingresso' // extra entrance exam → used only for admission grade, never affects CFC
+
 export interface UserExam {
   id: string
   user_id: string
   exam_code: string
   grade: number
   exam_year: number
-  fase: 1 | 2  // 1 = 1ª fase, 2 = 2ª fase (only fase 1 exams can be used in 1ª fase candidacy)
+  fase: 1 | 2
+  tipo: ExamTipo
 }
 
 // Raw DB row

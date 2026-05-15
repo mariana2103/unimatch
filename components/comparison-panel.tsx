@@ -35,7 +35,7 @@ export function ComparisonPanel({ courses }: ComparisonPanelProps) {
           <CardTitle className="flex items-center gap-2 text-sm text-navy">
             <GitCompareArrows className="h-4 w-4" />
             Comparação
-            <Badge variant="secondary" className="text-[10px]">{selectedCourses.length}/2</Badge>
+            <Badge variant="secondary" className="text-[10px]">{comparisonList.length}/2</Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={clearComparison} className="h-7 gap-1 text-xs text-muted-foreground">
             <X className="h-3 w-3" /> Limpar

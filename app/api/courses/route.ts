@@ -54,13 +54,15 @@ export async function GET(req: NextRequest) {
   if (district) query = query.eq('distrito', district)
   if (tipo) query = query.eq('tipo', tipo)
 
-  // Fetch more to account for exam post-filtering
-  const fetchLimit = exam ? 400 : limit
-  query = query.limit(fetchLimit)
+  query = query.order('nome', { ascending: true })
 
-  query = query
-    .order('nome', { ascending: true })
-    .range(page * limit, (page + 1) * limit - 1)
+  if (exam) {
+    // Fetch many rows so JS-level exam filtering has enough to work with;
+    // .range() would override .limit() in PostgREST so we avoid it here
+    query = query.limit(400)
+  } else {
+    query = query.range(page * limit, (page + 1) * limit - 1)
+  }
 
   const { data, error, count } = await query
 

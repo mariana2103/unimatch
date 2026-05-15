@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { toCourseSlug } from '@/lib/course-slug'
 import { EXAM_SUBJECTS } from '@/lib/constants'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 const BASE_URL = 'https://www.unimatch.pt'
 
@@ -23,6 +25,57 @@ const SELECT = `
   course_requirements(exam_code, weight, conjunto_id)
 `
 
+// ─── CSV fallback (used when Supabase is unavailable) ─────────────────────────
+
+function parseCsvCourses(): any[] {
+  try {
+    const csvPath = join(process.cwd(), 'database', 'data', 'courses.csv')
+    const text = readFileSync(csvPath, 'utf-8')
+    const lines = text.split('\n').filter(Boolean)
+    // Skip header
+    return lines.slice(1).map(line => {
+      // Parse CSV respecting quoted fields (history column is JSON with commas)
+      const fields: string[] = []
+      let cur = ''
+      let inQuote = false
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i]
+        if (ch === '"') {
+          if (inQuote && line[i + 1] === '"') { cur += '"'; i++ }
+          else inQuote = !inQuote
+        } else if (ch === ',' && !inQuote) {
+          fields.push(cur); cur = ''
+        } else {
+          cur += ch
+        }
+      }
+      fields.push(cur)
+      const [id, nome, instituicao_nome, tipo, nota_ultimo_colocado, distrito, area,
+             peso_secundario, peso_exames, nota_minima_p_ingresso, vagas] = fields
+      return {
+        id,
+        nome,
+        instituicao_nome,
+        tipo,
+        nota_ultimo_colocado: nota_ultimo_colocado ? parseFloat(nota_ultimo_colocado) / 10 : null,
+        distrito,
+        area,
+        peso_secundario: peso_secundario ? parseFloat(peso_secundario) : null,
+        peso_exames: peso_exames ? parseFloat(peso_exames) : null,
+        nota_minima_p_ingresso: nota_minima_p_ingresso ? parseFloat(nota_minima_p_ingresso) / 10 : null,
+        vagas: vagas ? parseInt(vagas, 10) : null,
+        nota_ultimo_colocado_f2: null,
+        nota_minima_prova: null,
+        link_oficial: null,
+        history: null,
+        course_requirements: [],
+      }
+    }).filter(r => r.nome && r.instituicao_nome)
+  } catch {
+    return []
+  }
+}
+
 // ─── Fetch all courses (used both for params and for lookup) ──────────────────
 
 async function getAllCourses() {
@@ -42,10 +95,40 @@ async function getAllCourses() {
       if (data.length < PAGE) break
       from += PAGE
     }
-    return all
+    if (all.length > 0) return all
   } catch {
-    return []
+    // fall through to CSV fallback
   }
+  return parseCsvCourses()
+}
+
+// ─── Fuzzy slug match (handles stale URLs after data renames) ─────────────────
+
+function normalizeSlug(s: string) {
+  // Collapse electr/eletr spelling variants so old URLs still match
+  return s.replace(/electr/g, 'eletr')
+}
+
+function findCourse(courses: any[], slug: string): any | undefined {
+  // 1. Exact match
+  const exact = courses.find(c => toCourseSlug(c.nome, c.instituicao_nome) === slug)
+  if (exact) return exact
+
+  // 2. Fuzzy: normalize spelling + allow URL slug to have extra institution suffix
+  //    (covers cases where institution name was shortened in DB)
+  const normSlug = normalizeSlug(slug)
+  let best: any | undefined
+  let bestLen = 0
+  for (const c of courses) {
+    const dbSlug = normalizeSlug(toCourseSlug(c.nome, c.instituicao_nome))
+    if (
+      normSlug === dbSlug ||
+      normSlug.startsWith(dbSlug + '-')
+    ) {
+      if (dbSlug.length > bestLen) { best = c; bestLen = dbSlug.length }
+    }
+  }
+  return best
 }
 
 // ─── Allow on-demand rendering for any slug not pre-built ─────────────────────
@@ -63,7 +146,7 @@ export async function generateMetadata(
   { params }: { params: { slug: string } },
 ): Promise<Metadata> {
   const courses = await getAllCourses()
-  const row = courses.find(c => toCourseSlug(c.nome, c.instituicao_nome) === params.slug)
+  const row = findCourse(courses, params.slug)
   if (!row) return { title: 'Curso não encontrado' }
 
   const corte = row.nota_ultimo_colocado != null
@@ -123,7 +206,7 @@ export async function generateMetadata(
 
 export default async function CursoPage({ params }: { params: { slug: string } }) {
   const courses = await getAllCourses()
-  const row = courses.find(c => toCourseSlug(c.nome, c.instituicao_nome) === params.slug)
+  const row = findCourse(courses, params.slug)
   if (!row) notFound()
 
   // Redirect users to the main app — this page exists for SEO/OG link previews only

@@ -270,41 +270,57 @@ export function CourseExplorer({ onCoursesLoaded, onViewDetails }: CourseExplore
 
   const filtered = useMemo(() => {
     const f = deferredFilters
-    let result: CourseUI[]
 
-    // Server-side search results when search query is active
-    if (searchResults !== null && deferredSearch.length >= 2) {
-      result = [...searchResults]
-    } else {
-      result = courses.filter(c => {
-        if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
-        if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
-        if (f.tipo && c.tipo !== f.tipo) return false
-        if (f.onlyQualified) {
-          const conjuntos = new Map<number, string[]>()
-          for (const p of c.provasIngresso) {
-            const cid = p.conjunto_id ?? 1
-            if (!conjuntos.has(cid)) conjuntos.set(cid, [])
-            conjuntos.get(cid)!.push(p.code)
-          }
-          if (conjuntos.size === 0) {
-            // No provas required — anyone qualifies
-          } else {
-            const qualifies = [...conjuntos.values()].some(
-              codes => codes.every(code => userExamCodes.has(code)),
-            )
-            if (!qualifies) return false
-          }
+    const normalizeText = (s: string) =>
+      s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+
+    // When searching, prefer server-side results (already filtered+ordered) but fall back to
+    // local accent-normalised search so "matematica" still matches "Matemática A".
+    const searchBase: CourseUI[] | null =
+      deferredSearch.length >= 2
+        ? (searchResults !== null && searchResults.length > 0
+            ? searchResults
+            : courses.length > 0
+              ? (() => {
+                  const q = normalizeText(deferredSearch)
+                  return courses.filter(c =>
+                    normalizeText(c.nome).includes(q) ||
+                    normalizeText(c.instituicao).includes(q) ||
+                    normalizeText(c.area).includes(q)
+                  )
+                })()
+              : searchResults ?? [])
+        : null
+
+    // Always apply non-text filters on the resolved pool
+    let result = (searchBase ?? courses).filter(c => {
+      if (f.areas.length > 0 && !f.areas.includes(c.area)) return false
+      if (f.districts.length > 0 && !f.districts.includes(c.distrito)) return false
+      if (f.tipo && c.tipo !== f.tipo) return false
+      if (f.onlyQualified) {
+        const conjuntos = new Map<number, string[]>()
+        for (const p of c.provasIngresso) {
+          const cid = p.conjunto_id ?? 1
+          if (!conjuntos.has(cid)) conjuntos.set(cid, [])
+          conjuntos.get(cid)!.push(p.code)
         }
-        if (f.withinRange) {
-          const userGrade = userGradeMap.get(c.id)
-          if (userGrade === undefined) return false
-          if (c.notaUltimoColocado === null) return false
-          if (c.notaUltimoColocado - userGrade > WITHIN_RANGE_PTS) return false
+        if (conjuntos.size === 0) {
+          // No provas required — anyone qualifies
+        } else {
+          const qualifies = [...conjuntos.values()].some(
+            codes => codes.every(code => userExamCodes.has(code)),
+          )
+          if (!qualifies) return false
         }
-        return true
-      })
-    }
+      }
+      if (f.withinRange) {
+        const userGrade = userGradeMap.get(c.id)
+        if (userGrade === undefined) return false
+        if (c.notaUltimoColocado === null) return false
+        if (c.notaUltimoColocado - userGrade > WITHIN_RANGE_PTS) return false
+      }
+      return true
+    })
 
     // Apply exam filter on top of search results (handles equivalences server-side)
     if (f.provasIngresso.length > 0) {

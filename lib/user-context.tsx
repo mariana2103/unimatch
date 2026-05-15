@@ -43,6 +43,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   const recalculateCFA = useCallback(async (userId: string, updatedGrades: UserGrade[], courseGroup: string, updatedExams?: UserExam[]) => {
+    // Don't recalculate if there are no school grades — exam-only changes would zero out media_final_calculada
+    if (updatedGrades.length === 0) return
+
     const bySubject = updatedGrades.reduce<Record<string, { name: string; grades: { year: number; grade: number }[] }>>(
       (acc, g) => {
         if (!acc[g.subject_name]) acc[g.subject_name] = { name: g.subject_name, grades: [] }
@@ -52,6 +55,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     )
     const examGrades = (updatedExams ?? exams).map(e => ({ examCode: e.exam_code, grade: e.grade, tipo: e.tipo }))
     const cfa = calculateCFA(Object.values(bySubject), courseGroup, undefined, examGrades)
+    if (cfa <= 0) return
     await supabase.from('profiles').update({ media_final_calculada: cfa }).eq('id', userId)
     setProfile(prev => prev ? { ...prev, media_final_calculada: cfa } : null)
   }, [supabase, exams])

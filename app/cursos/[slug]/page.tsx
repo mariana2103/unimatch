@@ -143,10 +143,11 @@ export async function generateStaticParams() {
 // ─── Per-page metadata ────────────────────────────────────────────────────────
 
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
+  const { slug } = await params
   const courses = await getAllCourses()
-  const row = findCourse(courses, params.slug)
+  const row = findCourse(courses, slug)
   if (!row) return { title: 'Curso não encontrado' }
 
   const corte = row.nota_ultimo_colocado != null
@@ -170,7 +171,7 @@ export async function generateMetadata(
     `Histórico de médias, simulador de candidatura e mais no UniMatch.`,
   ].filter(Boolean).join(' ')
 
-  const pageUrl = `${BASE_URL}/cursos/${params.slug}`
+  const pageUrl = `${BASE_URL}/cursos/${slug}`
 
   return {
     title,
@@ -202,11 +203,13 @@ export async function generateMetadata(
   }
 }
 
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function CursoPage({ params }: { params: { slug: string } }) {
+export default async function CursoPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const courses = await getAllCourses()
-  const row = findCourse(courses, params.slug)
+  const row = findCourse(courses, slug)
   if (!row) notFound()
 
   // Redirect users to the main app — this page exists for SEO/OG link previews only
@@ -254,7 +257,7 @@ export default async function CursoPage({ params }: { params: { slug: string } }
       address: { '@type': 'PostalAddress', addressRegion: row.distrito, addressCountry: 'PT' },
     },
     description: `${row.nome} na ${row.instituicao_nome}. ${corte1 ? `Nota de corte 2025: ${corte1} valores.` : ''} ${row.vagas ? `${row.vagas} vagas disponíveis.` : ''}`.trim(),
-    url: `${BASE_URL}/cursos/${params.slug}`,
+    url: `${BASE_URL}/cursos/${slug}`,
     inLanguage: 'pt-PT',
     educationalLevel: 'Licenciatura',
     ...(row.vagas ? { numberOfCredits: row.vagas } : {}),
